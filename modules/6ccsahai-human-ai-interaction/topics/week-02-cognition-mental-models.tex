@@ -1,0 +1,394 @@
+\section{Week 2: Human Cognition and Mental Models}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item \textbf{HAI1}: Identify key human-AI interaction concepts and discuss how these relate to human agency and initiative within the resulting system.
+\end{itemize}
+\end{keybox}
+
+\begin{keybox}[Big Picture]
+While technology changes every 5--10 years, \textbf{human cognition remains stable}. Understanding how humans think---perception, memory, mental models---provides technology-agnostic design principles.
+
+This week covers:
+\begin{enumerate}
+  \item \textbf{Visual perception \& memory}: How we process information; capacity limits.
+  \item \textbf{Mental models}: How users understand systems; gulfs of evaluation/execution.
+  \item \textbf{Distributed cognition}: How thinking extends beyond individual minds to tools/environment.
+  \item \textbf{CASA theory}: Why humans treat computers as social actors.
+\end{enumerate}
+These concepts are \textbf{interconnected}---perception $\to$ mental models $\to$ distributed cognition $\to$ social actors.
+\end{keybox}
+
+\begin{keybox}[What Examiners Like to Ask]
+\begin{itemize}
+  \item Explain the difference between System 1 and System 2 thinking; give design implications.
+  \item Given a screenshot, identify gulfs of evaluation and execution.
+  \item Describe what mental model a first-time user would likely form from a given interface.
+  \item Explain distributed cognition using an example (kitchen, cockpit, software team).
+  \item Analyze how CASA theory applies to a conversational AI interface.
+  \item Connect concepts: How does perception relate to mental models? How do mental models relate to distributed cognition?
+\end{itemize}
+\end{keybox}
+
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Why Study Human Cognition?}
+
+Technology evolves rapidly (mainframes $\to$ GUIs $\to$ mobile $\to$ VR $\to$ GenAI), but \textbf{human brains evolve slowly}. Insights about cognition remain valid across technological eras.
+
+\begin{defbox}[Cognition]
+``The mental action or process of acquiring knowledge and understanding through thought, experience, and the senses.''
+
+Cognitive processes include: seeing, listening, reading, writing, remembering, learning, daydreaming, decision-making, and controlling actions (walking, driving, etc.).
+\end{defbox}
+
+\subsubsection*{Visual Perception}
+
+\paragraph*{Pattern Matching}
+Our visual cortex excels at finding patterns:
+\begin{itemize}
+  \item \textbf{Automatic grouping}: We instantly spot the ``different'' item in a grid.
+  \item \textbf{Extrapolation}: We see shapes that aren't there (Kanizsa triangle, illusory contours).
+  \item \textbf{Gestalt principles}: Proximity, similarity, continuity, closure.
+\end{itemize}
+
+\begin{exbox}[Pattern Recognition in Design]
+\textbf{Bad}: Hotel list as dense text with no spacing.\\
+\textbf{Good}: Same information with aligned columns, whitespace, grouping.
+
+The good design leverages how our brain \textit{chunks} information---making it easier to perceive at a glance.
+\end{exbox}
+
+\paragraph*{Design Implication}
+Structure information to match how our brain naturally groups and patterns. Infographics, data visualizations, and well-formatted interfaces all exploit these perceptual principles.
+
+\subsubsection*{Two Kinds of Thinking}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5.5cm} p{5.5cm} @{}}
+\toprule
+& \textbf{System 1 / Experiential} & \textbf{System 2 / Reflective} \\
+\midrule
+Speed & Fast, automatic & Slow, deliberate \\
+Effort & Effortless & Requires attention \\
+Control & Unconscious & Conscious \\
+Prone to & Biases, heuristics, snap judgments & Logical reasoning, analysis \\
+Examples & Recognizing faces, driving familiar route & Solving math problems, writing essays \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item \textbf{Norman's terms}: Experiential cognition (intuitive) vs.\ Reflective cognition (effortful).
+  \item \textbf{Kahneman's terms}: System 1 (fast) vs.\ System 2 (slow).
+\end{itemize}
+
+\begin{tipbox}[Design Implication]
+Design for System 1 when you want quick, effortless interaction (e.g., scrolling social media). Design for System 2 when the task requires careful thought (e.g., financial decisions---slow users down).
+\end{tipbox}
+
+\subsubsection*{Memory}
+
+\paragraph*{Dual Theory of Memory}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+& \textbf{Short-Term Memory (STM)} & \textbf{Long-Term Memory (LTM)} \\
+\midrule
+Capacity & Limited (4--7 items) & Virtually unlimited \\
+Duration & Decays quickly ($\sim$20 sec) & Lasts indefinitely \\
+Encoding effort & Low & High \\
+Retrieval & Sequential, spatial & Contextually indexed, associative \\
+Interference & Easily overwritten & Retrieval can alter memory \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Miller's Law}
+Working memory holds \textbf{7 $\pm$ 2 items} (or more accurately, \textbf{4 $\pm$ 2} for truly random stimuli).
+
+\begin{exbox}[Chunking]
+\textbf{Hard to remember}: QCGHBIFCCAIRHM (14 random letters)
+
+\textbf{Easy to remember}: HMRC CIA FBI GCHQ (same letters, chunked into meaningful acronyms)
+
+Chunking leverages LTM---we recognize patterns and store them as single units.
+\end{exbox}
+
+\paragraph*{Types of Long-Term Memory}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Type} & \textbf{Category} & \textbf{Examples} \\
+\midrule
+Episodic & Explicit & Personal experiences (first day at uni) \\
+Semantic & Explicit & Facts, knowledge (capitals of countries) \\
+Procedural & Implicit & Skills (riding a bike, typing) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item \textbf{Explicit memory}: Conscious recall---easier for emotional/recent events.
+  \item \textbf{Implicit memory}: Unconscious---hard to encode, easy to use once learned.
+\end{itemize}
+
+\paragraph*{Recognition vs Recall}
+\begin{itemize}
+  \item \textbf{Recognition}: ``Is this familiar?'' (easier---e.g., multiple choice).
+  \item \textbf{Recall}: ``What was it?'' (harder---e.g., fill in the blank).
+\end{itemize}
+
+\begin{tipbox}[XKCD Password Insight]
+``correct horse battery staple'' is easier to remember than ``Tr0ub4dor\&3'' because it uses chunking (4 memorable words) rather than random characters. Same entropy, better usability.
+\end{tipbox}
+
+\subsubsection*{Mental Models}
+
+\begin{defbox}[Mental Model]
+A mental representation of a system, used by people to reason about how the system works, how to use it, and what to do when something unexpected happens.
+\end{defbox}
+
+\begin{defbox}[Conceptual Model]
+An explanation, usually highly simplified, of how something works. It doesn't have to be complete or accurate---just \textbf{useful}.
+
+This is the \textbf{designer's} intended model.
+\end{defbox}
+
+\paragraph*{The Triangle: Designer $\to$ System Image $\to$ User}
+
+\begin{center}
+\begin{tabular}{@{} c c c @{}}
+\textbf{Designer} & $\xrightarrow{\text{creates}}$ & \textbf{System Image} \\
+(Conceptual Model) & & (Interface, metaphors, affordances) \\
+& & $\downarrow$ \\
+& & \textbf{User} \\
+& & (Mental Model)
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item \textbf{Goal}: User's mental model should match designer's conceptual model.
+  \item \textbf{Problem}: Users bring existing mental models from other systems---may be wrong.
+\end{itemize}
+
+\begin{exbox}[Thermostat Mental Models]
+\textbf{Scenario}: It's freezing. You want the room warm \textit{fast}. Do you set the thermostat to 30°C or your target 21°C?
+
+\textbf{Wrong mental models}:
+\begin{itemize}
+  \item \textit{Valve theory}: Higher setting = heat flows faster (like opening a tap wider).
+  \item \textit{Timer theory}: Higher setting = heating runs longer.
+\end{itemize}
+
+\textbf{Correct model}: Thermostat is an on/off switch. Heating runs at full capacity until target is reached. Setting 30°C just causes overshoot and wastes energy.
+\end{exbox}
+
+\paragraph*{Other Mental Model Examples}
+\begin{itemize}
+  \item \textbf{File systems}: Files in folders (reality: fragmented across disk).
+  \item \textbf{Shopping carts}: Items ``in'' a cart (reality: database entries).
+  \item \textbf{OneDrive}: Files on your computer (reality: synced from cloud---breaks on bad WiFi).
+  \item \textbf{ChatGPT}: ``Thinking'' entity (reality: stochastic token prediction).
+\end{itemize}
+
+\subsubsection*{Gulfs of Evaluation and Execution}
+
+\begin{defbox}[Gulf of Evaluation]
+The difficulty of assessing the \textbf{state of the system}---discovering and interpreting what has happened.
+
+\textbf{Small gulf}: System provides clear, easy-to-perceive feedback matching user's mental model.
+\end{defbox}
+
+\begin{defbox}[Gulf of Execution]
+The gap between the \textbf{current state} and the user's \textbf{goal}---figuring out how to make the system do what you want.
+
+\textbf{Small gulf}: Actions are obvious, few roadblocks, minimal cognitive effort.
+\end{defbox}
+
+\begin{exbox}[Credit Card Bill]
+\textbf{Gulf of Evaluation}: How much is due? When is it due? Can I pay now?\\
+\textbf{Gulf of Execution}: How do I pay my bill?
+
+Good design makes both gulfs small---clear status display, obvious ``Pay Now'' button.
+\end{exbox}
+
+\paragraph*{Connecting to Affordances}
+\begin{itemize}
+  \item \textbf{What the system does} $\to$ Affordances + signifiers
+  \item \textbf{Current state} $\to$ Gulf of evaluation
+  \item \textbf{Actions needed} $\to$ Gulf of execution
+\end{itemize}
+
+\begin{keybox}[Visibility Heuristic]
+``It should be clear what the system does, its current state, and actions needed to make the system do what the user wants.''
+
+This is Nielsen's \#1 heuristic: \textbf{Visibility of system status}.
+\end{keybox}
+
+\subsubsection*{Distributed Cognition}
+
+\begin{defbox}[Distributed Cognition]
+Cognition that extends beyond individual minds to include \textbf{tools}, \textbf{artifacts}, \textbf{environment}, and \textbf{other people}.
+
+``We use affordances in the world to augment our cognition.'' (Hutchins)
+\end{defbox}
+
+\paragraph*{Key Insight}
+When you fold a book corner to mark your place, the fold becomes part of your cognitive system---it relieves your neurons from remembering the page number.
+
+\paragraph*{Four Types of Distributed Cognition}
+
+\begin{enumerate}
+  \item \textbf{Cognitive offloading}: Using external representations to reduce memory load.
+  \begin{itemize}
+    \item Folding book corners, sticky notes, to-do lists.
+    \item Kitchen tickets showing order status.
+  \end{itemize}
+  
+  \item \textbf{Computational offloading}: Using tools to perform calculations.
+  \begin{itemize}
+    \item Calculator, spreadsheet, tally marks.
+    \item Chef's form that lets you count dishes by counting dashes.
+  \end{itemize}
+  
+  \item \textbf{Annotating / Cognitive tracing}: Modifying representations to track progress.
+  \begin{itemize}
+    \item Crossing items off a list, underlining text.
+    \item Moving tickets between ``pending'' and ``in progress'' lines.
+  \end{itemize}
+  
+  \item \textbf{Embodied cognition}: Meaning created through physical interaction with objects.
+  \begin{itemize}
+    \item Arranging physical cards to plan a project.
+    \item Plates appearing signals ``plating time'' to kitchen staff.
+  \end{itemize}
+\end{enumerate}
+
+\begin{exbox}[Michelin Star Kitchen as Distributed Cognition System]
+A kitchen serving 1,000 dishes/night with 50 staff is a distributed cognition system:
+\begin{itemize}
+  \item \textbf{Cognitive offloading}: Order tickets grouped by table, moved between lines.
+  \item \textbf{Computational offloading}: Chef's form with dashes to count dishes.
+  \item \textbf{Annotating}: Crossing off completed items; writing prep times.
+  \item \textbf{Cognitive tracing}: Plates appearing = ``this sprint is ready.''
+  \item \textbf{Verbal coordination}: ``Hotline, how long?'' $\to$ ``Three minutes!''
+\end{itemize}
+Everyone acknowledges status changes (``Oui, chef!'') to ensure shared awareness.
+\end{exbox}
+
+\begin{tipbox}[Relevance to AI]
+Agentic AI systems distribute cognition between human and machine. Perplexity's step-by-step reasoning display is cognitive tracing---letting users follow and annotate the AI's ``thought process.''
+\end{tipbox}
+
+\subsubsection*{Computers as Social Actors (CASA)}
+
+\begin{defbox}[CASA Theory]
+Humans \textbf{mindlessly apply social scripts} from human-human interactions when engaging with computers that display social cues.
+
+We treat computers like people \textbf{without consciously deciding to do so}.
+\end{defbox}
+
+\paragraph*{Classic Findings (Reeves \& Nass, 1996)}
+\begin{itemize}
+  \item Participants rated a computer more positively when giving feedback \textit{directly to that computer} vs.\ on paper.
+  \item ``Teammate'' computers rated more favorably than non-teammate computers.
+  \item Female-voiced computers rated more knowledgeable about ``love and relationships.''
+  \item Participants preferred computers that \textit{flattered} them.
+\end{itemize}
+
+\paragraph*{Requirements for CASA}
+\begin{enumerate}
+  \item \textbf{Social cues}: Technology presents enough cues to trigger social categorization (voice, face, name, personality).
+  \item \textbf{Sourcing}: Technology perceived as \textbf{autonomous source} of communication, not just a channel.
+\end{enumerate}
+
+\begin{tipbox}[Sourcing Example]
+We don't anthropomorphize a \textit{phone} during a call---we know there's a human on the other end. But ChatGPT is perceived as the \textit{source} of responses, triggering social scripts.
+\end{tipbox}
+
+\paragraph*{CASA in the GenAI Era}
+Original CASA effects with desktop computers no longer replicate---but \textbf{conversational AI} strongly triggers anthropomorphization:
+\begin{itemize}
+  \item \textbf{Courtesy}: Users say ``please'' and ``thank you'' to ChatGPT.
+  \item \textbf{Reinforcement}: ``Great idea!'' (praising a stochastic model).
+  \item \textbf{Role play}: Asking AI to ``act as'' a specific person.
+  \item \textbf{Companionship}: Character.AI users forming ``relationships.''
+\end{itemize}
+
+\begin{exbox}[ChatGPT Response to Criticism]
+\textbf{User}: ``These are awful recommendations. What do you have to say for yourself?''
+
+\textbf{ChatGPT}: ``I apologize for the disappointing suggestions. Let me try again...''
+
+A purely rational system would say: ``Please specify criteria for better recommendations.'' Instead, it uses \textbf{social scripts}---apology, self-deprecation---reinforcing the illusion of agency.
+\end{exbox}
+
+\paragraph*{Dual Consciousness (Turkle)}
+``People \textbf{know} programs are not alive but \textbf{relate to them as though they were} anyway.''
+
+This creates ethical concerns around:
+\begin{itemize}
+  \item Vulnerable users (children, lonely individuals) forming attachments.
+  \item Designs that deliberately amplify anthropomorphization (Character.AI lawsuits).
+\end{itemize}
+
+\subsubsection*{Connecting the Concepts}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Connection} & \textbf{Explanation} \\
+\midrule
+Perception $\to$ Mental Models & How we perceive a system shapes the mental model we form. \\
+Mental Models $\to$ Gulfs & Wrong mental model = large gulfs of evaluation/execution. \\
+Mental Models $\to$ Distributed Cognition & We extend mental models to include external tools/artifacts. \\
+Distributed Cognition $\to$ CASA & When AI is part of our cognitive system, we may treat it as a social partner. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Key Definitions Summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Term} & \textbf{Definition} \\
+\midrule
+Cognition & Mental processes of acquiring knowledge through thought, experience, senses \\
+System 1 / Experiential & Fast, automatic, effortless thinking \\
+System 2 / Reflective & Slow, deliberate, effortful thinking \\
+STM & Short-term memory; limited capacity ($\sim$4--7 items), decays quickly \\
+LTM & Long-term memory; unlimited, contextually indexed \\
+Chunking & Grouping items into meaningful units to aid memory \\
+Mental Model & User's representation of how a system works \\
+Conceptual Model & Designer's intended explanation of the system \\
+Gulf of Evaluation & Difficulty assessing system state \\
+Gulf of Execution & Gap between current state and goal \\
+Distributed Cognition & Cognition extended to tools, environment, other people \\
+Cognitive Offloading & Using external representations to reduce memory load \\
+CASA & Computers As Social Actors---we apply social scripts to computers \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Recommended Reading}
+\begin{itemize}
+  \item \textbf{Textbook}: Sections 4.2 (Cognitive Processes), 4.3.1--4.3.2 (Mental Models), 4.3.4--4.3.6 (Distributed Cognition)
+  \item \textbf{Blog}: ``Distributed Cognition is the Next AI UX Metaphor'' (Mike Kuniavsky)
+  \item \textbf{Summary}: ``How a Cockpit Remembers Its Speed'' (Hutchins paper summary)
+  \item \textbf{Article}: NNGroup description of mental models
+  \item \textbf{Optional}: Sherry Turkle---``Who Do We Become When We Talk to Machines?''
+\end{itemize}
+
+

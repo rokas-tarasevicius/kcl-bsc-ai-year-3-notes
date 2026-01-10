@@ -1,0 +1,344 @@
+\section{Week 5: Prototyping Human-Centred AI Systems}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item \textbf{HAI2}: Describe the human-AI interaction design process and its distinction from conventional human-centred design.
+  \item \textbf{HAI4}: Create and evaluate human-centred human-AI prototypes.
+\end{itemize}
+\end{keybox}
+
+\begin{keybox}[Big Picture]
+This is the ``doing'' week---prototyping is learning by making.
+
+The core principle: \textbf{Maximize the rate of learning by minimizing the time to try new ideas.}
+
+We cover:
+\begin{enumerate}
+  \item \textbf{What prototypes are}: Definition, purpose, and types.
+  \item \textbf{Low vs.\ high fidelity}: When to use each.
+  \item \textbf{Prototyping techniques}: Sketches, wireframes, paper, Figma, Wizard of Oz.
+  \item \textbf{AI-specific prototyping}: How to prototype AI systems before building them.
+\end{enumerate}
+\end{keybox}
+
+\begin{keybox}[What Examiners Like to Ask]
+\begin{itemize}
+  \item Define what a prototype is and explain its purpose.
+  \item Compare low-fidelity and high-fidelity prototypes with advantages/disadvantages.
+  \item Explain when you would use vertical vs.\ horizontal prototyping.
+  \item Describe Wizard of Oz prototyping and give an AI example.
+  \item Given an AI use case, propose an appropriate prototyping strategy.
+  \item Explain why prototyping is particularly important for human-centered AI.
+\end{itemize}
+\end{keybox}
+
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{What are Prototypes?}
+
+\begin{defbox}[Prototype]
+One \textbf{manifestation of a design} that allows stakeholders to interact with it and explore its suitability.
+
+\textbf{Key property}: A prototype \textbf{emphasizes one set of characteristics} and de-emphasizes others. It is intentionally \textbf{limited}.
+\end{defbox}
+
+\paragraph*{What Prototypes Can Be}
+\begin{itemize}
+  \item Paper-based storyboard
+  \item Cardboard mockup
+  \item Wireframe sketch
+  \item Click-through interactive demo
+  \item Partial software implementation
+  \item Physical 3D-printed model
+\end{itemize}
+
+\paragraph*{Purpose of Prototypes}
+\begin{enumerate}
+  \item Help you \textbf{think through} possibilities in your design space.
+  \item Help you \textbf{test assumptions} about users, experience, or technology viability.
+  \item Help users \textbf{envision} interactions with the new system.
+  \item Serve as \textbf{probes} to get feedback from users.
+\end{enumerate}
+
+\subsubsection*{Why Prototype Human-Centered AI?}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+& \textbf{Traditional AI} & \textbf{Human-Centered AI} \\
+\midrule
+Focus & Model-centric & User-centric \\
+Starting point & Data first & People first \\
+Evaluation & Accuracy & Usability, trust, fairness \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Reasons to Prototype HAI Systems}
+\begin{itemize}
+  \item \textbf{Align behavior with expectations}: Does the AI do what users expect?
+  \item \textbf{Catch usability issues early}: Before expensive implementation.
+  \item \textbf{Explore ethical concerns}: Trust, explainability, fairness---before deployment.
+\end{itemize}
+
+\subsubsection*{Low-Fidelity vs.\ High-Fidelity Prototypes}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5.5cm} p{5.5cm} @{}}
+\toprule
+& \textbf{Low-Fidelity} & \textbf{High-Fidelity} \\
+\midrule
+Cost & Lower development cost & Time/resource intensive \\
+Speed & Fast to create and change & Slower to develop \\
+Detail & Little detail, conceptual & Look \& feel resembles final \\
+Interactivity & Limited or none & Partially/fully functional \\
+Best for & Early ideation, exploring concepts & Usability testing, refinement \\
+Risk & No error checking possible & May confuse stakeholders \\
+Examples & Sketches, wireframes, paper & Figma, coded prototype \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{The Fidelity Spectrum}
+
+\begin{center}
+\textbf{Sketches} $\to$ \textbf{Wireframes} $\to$ \textbf{Interactive Prototype} $\to$ \textbf{Final Design}
+\end{center}
+
+\begin{itemize}
+  \item \textbf{Sketches}: Low commitment, quick to throw away, good for \textit{communicating ideas}.
+  \item \textbf{Wireframes}: Structure and flow, good for \textit{concept validation}.
+  \item \textbf{Interactive prototypes}: Some interactivity, good for \textit{refinement and testing}.
+  \item \textbf{Final design}: Fully branded, good for \textit{wide-scale evaluation}.
+\end{itemize}
+
+\begin{tipbox}[Match Fidelity to Purpose]
+Don't build a high-fidelity prototype just to test an idea. Use sketches or wireframes for early exploration; save high-fidelity for later validation.
+\end{tipbox}
+
+\subsubsection*{Low-Fidelity Prototyping Techniques}
+
+\paragraph*{1. Wireframes}
+\begin{itemize}
+  \item Draw overviews of interactive products to establish structure and flow.
+  \item Primarily \textbf{tools for collaboration}---make better prototypes faster.
+  \item Tools: \textbf{Balsamiq}, Miro, Figma (low-fi mode).
+  \item Use boxes with X for images, placeholder text for content.
+\end{itemize}
+
+\paragraph*{2. Paper Prototyping}
+\begin{itemize}
+  \item Sketch concepts/flows on paper; test with users.
+  \item Use cardboard ``phones'' or ``tablets'' to simulate device context.
+  \item \textbf{Why paper?} Low stakes $\to$ users feel more comfortable critiquing.
+  \item Research shows hand-drawn prototypes invite more honest feedback.
+\end{itemize}
+
+\paragraph*{3. Click-Through Prototypes (Low-Fi Version)}
+\begin{itemize}
+  \item Connect frames in Figma/Miro with simple click interactions.
+  \item Test basic flows without full implementation.
+  \item Example: Button changes screen color---tests interaction, not content.
+\end{itemize}
+
+\subsubsection*{High-Fidelity Prototyping Techniques}
+
+\paragraph*{1. Click-Through Prototypes (High-Fi)}
+\begin{itemize}
+  \item Tools: \textbf{Figma}, Adobe XD, Axure.
+  \item Interactive, resembles final product.
+  \item Can test on mobile devices (Figma Mirror app).
+  \item Start with Miro wireframes $\to$ build up in Figma.
+\end{itemize}
+
+\paragraph*{2. Vertical vs.\ Horizontal Prototyping}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5.5cm} p{5.5cm} @{}}
+\toprule
+& \textbf{Vertical} & \textbf{Horizontal} \\
+\midrule
+Implementation & Few functions fully implemented & All UI implemented but shallow \\
+Depth & Deep (one feature works end-to-end) & Shallow (no real data processing) \\
+Example & Messaging works; nothing else & All buttons visible; nothing saves \\
+Best for & Testing specific feature in depth & Testing overall navigation/layout \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{3. Physical Computing}
+\begin{itemize}
+  \item Platforms: Arduino, Raspberry Pi, 3D printing, laser cutting.
+  \item For tangible interfaces, IoT devices, wearables.
+  \item Quickly create 3D form factors to test physical interactions.
+\end{itemize}
+
+\subsubsection*{Wizard of Oz Prototyping}
+
+\begin{defbox}[Wizard of Oz]
+A prototyping technique where a \textbf{human simulates} the system's behavior behind the scenes, while the user believes they are interacting with a real system.
+
+Named after the film: A powerful wizard is actually just a person behind a curtain.
+\end{defbox}
+
+\paragraph*{Classic Example: IBM Listening Typewriter (1984)}
+\begin{itemize}
+  \item User speaks into microphone; text appears on screen.
+  \item User believes it's speech-to-text technology.
+  \item \textbf{Reality}: A human typist in another room transcribes in real-time.
+  \item \textbf{Purpose}: Test the \textit{experience} before building the technology.
+\end{itemize}
+
+\paragraph*{Why Use Wizard of Oz?}
+\begin{itemize}
+  \item Test experiences for technology that doesn't exist yet.
+  \item Test AI interactions before training/fine-tuning models.
+  \item Much faster and cheaper than building real AI.
+  \item Especially useful for niche domains (healthcare, hospitality, etc.).
+\end{itemize}
+
+\subsubsection*{AI-Specific Prototyping Strategies}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{AI Use Case} & \textbf{Prototype Strategy} \\
+\midrule
+Recommender system & Mock interface with fake suggestions (Figma/paper). \\
+Chatbot / LLM & Wizard of Oz with scripted/human responses. \\
+Classifier UI & Confidence bars + explanation cards. \\
+Personalization & Multiple mockups showing different personalized states. \\
+Agent/assistant & Wizard of Oz with human behind the scenes. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{exbox}[Prototyping a Chatbot]
+\textbf{Scenario}: You're designing an AI tutor chatbot.
+
+\textbf{Before building any AI}:
+\begin{enumerate}
+  \item Create Figma mockups of the chat interface.
+  \item Run Wizard of Oz sessions: You type responses pretending to be the AI.
+  \item Test different ``personalities''---formal vs.\ friendly.
+  \item Gather feedback on what users expect from the interaction.
+\end{enumerate}
+
+\textbf{What you learn}: Do users want step-by-step guidance? Do they get frustrated? Do they trust the responses?
+
+\textbf{Only then}: Build/fine-tune the actual model.
+\end{exbox}
+
+\subsubsection*{Key Questions When Prototyping}
+
+\begin{enumerate}
+  \item \textbf{What assumptions are you testing?}
+  \begin{itemize}
+    \item User expectations?
+    \item Technology feasibility?
+    \item Trust and explainability?
+  \end{itemize}
+  
+  \item \textbf{What does this mean for how/why you prototype?}
+  \begin{itemize}
+    \item Testing an idea? $\to$ Low fidelity.
+    \item Testing specific interaction? $\to$ Vertical prototype.
+    \item Testing overall flow? $\to$ Horizontal prototype.
+    \item AI not built yet? $\to$ Wizard of Oz.
+  \end{itemize}
+\end{enumerate}
+
+\begin{tipbox}[The Core Principle]
+\textbf{Maximize the rate of learning by minimizing the time to try new ideas.}
+
+Choose the \textit{minimum fidelity} needed to test your current assumptions. Don't over-engineer prototypes.
+\end{tipbox}
+
+\subsubsection*{Prototyping in the Design Process}
+
+Recall the Double Diamond (Week 4):
+\begin{center}
+Discover $\to$ Define $\to$ \textbf{Develop} $\to$ Deliver
+\end{center}
+
+Prototyping sits in the \textbf{Develop} phase:
+\begin{itemize}
+  \item Diverge: Generate many prototype ideas.
+  \item Converge: Test, iterate, refine toward final design.
+\end{itemize}
+
+In Stanford d.school terms: \textbf{Prototype} $\to$ \textbf{Test} (next week).
+
+\subsubsection*{Worked Examples}
+
+\begin{exbox}[Choosing Fidelity]
+\textbf{Scenario}: You want to test whether users understand a new AI feature that explains why a recommendation was made.
+
+\textbf{Early stage}: Paper prototype with explanation cards. Show to 5 users. Do they understand?
+
+\textbf{Later stage}: Figma prototype with different explanation styles. A/B test which is clearer.
+
+\textbf{Final stage}: Implement in code; run usability study.
+\end{exbox}
+
+\begin{exbox}[Vertical vs.\ Horizontal]
+\textbf{Scenario}: AI-powered email assistant.
+
+\textbf{Vertical prototype}: The ``compose reply'' feature works end-to-end (AI generates draft, user edits, sends). Other features (scheduling, search) are stubs.
+
+\textbf{Horizontal prototype}: All features are visible and clickable, but none actually process data. Good for testing navigation: ``Can users find the AI features?''
+\end{exbox}
+
+\subsubsection*{Key Definitions Summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Term} & \textbf{Definition} \\
+\midrule
+Prototype & Manifestation of design for stakeholder interaction; intentionally limited \\
+Low-fidelity & Quick, cheap, conceptual; sketches, wireframes, paper \\
+High-fidelity & Interactive, resembles final product; Figma, coded prototypes \\
+Wireframe & Structural overview of layout and flow \\
+Paper prototype & Hand-drawn sketch tested with users \\
+Vertical prototype & Few features fully implemented (deep) \\
+Horizontal prototype & All UI visible but shallow (no real processing) \\
+Wizard of Oz & Human simulates AI behavior behind the scenes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Tools Reference}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Tool} & \textbf{Fidelity} & \textbf{Best For} \\
+\midrule
+Paper/Pen & Low & Very early ideation \\
+Miro & Low & Collaborative wireframing \\
+Balsamiq & Low & Quick wireframes \\
+Figma & Low--High & Wireframes to interactive prototypes \\
+Adobe XD & High & Interactive prototypes \\
+Arduino/Pi & Physical & Tangible/IoT prototypes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Recommended Resources}
+\begin{itemize}
+  \item \textbf{Textbook}: Chapter 11 (Prototyping)
+  \item \textbf{Video}: Tony Fadell---Designing the Nest Thermostat
+  \item \textbf{Tool}: Figma tutorials for interactive prototyping
+\end{itemize}
+
+

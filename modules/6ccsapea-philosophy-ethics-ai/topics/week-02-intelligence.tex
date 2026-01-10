@@ -1,0 +1,386 @@
+% =============================================================================
+%                    WEEK 2: INTELLIGENCE
+% =============================================================================
+\section{Week 2: Intelligence}
+
+% -----------------------------------------------------------------------------
+%                              2.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Define \textbf{intelligence} and explain why the definition matters.
+  \item Distinguish between \textbf{Narrow AI}, \textbf{AGI}, and \textbf{Superintelligence}.
+  \item Explain the \textbf{Turing Test} and analyse its interpretations.
+  \item Evaluate the \textbf{Chinese Room} argument and its replies.
+  \item Understand why intelligence is \textbf{substrate-neutral}.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week addresses the foundational question: \textit{What is intelligence?} We explore definitions of intelligence, examine whether machines can be intelligent, and critically analyse two famous thought experiments---the Turing Test and the Chinese Room. These concepts are essential for understanding debates about AI capabilities, consciousness, and the possibility of AGI.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Define intelligence (Tegmark's definition) and explain Moravec's paradox.
+  \item Explain the four quadrants of AI research (Russell \& Norvig).
+  \item Describe the Turing Test and its interpretations (sufficient/necessary conditions).
+  \item Present the Chinese Room argument and evaluate replies (Systems, Robot, Virtual Mind).
+  \item What is substrate neutrality and why does it matter for AI?
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 2.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item What is intelligence?
+  \item Substrate neutrality: information and computation
+  \item Four approaches to building AI (Russell \& Norvig)
+  \item Types of AI: Narrow AI, AGI, Superintelligence
+  \item The Turing Test
+  \item Analysis of the Turing Test
+  \item The Chinese Room argument
+  \item Replies to the Chinese Room
+\end{enumerate}
+
+\bigseparator
+
+% --- What is Intelligence? ---
+\subsubsection{What is Intelligence?}
+
+\begin{defbox}[Intelligence (Tegmark)]
+\textbf{``Intelligence is the ability to accomplish complex goals.''}
+
+This definition:
+\begin{itemize}
+  \item Subsumes other definitions (logic, understanding, self-awareness, learning).
+  \item Allows for \textbf{comparison}: X is more intelligent than Y if X can accomplish all goals Y can, plus at least one more.
+  \item Results in a \textbf{partial ordering} (some agents are incomparable).
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Moravec's Paradox]
+Tasks that seem \textbf{easy for humans} (image recognition, walking) are \textbf{hard for computers}.
+
+Tasks that seem \textbf{hard for humans} (complex calculations, chess) are \textbf{easy for computers}.
+
+\textbf{Explanation:} Evolution has dedicated massive neural ``hardware'' to sensorimotor tasks, making them feel effortless. Computers lack this specialized circuitry.
+\end{defbox}
+
+\begin{tipbox}[Exam Relevance]
+Moravec's paradox explains why early AI succeeded at ``hard'' tasks (chess) but struggled with ``easy'' ones (vision). Modern deep learning has begun to address this by learning sensorimotor representations from data.
+\end{tipbox}
+
+\bigseparator
+
+% --- Substrate Neutrality ---
+\subsubsection{Substrate Neutrality: Information and Computation}
+
+\begin{thmbox}[The Substrate Neutrality Thesis]
+Intelligence is ultimately about \textbf{information} and \textbf{computation}, not about the physical material (substrate) that implements them.
+
+\textbf{Implication:} There is no reason in principle why machines (silicon-based) cannot be as intelligent as humans (carbon-based).
+\end{thmbox}
+
+\begin{defbox}[Information]
+\textbf{Information storage} requires physical components that can exist in multiple \textbf{stable states}.
+
+\textbf{Examples:}
+\begin{itemize}
+  \item Hard drive: magnetized points (two states $\to$ 1 bit)
+  \item RAM: electron positions
+  \item Fiber optics: strong/weak laser beams
+  \item DNA: nucleotide sequences
+  \item Brain: $\sim$10 GB electrically (neuron firing), $\sim$100 TB chemically (synaptic strengths)
+\end{itemize}
+
+\textbf{Key point:} Information can be stored in \textbf{any} physical medium with stable states.
+\end{defbox}
+
+\begin{defbox}[Computation]
+\textbf{Computation} transforms one information state into another by implementing a \textbf{function}.
+
+\textbf{Key result:} NAND gates are \textbf{Turing-complete}---any computable function can be implemented by connecting NAND gates.
+
+\textbf{Implication:} A \textbf{universal intelligent machine} could, given enough time and resources, accomplish any goal as well as any other intelligent entity.
+\end{defbox}
+
+\bigseparator
+
+% --- Four Approaches to AI ---
+\subsubsection{Four Approaches to Building AI}
+
+Russell and Norvig's classic textbook identifies four paradigms:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} l | c c @{}}
+\toprule
+ & \textbf{Human-Based} & \textbf{Ideal Rationality} \\
+\midrule
+\textbf{Reasoning-Based} & Think like humans & Think rationally \\
+\textbf{Behaviour-Based} & Act like humans & Act rationally \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{defbox}[Ideal Rational Agent]
+A \textbf{perfectly rational agent}:
+\begin{enumerate}
+  \item Models the environment $E$.
+  \item Considers actions $a_1, \ldots, a_n$ and their resulting states $E_1, \ldots, E_n$.
+  \item Computes \textbf{expected utility} for each action: $\mathbb{E}[U(a_i)] = P(E_i \mid a_i) \times U(E_i)$.
+  \item Chooses the action with highest expected utility.
+\end{enumerate}
+
+\textbf{In practice:} Perfect rationality is infeasible. We use \textbf{bounded optimality}---optimal behaviour given resource constraints (time, memory, processing power).
+\end{defbox}
+
+\begin{tipbox}[AIXI Framework]
+\textbf{AIXI} (Legg \& Hutter) provides a mathematically rigorous definition:
+
+\textit{``Intelligence measures an agent's ability to achieve goals in a \textbf{wide range of environments}.''}
+
+Key insight: The agent doesn't know its environment in advance---it must learn and act simultaneously.
+
+\textbf{Problem:} The optimal AIXI agent is \textbf{not Turing-computable}. Practical AI must approximate this ideal.
+\end{tipbox}
+
+\bigseparator
+
+% --- Types of AI ---
+\subsubsection{Types of AI: Narrow AI, AGI, Superintelligence}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+\textbf{Type} & \textbf{Definition} & \textbf{Examples} \\
+\midrule
+\textbf{Narrow AI} & Purpose-built for \textbf{specific tasks}; often superhuman in that domain & Deep Blue (chess), AlphaGo, GPT-3 \\
+\textbf{AGI} & Can accomplish \textbf{any goal} at least as well as humans; possesses common sense, learning, reasoning & Does not yet exist \\
+\textbf{Superintelligence} & \textbf{Greatly exceeds} human cognitive performance in virtually all domains & Hypothetical future AI \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{defbox}[Moravec's Landscape]
+Imagine a landscape where:
+\begin{itemize}
+  \item \textbf{Lowlands} = tasks computers find easy (arithmetic, chess)
+  \item \textbf{Peaks} = tasks humans find easy (locomotion, social interaction, creativity)
+\end{itemize}
+
+AI capability is like rising water---it has flooded the lowlands and is approaching the peaks. The \textbf{critical sea level} is when machines can perform \textbf{AI design itself}.
+\end{defbox}
+
+\begin{thmbox}[The Singularity]
+Once machines can \textbf{design better versions of themselves}:
+\begin{itemize}
+  \item Recursive self-improvement begins.
+  \item Machines have advantages over human researchers: speed, memory, data access.
+  \item Result: rapid \textbf{intelligence explosion} $\to$ Superintelligence.
+\end{itemize}
+
+\textbf{Survey estimates} (Bostrom):
+\begin{itemize}
+  \item 50\% of researchers expect AGI by 2040.
+  \item 10\% expect Superintelligence within 2 years of AGI.
+  \item 75\% expect Superintelligence within 30 years of AGI.
+\end{itemize}
+\end{thmbox}
+
+\bigseparator
+
+% --- The Turing Test ---
+\subsubsection{The Turing Test}
+
+\begin{defbox}[The Turing Test (1950)]
+\textbf{Original formulation (Imitation Game):}
+\begin{itemize}
+  \item An interrogator communicates (via text) with a human and a machine in separate rooms.
+  \item The interrogator tries to determine which is which.
+  \item The machine tries to fool the interrogator; the human tries to help identify the machine.
+\end{itemize}
+
+\textbf{Turing's prediction:} In 50 years, a computer could fool an average interrogator 30\% of the time after 5 minutes.
+
+\textbf{Alternative formulation:} If the judge cannot do better than 50/50, the machine \textbf{passes} the test.
+\end{defbox}
+
+\begin{tipbox}[Historical Note]
+Turing anticipated \textbf{machine learning}: ``Instead of trying to produce a programme to simulate the adult mind, why not\ldots simulate the child's? If\ldots subjected to an appropriate course of education one would obtain the adult brain.''
+
+Descartes (1669) prefigured the test: machines could never ``arrange speech in various ways, in order to reply appropriately to everything that may be said in its presence.''
+\end{tipbox}
+
+\bigseparator
+
+% --- Analysis of the Turing Test ---
+\subsubsection{Analysis of the Turing Test}
+
+\begin{defbox}[Logical Interpretations]
+The Turing Test can be interpreted as providing:
+
+\textbf{1. Logically sufficient conditions:}
+\[
+\text{Pass TT} \Rightarrow \text{Intelligent}
+\]
+(TT-passers are a \textbf{subset} of intelligent beings. Failing TT doesn't prove non-intelligence.)
+
+\textbf{2. Logically necessary conditions:}
+\[
+\text{Intelligent} \Rightarrow \text{Pass TT}
+\]
+(Intelligent beings are a \textbf{subset} of TT-passers. Failing TT proves non-intelligence.)
+
+\textbf{3. Both (biconditional):} Pass TT $\Leftrightarrow$ Intelligent. (Rarely claimed.)
+
+\textbf{4. Probabilistic:} Passing TT provides \textbf{evidence} for intelligence (Turing's own view).
+\end{defbox}
+
+\begin{exbox}[Objections to the Turing Test]
+\textbf{1. The Chauvinistic Objection} (attacks necessary interpretation):
+\begin{itemize}
+  \item Intelligent aliens might fail because they don't share human linguistic conventions.
+  \item An entity could achieve complex goals in diverse environments without passing TT.
+\end{itemize}
+
+\textbf{2. The Blockhead Objection} (attacks sufficient interpretation):
+\begin{itemize}
+  \item Imagine a creature with a \textbf{lookup table} containing responses to every possible input.
+  \item Blockhead passes TT but uses \textbf{brute force}---no real intelligence or understanding.
+  \item \textbf{Counter:} Is Blockhead logically/nomically possible? Is brute-force processing really non-intelligent?
+\end{itemize}
+
+\textbf{3. Too Hard:} Nothing without a human-like brain could pass.
+
+\textbf{4. Too Narrow:} Success might come from tricks, not genuine cognition.
+
+\textbf{5. Too Easy:} More demanding tests needed (e.g., \textbf{Lovelace Test}---creativity/originality).
+\end{exbox}
+
+\begin{tipbox}[Exam Tip]
+When discussing TT interpretations, use set-theoretic reasoning:
+\begin{itemize}
+  \item Sufficient: $\{\text{TT-passers}\} \subseteq \{\text{Intelligent beings}\}$
+  \item Necessary: $\{\text{Intelligent beings}\} \subseteq \{\text{TT-passers}\}$
+\end{itemize}
+Then apply this to analyse objections.
+\end{tipbox}
+
+\bigseparator
+
+% --- The Chinese Room ---
+\subsubsection{The Chinese Room Argument (Searle, 1980)}
+
+\begin{thmbox}[The Chinese Room]
+\textbf{Setup:}
+\begin{itemize}
+  \item A person who knows no Chinese is locked in a room.
+  \item The room contains boxes of Chinese symbols (database) and a rulebook (program).
+  \item People outside send in Chinese questions (input).
+  \item The person follows rules to manipulate symbols and produces Chinese answers (output).
+  \item The person passes the Turing Test for Chinese---but understands nothing.
+\end{itemize}
+
+\textbf{Argument structure:}
+\begin{enumerate}
+  \item The symbol-manipulating program $P$ is possible (at least conceivably).
+  \item $P$ does not possess \textbf{understanding} $\to$ $P$ is not intelligent.
+  \item Any digital computer $C$ is equivalent to $P$ in relevant respects.
+  \item \textbf{Conclusion:} No digital computer can be intelligent.
+\end{enumerate}
+\end{thmbox}
+
+\begin{defbox}[Key Distinction: Syntax vs.\ Semantics]
+\begin{itemize}
+  \item \textbf{Syntax:} Formal manipulation of symbols according to rules.
+  \item \textbf{Semantics:} Meaning---what symbols \textbf{represent}.
+\end{itemize}
+
+\textbf{Searle's claim:} Computers can only do syntax. Understanding requires semantics. Therefore, computers cannot truly understand---and understanding is necessary for intelligence.
+
+\textbf{Challenge:} Is understanding really necessary for intelligence (per Tegmark's definition)?
+\end{defbox}
+
+\bigseparator
+
+% --- Replies to the Chinese Room ---
+\subsubsection{Replies to the Chinese Room}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Reply} & \textbf{Argument} \\
+\midrule
+\textbf{Systems Reply} & The \textbf{man} doesn't understand, but the \textbf{whole system} (man + database + rulebook) does. The man is just the CPU. \\
+\textbf{Virtual Mind Reply} & The system creates a \textbf{virtual entity} (like Siri or a video game character) that understands, distinct from the physical components. \\
+\textbf{Robot Reply} & Understanding requires \textbf{embodiment}---interacting with the world. A robot that sees, touches, and experiences could ground symbols in meaning. \\
+\textbf{Impossibility Reply} (Dennett) & Such a program would require $\sim$100 billion lines of code. Running it by hand would take lifetimes. It's not \textbf{nomically possible}. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{defbox}[Nomic vs.\ Logical Possibility]
+\begin{itemize}
+  \item \textbf{Logical possibility:} No inherent contradiction (can be conceived).
+  \item \textbf{Nomic possibility:} Possible given the \textbf{laws of physics}.
+\end{itemize}
+
+Dennett argues the Chinese Room is \textbf{logically} possible but not \textbf{nomically} possible---so it's not a valid counterexample.
+\end{defbox}
+
+\begin{tipbox}[Exam Tip]
+The Chinese Room hinges on \textbf{Premise 2}: understanding is necessary for intelligence. If you accept Tegmark's goal-based definition, you can reject this premise---a system could be intelligent (achieve complex goals) without ``true understanding.''
+\end{tipbox}
+
+\bigseparator
+
+% --- Summary ---
+\subsubsection{Summary: Key Takeaways}
+
+\begin{thmbox}[Week 2 Key Points]
+\begin{enumerate}
+  \item \textbf{Intelligence} = ability to accomplish complex goals (Tegmark).
+  \item \textbf{Moravec's paradox:} ``Easy'' human tasks are computationally hard.
+  \item \textbf{Substrate neutrality:} Intelligence depends on information/computation, not physical material.
+  \item \textbf{Four AI paradigms:} Think/act like humans vs.\ think/act rationally.
+  \item \textbf{Narrow AI} excels at specific tasks; \textbf{AGI} matches human breadth; \textbf{Superintelligence} exceeds humans in all domains.
+  \item \textbf{Turing Test:} Linguistic indistinguishability as a test for intelligence.
+  \item TT can be interpreted as sufficient, necessary, both, or probabilistic.
+  \item \textbf{Chinese Room:} Syntax alone doesn't yield understanding.
+  \item Replies: Systems, Virtual Mind, Robot (embodiment), Impossibility.
+\end{enumerate}
+\end{thmbox}
+
+\begin{defbox}[Key Terms to Remember]
+\begin{itemize}
+  \item \textbf{Narrow AI / AGI / Superintelligence:} Levels of AI capability.
+  \item \textbf{Substrate neutrality:} Intelligence is hardware-independent.
+  \item \textbf{Turing-complete:} Can compute any computable function.
+  \item \textbf{Expected utility:} $P(\text{outcome}) \times U(\text{outcome})$.
+  \item \textbf{Bounded optimality:} Best behaviour given resource limits.
+  \item \textbf{Turing Test:} Behavioural test for machine intelligence.
+  \item \textbf{Logically sufficient/necessary:} Set-theoretic interpretations.
+  \item \textbf{Chinese Room:} Thought experiment against computer understanding.
+  \item \textbf{Syntax vs.\ Semantics:} Symbol manipulation vs.\ meaning.
+  \item \textbf{Nomic possibility:} Possible given physical laws.
+  \item \textbf{Embodiment:} Understanding requires physical interaction with the world.
+\end{itemize}
+\end{defbox}
+

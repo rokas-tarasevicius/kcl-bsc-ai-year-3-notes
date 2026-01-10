@@ -1,0 +1,419 @@
+\section{Week 3: Interface and Interaction Patterns for Human-AI Systems}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item \textbf{HAI1}: Identify key human-AI interaction concepts and discuss how these relate to human agency and initiative within the resulting system.
+  \item \textbf{HAI2}: Describe the human-AI interaction design process and its distinction from conventional human-centred design.
+\end{itemize}
+\end{keybox}
+
+\begin{keybox}[Big Picture]
+This week moves from theory to practice: how do the cognitive concepts from Week 2 translate into concrete design guidelines?
+
+We cover:
+\begin{enumerate}
+  \item \textbf{Six usability goals}: Properties that make systems usable.
+  \item \textbf{Usability vs.\ User Experience}: Related but distinct concepts.
+  \item \textbf{Nielsen's 10 heuristics}: Rules of thumb for achieving usability.
+  \item \textbf{AI-specific guidelines}: How heuristics differ for deep learning vs.\ GenAI systems.
+  \item \textbf{Building with AI}: Building blocks, workflows, and agents (Anthropic framework).
+\end{enumerate}
+\end{keybox}
+
+\begin{keybox}[What Examiners Like to Ask]
+\begin{itemize}
+  \item List and explain the six usability goals; apply them to critique a given system.
+  \item Distinguish usability from user experience with examples.
+  \item Given a screenshot, identify which Nielsen heuristics are violated and suggest fixes.
+  \item Compare 2019 deep-learning guidelines vs.\ 2024 GenAI guidelines.
+  \item Explain the difference between building blocks, workflows, and agents.
+  \item Connect heuristics back to cognitive concepts (memory, mental models, distributed cognition).
+\end{itemize}
+\end{keybox}
+
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Six Usability Goals}
+
+These goals describe properties of \textbf{usable} systems. Use them to evaluate any design.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Goal} & \textbf{Key Question} \\
+\midrule
+1. Effective & Can users accomplish their goals at all? \\
+2. Efficient & Can users maintain high productivity once learned? \\
+3. Safe & What errors are possible? How easy is recovery? \\
+4. Good utility & Does it provide the right functions for user tasks? \\
+5. Easy to learn & Can users figure it out by exploring? \\
+6. Memorable & Can users remember how to use it after time away? \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{1. Effective to Use}
+\begin{itemize}
+  \item \textbf{Question}: Can users learn, work, access information, or buy goods?
+  \item A messaging app that can't send messages is not effective.
+  \item Even the bad parking sign is \textit{technically} effective---you can eventually figure it out.
+\end{itemize}
+
+\paragraph*{2. Efficient to Use}
+\begin{itemize}
+  \item \textbf{Question}: Once learned, can users sustain high productivity?
+  \item A messaging app that sends one letter at a time is effective but not efficient.
+  \item The good parking sign is efficient---information jumps out at a glance.
+\end{itemize}
+
+\paragraph*{3. Safe to Use}
+\begin{itemize}
+  \item \textbf{Question}: What errors are possible? How do users recover?
+  \item Delete key next to Enter = error-prone design.
+  \item ``Are you sure you want to delete?'' dialogs = safety mechanism.
+\end{itemize}
+
+\paragraph*{4. Good Utility}
+\begin{itemize}
+  \item \textbf{Question}: Does it provide appropriate functions for user tasks?
+  \item Unix terminal has great utility for developers, zero utility for non-technical users.
+  \item A TV remote with 50 buttons has poor utility if users only need 5.
+\end{itemize}
+
+\paragraph*{5. Easy to Learn}
+\begin{itemize}
+  \item \textbf{Question}: Can users work out how to use it by exploring?
+  \item Chat interfaces are easy to \textit{start} (type and send), but hard to \textit{master} (what can it do?).
+  \item Games with clear mechanics are often easier to learn than multipurpose tools.
+\end{itemize}
+
+\paragraph*{6. Memorable (Easy to Remember)}
+\begin{itemize}
+  \item \textbf{Question}: What support helps users remember infrequent tasks?
+  \item Links to Week 2: recognition easier than recall; distributed cognition (leave traces).
+  \item Tooltips, recent actions, undo history all support memorability.
+\end{itemize}
+
+\subsubsection*{Usability vs.\ User Experience}
+
+\begin{defbox}[User Experience (UX)]
+How the system \textbf{feels} to the user---their subjective experience of interacting with it.
+
+\textbf{Key insight}: You can't design \textit{a} user experience. You can only design \textit{for} user experience.
+\end{defbox}
+
+\paragraph*{Comparison}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+& \textbf{Usability} & \textbf{User Experience} \\
+\midrule
+Focus & Task completion & How it feels \\
+Scope & Narrow (effective, efficient, safe) & Broad (enjoyable, motivating, beautiful) \\
+Measurable & More objective & More subjective \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{``Beautiful Things Work Better''---But Do They?}
+
+\begin{exbox}[The Juicy Salif Paradox]
+\textbf{Philippe Starck's Juicy Salif} (£200): Beautiful sculpture, terrible juicer (sprays pips, makes mess).
+
+\textbf{Argos Value Juicer} (99p): Ugly, but actually juices effectively.
+
+The Juicy Salif has great aesthetics but poor usability. The enjoyment comes from \textit{looking at it}, not \textit{using it}.
+\end{exbox}
+
+\paragraph*{The 2×2 Matrix}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l | c c @{}}
+& \textbf{High Usability} & \textbf{Low Usability} \\
+\midrule
+\textbf{High UX} & Beautiful \& usable (goal!) & Beautiful but unusable (Juicy Salif) \\
+\textbf{Low UX} & ``Charming'' but usable & What nobody wants \\
+\end{tabular}
+\end{center}
+
+\subsubsection*{What is a Heuristic?}
+
+\begin{defbox}[Heuristic]
+A strategy derived from previous experience with similar problems---a \textbf{rule of thumb} that often works but isn't guaranteed.
+
+In psychology: Simple, efficient rules (learned or evolved) for making decisions under uncertainty or incomplete information.
+\end{defbox}
+
+\paragraph*{Key Concepts}
+\begin{itemize}
+  \item \textbf{Satisficing} (Herbert Simon): Users seek solutions that are ``good enough,'' not optimal.
+  \item \textbf{Bounded rationality}: We can't process all information, so we use shortcuts.
+  \item Users don't carefully analyze your system---they make quick judgments.
+\end{itemize}
+
+\paragraph*{Two Types of Heuristics in Design}
+\begin{enumerate}
+  \item \textbf{Design heuristics}: How designers solve problems (e.g., ``use consistent icons'').
+  \item \textbf{User heuristics}: How users make decisions (e.g., ``this looks clickable'').
+\end{enumerate}
+
+\subsubsection*{Nielsen's 10 Usability Heuristics}
+
+Jakob Nielsen's heuristics are \textbf{design principles}---if followed, they increase the likelihood of a usable system.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} c l p{7cm} @{}}
+\toprule
+\textbf{\#} & \textbf{Heuristic} & \textbf{Summary} \\
+\midrule
+1 & Visibility \& Feedback & Keep users informed about system status. \\
+2 & Match Real World & Use user language, not system jargon. \\
+3 & User Control \& Freedom & Provide undo, redo, emergency exits. \\
+4 & Consistency \& Standards & Same action = same representation. \\
+5 & Error Prevention & Prevent errors before they happen. \\
+6 & Recognition > Recall & Make options visible; don't rely on memory. \\
+7 & Flexibility \& Efficiency & Support both novices and experts. \\
+8 & Aesthetic \& Minimalist & High signal-to-noise ratio. \\
+9 & Error Recovery & Clear error messages; constructive solutions. \\
+10 & Help \& Documentation & Easy to search, task-focused, concrete steps. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Heuristic 1: Visibility \& Feedback}
+\begin{itemize}
+  \item System should always keep users informed about what's happening.
+  \item \textbf{Example}: Selected items change color; Mac charge cable shows orange/green.
+  \item \textbf{GenAI}: Perplexity shows ``thinking'' steps---visibility of internal process.
+\end{itemize}
+
+\paragraph*{Heuristic 2: Match Between System \& Real World}
+\begin{itemize}
+  \item Use words, phrases, concepts familiar to users---not system-oriented terms.
+  \item \textbf{Skeuomorphic design}: Digital highlighter looks like physical highlighter.
+  \item \textbf{Caution}: Chat interfaces trigger human conversation mental models---can lead to wrong expectations about AI capabilities.
+\end{itemize}
+
+\paragraph*{Heuristic 3: User Control \& Freedom}
+\begin{itemize}
+  \item Users make mistakes---provide ``emergency exits'' (undo, cancel, go back).
+  \item \textbf{Bad}: Irreversible action after user ignores a dialog.
+  \item \textbf{GenAI}: Claude allows branching conversations, editing prompts, regenerating responses.
+\end{itemize}
+
+\paragraph*{Heuristic 4: Consistency \& Standards}
+\begin{itemize}
+  \item Same action = same representation, both within your app and across the ecosystem.
+  \item Apple's Human Interface Guidelines: Specific menu orders, icon styles.
+  \item \textbf{AI guidelines}: More high-level (``support efficient dismissal'') than prescriptive.
+\end{itemize}
+
+\paragraph*{Heuristic 5: Error Prevention}
+\begin{itemize}
+  \item Better than good error messages is preventing errors entirely.
+  \item \textbf{Poka-yoke} (Japanese): Mistake-proofing by design.
+  \item \textbf{Example}: Manual car won't start unless clutch is depressed.
+  \item \textbf{UI}: Dangerous action buttons are secondary; confirmation dialogs; disabled states.
+\end{itemize}
+
+\begin{tipbox}[Slips vs.\ Mistakes]
+\textbf{Slip}: User intends correct action, executes wrong one (pressing Delete instead of Enter).
+
+\textbf{Mistake}: User forms wrong intention (wrong mental model of thermostat).
+
+Error prevention addresses both.
+\end{tipbox}
+
+\paragraph*{Heuristic 6: Recognition Rather Than Recall}
+\begin{itemize}
+  \item Minimize memory load: make options, actions, objects visible.
+  \item \textbf{Links to Week 2}: Recognition is easier than recall.
+  \item \textbf{Examples}: Autocomplete, recently used items, visible toolbars.
+\end{itemize}
+
+\paragraph*{Heuristic 7: Flexibility \& Efficiency of Use}
+\begin{itemize}
+  \item Accelerators for experts; guided paths for novices.
+  \item \textbf{Perpetual intermediates}: Most users are neither beginners nor experts.
+  \item \textbf{Examples}: Keyboard shortcuts, customizable toolbars, Adobe shortcut stickers.
+\end{itemize}
+
+\paragraph*{Heuristic 8: Aesthetic \& Minimalist Design}
+\begin{itemize}
+  \item Every extra element competes with relevant information.
+  \item \textbf{Signal-to-noise ratio}: Maximize signal, minimize noise.
+  \item \textbf{Example}: 1990s cluttered websites vs.\ modern landing pages with clear CTAs.
+\end{itemize}
+
+\paragraph*{Heuristic 9: Help Users Recognize, Diagnose, Recover from Errors}
+\begin{itemize}
+  \item Error messages in plain language, precisely indicate problem, suggest solution.
+  \item \textbf{Example}: Twitter character counter shows exactly how many characters over.
+  \item \textbf{GenAI}: Retry buttons, model switching, conversation branching.
+\end{itemize}
+
+\paragraph*{Heuristic 10: Help \& Documentation}
+\begin{itemize}
+  \item Even if system is usable without docs, provide searchable, task-focused help.
+  \item \textbf{Good help}: Concrete steps, not too large, focused on user tasks.
+\end{itemize}
+
+\subsubsection*{Heuristics for AI Systems}
+
+The field is developing AI-specific guidelines. Key comparison:
+
+\paragraph*{2019 Microsoft Guidelines (Deep Learning)}
+\begin{itemize}
+  \item Focused on making AI behavior \textbf{predictable and consistent}.
+  \item Assumption: AI systems should behave deterministically.
+  \item Example guideline: ``Make clear why the system did what it did'' (G11).
+  \item Mental model: AI produces single output that is right or wrong.
+\end{itemize}
+
+\paragraph*{2024 IBM Guidelines (Generative AI)}
+\begin{itemize}
+  \item Embraces \textbf{generative variability} as a fundamental characteristic.
+  \item Helps users \textbf{manage and leverage} the fact that GenAI produces different outputs for same input.
+  \item Example guideline: ``Leverage multiple outputs,'' ``Help user craft effective outcome specifications.''
+  \item Mental model: AI enables \textbf{exploration of possibility spaces}.
+\end{itemize}
+
+\paragraph*{Key Differences}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+& \textbf{2019 Deep Learning} & \textbf{2024 Generative AI} \\
+\midrule
+Outputs & Single recommendation (accept/reject) & Multiple possibilities (explore) \\
+Variability & Try to eliminate & Embrace and leverage \\
+User role & Judge correctness & Craft specifications, explore \\
+Key guideline & ``Support efficient correction'' & ``Help craft outcome specifications'' \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Building with AI: Anthropic Framework}
+
+From Anthropic's ``Building Effective Agents'' blog---required reading.
+
+\paragraph*{Three Levels of Complexity}
+
+\begin{enumerate}
+  \item \textbf{Building Blocks}: Single LLM call with optional tool use.
+  \begin{itemize}
+    \item Input $\to$ LLM $\to$ Output
+    \item Simplest unit; deterministic path.
+  \end{itemize}
+  
+  \item \textbf{Workflows}: Predetermined paths with multiple LLM calls.
+  \begin{itemize}
+    \item Sequence of blocks with conditional logic.
+    \item No cycles; linear or branching.
+    \item Example: Input $\to$ LLM1 $\to$ Check $\to$ LLM2 $\to$ Output
+  \end{itemize}
+  
+  \item \textbf{Agents}: LLM controls its own reasoning and tool use.
+  \begin{itemize}
+    \item Has feedback loops---LLM decides what to do next.
+    \item Reasoning and planning; not fully predetermined.
+    \item Example: LLM $\to$ Plan $\to$ Act $\to$ Observe $\to$ (repeat)
+  \end{itemize}
+\end{enumerate}
+
+\begin{tipbox}[Key Distinction]
+\textbf{Workflows}: Human designs the control flow; LLM executes steps.
+
+\textbf{Agents}: LLM decides the control flow; human sets goals/constraints.
+\end{tipbox}
+
+\subsubsection*{Connecting Heuristics to Usability Goals}
+
+The 10 heuristics help achieve the 6 usability goals:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Usability Goal} & \textbf{Related Heuristics} \\
+\midrule
+Effective & Match real world, Good utility \\
+Efficient & Flexibility \& efficiency, Aesthetic \& minimal \\
+Safe & Error prevention, Error recovery, User control \\
+Good utility & Match real world, Help \& documentation \\
+Easy to learn & Recognition > recall, Consistency, Visibility \\
+Memorable & Recognition > recall, Consistency \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Worked Examples}
+
+\begin{exbox}[Heuristic Evaluation]
+\textbf{Scenario}: A mobile banking app shows ``Error 0x4F2A'' when login fails.
+
+\textbf{Violated heuristics}:
+\begin{itemize}
+  \item \#2 Match real world: System jargon, not user language.
+  \item \#9 Error recovery: No constructive suggestion for fixing the problem.
+\end{itemize}
+
+\textbf{Fix}: ``Incorrect password. Please try again or reset your password.''
+\end{exbox}
+
+\begin{exbox}[Comparing AI Guidelines]
+\textbf{Scenario}: You're designing a writing assistant.
+
+\textbf{2019 approach} (deep learning): Show single ``best'' suggestion; user accepts or rejects.
+
+\textbf{2024 approach} (GenAI): Show multiple variations; let user explore, combine, iterate; help user specify what ``good'' means for their context.
+\end{exbox}
+
+\begin{exbox}[Building Block vs.\ Workflow vs.\ Agent]
+\textbf{Building block}: ``Summarize this document'' $\to$ LLM $\to$ Summary.
+
+\textbf{Workflow}: Document $\to$ Extract key points (LLM1) $\to$ Check for completeness (rule) $\to$ Generate summary (LLM2) $\to$ Summary.
+
+\textbf{Agent}: ``Research this topic and write a report'' $\to$ Agent plans steps, searches web, reads sources, decides when to stop, writes report.
+\end{exbox}
+
+\subsubsection*{Key Definitions Summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Term} & \textbf{Definition} \\
+\midrule
+Usability & How effectively, efficiently, and satisfyingly users achieve goals \\
+User Experience & How the system feels to the user (subjective) \\
+Heuristic & Rule of thumb derived from experience; not guaranteed \\
+Satisficing & Seeking ``good enough'' rather than optimal solutions \\
+Poka-yoke & Mistake-proofing by design \\
+Signal-to-noise & Ratio of useful information to clutter \\
+Building block & Single LLM call (simplest unit) \\
+Workflow & Predetermined sequence of LLM calls \\
+Agent & LLM with feedback loop controlling its own actions \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Recommended Reading}
+\begin{itemize}
+  \item \textbf{Textbook}: Section 1.7 (Usability goals)
+  \item \textbf{Blog}: Anthropic---``Building Effective Agents'' (building blocks, workflows, agents)
+  \item \textbf{Article}: ``Human-Centered AI: 5 Key Frameworks for UX Designers''
+  \item \textbf{Pattern library}: Shape of AI (\texttt{shapeof.ai})
+  \item \textbf{Critical thinking}: MIT Critical Thinking paper, Bloom's Taxonomy
+\end{itemize}
+
+

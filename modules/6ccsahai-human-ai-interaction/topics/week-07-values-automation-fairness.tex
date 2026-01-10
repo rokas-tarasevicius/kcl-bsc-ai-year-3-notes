@@ -1,0 +1,331 @@
+\section{Week 7: Human-Centred Values -- Automation, Agency \& Fairness}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item \textbf{HAI3}: Apply critical reasoning skills to identify general (explainability, fairness, efficacy, accountability, transparency) and context-specific constraints on human-AI interactions.
+\end{itemize}
+\end{keybox}
+
+\begin{keybox}[Big Picture]
+This week begins the ``HAI as Values'' section---designing AI that is \textbf{aligned with human values}.
+
+We cover three core values:
+\begin{enumerate}
+  \item \textbf{Automation}: When should AI act autonomously? When should humans retain control?
+  \item \textbf{Agency}: How do we distribute responsibility between humans and AI?
+  \item \textbf{Fairness}: How do we prevent AI from perpetuating or amplifying bias?
+\end{enumerate}
+\end{keybox}
+
+\begin{keybox}[What Examiners Like to Ask]
+\begin{itemize}
+  \item Explain the shift from 1D to 2D thinking about automation and human control.
+  \item Describe the Google Flu Trends and Boeing MCAS failures; what lessons do they teach?
+  \item Define ``moral crumple zones'' and explain with an example.
+  \item Distinguish between allocative and representational harms.
+  \item Explain the Suresh \& Guttag framework for sources of bias in ML.
+  \item Given a scenario, identify what type of bias might be present.
+  \item Compare transparency and explainability.
+\end{itemize}
+\end{keybox}
+
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Automation \& Agency}
+
+\paragraph*{The Case for Automation}
+Humans have limitations that AI can address:
+\begin{itemize}
+  \item Poor at repetitive tasks.
+  \item Cognitive biases and judgment errors.
+  \item Limited memory.
+  \item Ambiguous intents.
+\end{itemize}
+
+\paragraph*{The Case Against Pure Automation}
+\begin{itemize}
+  \item Loss of critical domain expertise.
+  \item Fairness concerns (who is harmed when AI fails?).
+  \item Accountability gaps (who is responsible?).
+\end{itemize}
+
+\paragraph*{From 1D to 2D Thinking}
+
+\textbf{Old (1D) Model}: Choose a point on a spectrum from human control to full automation.
+
+\begin{center}
+Human Control $\longleftrightarrow$ Full Automation
+\end{center}
+
+\textbf{New (2D) Model}: Aim for \textbf{both} high human control \textbf{and} high automation.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l | c c @{}}
+& \textbf{Low Automation} & \textbf{High Automation} \\
+\midrule
+\textbf{High Human Control} & Bicycle, piano & Camera (auto-focus + human click) \\
+\textbf{Low Human Control} & --- & Pacemaker, airbag \\
+\end{tabular}
+\end{center}
+
+Goal: Safe, reliable, trustworthy interactions where humans retain meaningful control \textit{and} benefit from automation.
+
+\subsubsection*{Case Studies in Automation Failure}
+
+\begin{exbox}[Google Flu Trends (2008--2015)]
+\textbf{What it did}: Aggregated search queries (e.g., ``flu symptoms'') to predict flu outbreaks.
+
+\textbf{The failure}: Predicted \textbf{more than double} the actual flu cases reported by CDC.
+
+\textbf{Why it failed}:
+\begin{itemize}
+  \item Non-transparent algorithms.
+  \item Features like ``autosuggest'' altered search patterns.
+  \item Modeling became less effective over time.
+\end{itemize}
+
+\textbf{Lesson}: Automation without transparency and human oversight can fail silently.
+\end{exbox}
+
+\begin{exbox}[Boeing MCAS (2018--2019)]
+\textbf{What happened}: Two crashes killed 346 people.
+
+\textbf{The failure}: MCAS flight control software received incorrect sensor data (thought nose was up), continuously pushed nose down.
+
+\textbf{Why it failed}:
+\begin{itemize}
+  \item Pilots couldn't override the automated system.
+  \item Pilots weren't informed MCAS existed---no training.
+\end{itemize}
+
+\textbf{Lesson}: Automation failure + lack of human agency + lack of transparency = catastrophe.
+\end{exbox}
+
+\subsubsection*{Moral Crumple Zones}
+
+\begin{defbox}[Moral Crumple Zone (Madeleine Elish)]
+When responsibility for an action is \textbf{misattributed to a human} who had \textbf{limited control} over an automated system.
+
+Like a car's crumple zone absorbs crash impact, the human ``absorbs'' moral/legal blame for AI failures.
+\end{defbox}
+
+\begin{exbox}[Uber Self-Driving Car (2018)]
+A self-driving Uber struck and killed a pedestrian in Arizona. A ``safety driver'' was at the wheel but wasn't actively monitoring.
+
+\textbf{Result}: The safety driver faced manslaughter charges---despite having limited control over the autonomous system.
+
+\textbf{Question}: Who is really responsible when AI fails?
+\end{exbox}
+
+\subsubsection*{GenAI and Human Decision-Making}
+
+\paragraph*{Study 1: ``To Use or Not to Use'' (CHI 2025)}
+\textbf{Research questions}:
+\begin{enumerate}
+  \item How good are people at deciding when to use GenAI to maximize productivity?
+  \item How do people decide when to use or not use GenAI?
+\end{enumerate}
+
+\textbf{Method}: Participants filled in image grids manually or with ``Assisted Fill'' (simulated GenAI). Varied latency and error rate.
+
+\textbf{Findings}:
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{AI Type} & \textbf{User Behavior} \\
+\midrule
+``Smart AI'' (fast + accurate) & Users make optimal decisions (use it). \\
+``Dumb AI'' (slow + inaccurate) & Users make optimal decisions (don't use it). \\
+Moderate AI & Users struggle to decide optimally. \\
+Smart but slow & \textbf{Gulf of impatience}---users abandon too early. \\
+Dumb but fast & \textbf{Gulf of overreliance}---users trust it too much. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Study 2: GenAI and Critical Thinking (CHI 2025)}
+\textbf{Method}: Survey of 319 knowledge workers about GenAI use.
+
+\textbf{Findings}:
+\begin{itemize}
+  \item Higher confidence in GenAI $\to$ \textbf{less critical thinking} (even though effort is low).
+  \item Higher self-confidence $\to$ \textbf{more critical thinking} (even though effort is high).
+\end{itemize}
+
+\textbf{Design implications}:
+\begin{itemize}
+  \item AI tools should help users gauge reliability of outputs.
+  \item Enhance awareness of when critical thinking is needed.
+  \item Indicate when to trust AI vs.\ when to apply own judgment.
+\end{itemize}
+
+\subsubsection*{Fairness}
+
+\begin{defbox}[Fairness]
+The \textbf{absence of prejudice or favoritism} toward an individual or group based on their inherent or acquired characteristics.
+
+An \textbf{unfair algorithm} is one whose decisions are skewed toward a particular group.
+\end{defbox}
+
+\paragraph*{Why Fairness Matters}
+AI is used in high-stakes decisions:
+\begin{itemize}
+  \item Courts (recidivism prediction).
+  \item Healthcare.
+  \item Child welfare.
+  \item Autonomous vehicles.
+  \item Hiring and loans.
+\end{itemize}
+
+\begin{exbox}[COMPAS Algorithm (ProPublica, 2016)]
+\textbf{What it did}: Predicted likelihood of defendants re-offending; used by US courts for bail/detention decisions.
+
+\textbf{The bias}: Higher false positive rates for African-Americans (predicted high risk when they didn't re-offend).
+
+\textbf{Key finding}: COMPAS was no better than non-expert human judgment---but with racial bias built in.
+
+\textbf{Lesson}: Automated decision-making can encode and amplify societal biases.
+\end{exbox}
+
+\begin{exbox}[Gender Shades (Joy Buolamwini)]
+\textbf{What she found}: Commercial facial recognition had:
+\begin{itemize}
+  \item 99\% accuracy for white men.
+  \item 35\% accuracy for dark-skinned women.
+\end{itemize}
+
+\textbf{The ``coded gaze''}: Algorithms trained on biased data perpetuate that bias.
+
+\textbf{Impact}: Led to major tech companies improving their systems and policy discussions.
+\end{exbox}
+
+\subsubsection*{Types of Harm (Kate Crawford)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+& \textbf{Allocative Harms} & \textbf{Representational Harms} \\
+\midrule
+Definition & System withholds opportunity/resource from a group & System reinforces subordination of groups \\
+Effect & Immediate (decision-making) & Long-term (culture, identity) \\
+Example & Denied loan, detained by algorithm & Stereotypes in search results \\
+Formalizable & Easier (resource allocation) & Harder (cultural impact) \\
+Research focus & More attention historically & Less attention, but critical \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Sources of Bias in ML (Suresh \& Guttag Framework)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+\textbf{Bias Type} & \textbf{Description} & \textbf{Example} \\
+\midrule
+Historical & Data reflects real-world biases, even if perfectly measured & Word embeddings associate ``nurse'' with women, ``engineer'' with men \\
+Representation & Sample doesn't represent full population & ImageNet: 1--2\% images from China/India; fails on non-Western weddings \\
+Measurement & Proxy features misrepresent underlying concept & COMPAS uses ``arrest'' as proxy for ``riskiness''---but minorities are over-policed \\
+Learning & Model choices amplify disparities & Pruning for compactness preserves frequent features, loses minority attributes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Historical Bias}
+Even if data is perfectly sampled, it can perpetuate harmful stereotypes because those stereotypes exist in the world.
+
+\paragraph*{Representation Bias}
+\begin{itemize}
+  \item Target population doesn't reflect reality.
+  \item Underrepresented groups (e.g., pregnant women in 18--60 sample).
+  \item Uneven geographic sampling (ImageNet: mostly US/Western Europe).
+\end{itemize}
+
+\paragraph*{Measurement Bias}
+Using proxies that don't accurately measure the concept:
+\begin{itemize}
+  \item ``Arrest'' $\neq$ ``riskiness'' (arrests are influenced by policing patterns).
+  \item Minority communities are more heavily policed $\to$ more arrests $\to$ higher ``risk'' scores.
+\end{itemize}
+
+\paragraph*{Learning Bias}
+Model optimization can amplify disparities:
+\begin{itemize}
+  \item Pruning for compact models prioritizes frequent features.
+  \item Underrepresented attributes are lost.
+\end{itemize}
+
+\subsubsection*{Transparency \& Explainability}
+
+\begin{defbox}[Transparency]
+AI systems should not operate as ``black boxes.'' Users should have insight into the AI's reasoning process.
+\end{defbox}
+
+\begin{defbox}[Explainability]
+The ability of AI systems to \textbf{justify their outputs} in a way humans can understand.
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5.5cm} p{5.5cm} @{}}
+\toprule
+& \textbf{Transparency} & \textbf{Explainability} \\
+\midrule
+Focus & How the system works & Why a specific output was produced \\
+Audience & Developers, auditors & End users \\
+Goal & Enable oversight & Enable trust and correction \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Both are mechanisms for addressing fairness concerns by making bias visible and correctable.
+
+\subsubsection*{Key Takeaways}
+
+\begin{enumerate}
+  \item \textbf{Automation without agency is dangerous}: Users need ability to override, and training to do so.
+  \item \textbf{Transparency matters}: Non-transparent systems fail silently (Google Flu Trends).
+  \item \textbf{Responsibility is distributed}: Moral crumple zones misattribute blame to humans with limited control.
+  \item \textbf{GenAI changes behavior}: Overreliance and reduced critical thinking are real risks.
+  \item \textbf{Fairness is multi-dimensional}: Allocative and representational harms; historical, representation, measurement, learning bias.
+  \item \textbf{Design choices matter}: From data collection to model architecture, every step can introduce bias.
+\end{enumerate}
+
+\subsubsection*{Key Definitions Summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Term} & \textbf{Definition} \\
+\midrule
+Fairness & Absence of prejudice/favoritism based on characteristics \\
+Allocative harm & Withholding opportunity/resource from a group \\
+Representational harm & Reinforcing subordination/stereotypes \\
+Historical bias & Data reflects real-world biases \\
+Representation bias & Sample doesn't represent full population \\
+Measurement bias & Proxy features misrepresent underlying concept \\
+Learning bias & Model optimization amplifies disparities \\
+Moral crumple zone & Human absorbs blame for AI failure despite limited control \\
+Transparency & Insight into AI's reasoning process \\
+Explainability & AI justifies outputs in human-understandable way \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Recommended Reading}
+\begin{itemize}
+  \item \textbf{Textbook}: Shneiderman, Human-Centered AI, Chapter 8
+  \item \textbf{Video}: Kate Crawford, ``The Trouble with Bias'' (NeurIPS 2017)
+  \item \textbf{Project}: Joy Buolamwini, Gender Shades
+  \item \textbf{Article}: ProPublica, ``Machine Bias'' (COMPAS investigation)
+  \item \textbf{Paper}: Suresh \& Guttag, ``Framework for Understanding Sources of Harm''
+\end{itemize}
+
+

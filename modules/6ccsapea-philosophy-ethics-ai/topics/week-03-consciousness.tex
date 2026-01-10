@@ -1,0 +1,434 @@
+% =============================================================================
+%                    WEEK 3: CONSCIOUSNESS
+% =============================================================================
+\section{Week 3: Consciousness}
+
+% -----------------------------------------------------------------------------
+%                              3.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Define \textbf{consciousness} and distinguish it from intelligence.
+  \item Explain the \textbf{Easy Problem} vs.\ the \textbf{Hard Problem} of consciousness.
+  \item Compare \textbf{dualist} and \textbf{physicalist} theories of consciousness.
+  \item Evaluate the \textbf{Philosophical Zombies} argument.
+  \item Describe \textbf{information-theoretic} theories (GWT, IIT) and their implications for AI.
+  \item Assess whether \textbf{AI could be conscious}.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+Consciousness---subjective experience, ``what it is like'' to be something---is one of the deepest mysteries in philosophy. This week explores whether machines could ever be conscious, which matters because: (1) consciousness may or may not be necessary for intelligence, (2) if AI is conscious, it may experience suffering and deserve moral consideration, (3) how we treat AI (as if conscious or not) will shape society.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Define consciousness (Nagel's formulation). How does it differ from intelligence?
+  \item Explain the Easy Problem vs.\ Hard Problem (Chalmers).
+  \item Present the Philosophical Zombies argument. What does it try to show?
+  \item Compare dualism and physicalism. What is functionalism?
+  \item Describe Global Workspace Theory and Integrated Information Theory.
+  \item Could AI be conscious? What criteria might we use?
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 3.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item What is consciousness?
+  \item Revisiting the Chinese Room: understanding vs.\ experience
+  \item The Easy Problem vs.\ the Hard Problem
+  \item Theories of consciousness: Dualism and Physicalism
+  \item The Philosophical Zombies argument
+  \item What is a conscious state? (Qualia, access consciousness)
+  \item Roles and functions of consciousness
+  \item Information-theoretic theories (GWT, IIT)
+  \item Could AI be conscious?
+\end{enumerate}
+
+\bigseparator
+
+% --- What is Consciousness? ---
+\subsubsection{What is Consciousness?}
+
+\begin{defbox}[Consciousness (Tegmark)]
+\textbf{Consciousness = subjective experience.}
+
+The ``thing that goes away every night in deep sleep, and comes back when we wake up.'' It encompasses all our subjective feelings and experiences.
+\end{defbox}
+
+\begin{defbox}[Nagel's Formulation (1974)]
+\textit{``Something is conscious if there is \textbf{something that it is like} to be that something.''}
+
+There is some subjective way the world seems or appears from the creature's mental/experiential point of view.
+
+\textbf{Example:} ``What is it like to be a bat?'' --- Bats use echolocation. Is there a subjective experience of echolocating? We can never fully know.
+\end{defbox}
+
+\begin{tipbox}[Why Consciousness Matters for AI]
+\begin{enumerate}
+  \item \textbf{Is consciousness necessary for intelligence?} Definitions of AGI/Superintelligence don't require it---but that doesn't mean it's not needed.
+  \item \textbf{Moral consideration:} If AI is conscious, it may experience pain/suffering $\to$ ethical obligations.
+  \item \textbf{Social impact:} If we \textit{treat} AI as conscious (regardless of whether it is), this will profoundly change society.
+\end{enumerate}
+\end{tipbox}
+
+\bigseparator
+
+% --- Revisiting the Chinese Room ---
+\subsubsection{Revisiting the Chinese Room: Understanding vs.\ Experience}
+
+\begin{thmbox}[Searle's Revised Conclusion (2010)]
+\textit{``The implementation of the computer program is not by itself sufficient for \textbf{consciousness} or \textbf{intentionality}.''}
+
+\textbf{Intentionality} = ``aboutness''---the way mental states relate to things in the world.
+
+\textbf{Implication:} A computer may \textit{behave} as if it understands, but lack \textbf{real understanding} (conscious apprehension of meaning).
+\end{thmbox}
+
+\begin{defbox}[Functionalism]
+The view that mental states count as being of a given type because of the \textbf{functional role} they play.
+
+\textit{``If it looks like a duck, walks like a duck, and quacks like a duck---it is a duck.''}
+
+Applied to consciousness: If system $S_1$ produces the same input/output pairs as a conscious system $S_2$, then $S_1$ is conscious (regardless of what $S_1$ is made of).
+
+\textbf{Searle rejects functionalism:} Behaviour isn't enough; genuine understanding requires conscious experience.
+\end{defbox}
+
+\begin{exbox}[Dennett's ``Competence Without Comprehension'']
+Modern NLP systems (GPT-3, etc.) respond to questions based on learned contexts---``the meaning of a word is the company it keeps.''
+
+They exhibit \textbf{competent behaviour} without (arguably) any \textbf{conscious comprehension}.
+
+\textbf{Question:} If a machine can do everything that understanding enables, why insist on an ``inner feeling'' of understanding?
+\end{exbox}
+
+\bigseparator
+
+% --- Easy vs Hard Problem ---
+\subsubsection{The Easy Problem vs.\ the Hard Problem (Chalmers)}
+
+\begin{defbox}[The Easy Problem]
+How does the brain work in all its functions?
+\begin{itemize}
+  \item How does it interpret sensory inputs?
+  \item How does it produce behaviour and language?
+  \item How do brain processes support cognition?
+\end{itemize}
+
+These are \textbf{extremely difficult} but are problems of \textbf{mechanism}---they don't require explaining subjective experience.
+\end{defbox}
+
+\begin{defbox}[The Hard Problem]
+How does physical matter give rise to \textbf{feelings} and \textbf{experience}---the ``what it seems like from the inside''?
+
+When you drive, you experience colours, sounds, emotions. Does a self-driving car experience \textbf{anything at all}?
+
+Both systems process information and output motor commands. But \textbf{subjective experience} seems logically separate---is it optional? What causes it?
+
+\textbf{The explanatory gap:} We have no satisfactory explanation of how consciousness arises from the physical.
+\end{defbox}
+
+\begin{tipbox}[Exam Tip]
+The Easy/Hard distinction is central. Easy problems are about \textit{function}; the Hard Problem is about \textit{experience}. Information-theoretic theories (GWT, IIT) address the Easy Problem but arguably don't fully solve the Hard Problem.
+\end{tipbox}
+
+\bigseparator
+
+% --- Theories of Consciousness ---
+\subsubsection{Theories of Consciousness: Dualism and Physicalism}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Theory} & \textbf{Core Claim} \\
+\midrule
+\textbf{Substance Dualism} & Two kinds of substance exist: physical matter and non-physical consciousness (Descartes). \\
+\textbf{Property Dualism} & One substance (matter), but two kinds of properties: physical and conscious. Conscious properties are not reducible to physical properties. \\
+\textbf{Physicalism} & Everything is physical. Consciousness can (in principle) be explained in terms of physical processes. \\
+\textbf{Functionalism} & (A form of physicalism) Mental states are defined by their functional role---what they do, not what they're made of. \\
+\textbf{Neutral Monism} & Underlying reality is neither physical nor mental---both are aspects of something more fundamental (Bertrand Russell). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% --- Philosophical Zombies ---
+\subsubsection{The Philosophical Zombies Argument}
+
+\begin{defbox}[Philosophical Zombie]
+A \textbf{philosophical zombie} is an exact physical duplicate of a person that:
+\begin{itemize}
+  \item Behaves identically to a conscious person.
+  \item Has identical brain states, neuron firings, etc.
+  \item But has \textbf{no experiential consciousness}---there is nothing it is like to be a zombie.
+\end{itemize}
+\end{defbox}
+
+\begin{thmbox}[The Zombie Argument (Chalmers)]
+\textbf{Premises:}
+\begin{enumerate}
+  \item Zombies are \textbf{conceivable} (we can imagine them).
+  \item If conceivable, then \textbf{possible} (at least logically).
+  \item If consciousness were a physical property, a physical duplicate would \textit{necessarily} be conscious.
+  \item But zombies (physical duplicates without consciousness) are possible.
+\end{enumerate}
+
+\textbf{Conclusion:} Consciousness is \textbf{not} a physical property. Therefore, \textbf{property dualism} is true.
+\end{thmbox}
+
+\begin{exbox}[Objections to the Zombie Argument]
+\textbf{1. Is conceivability $\to$ possibility valid?}
+\begin{itemize}
+  \item You can \textit{imagine} a 747 flying backwards, but the more you know about aerodynamics, the harder it becomes.
+  \item The more we understand brain processes, the less conceivable zombies may become.
+\end{itemize}
+
+\textbf{2. Can we really conceive of zombies?}
+\begin{itemize}
+  \item If consciousness is tightly linked to brain function, perhaps we \textit{can't} coherently conceive of a physical duplicate without experience.
+\end{itemize}
+
+\textbf{Even if you reject the zombie argument, the Hard Problem remains:} How do we explain subjective feelings in terms of physical relations?
+\end{exbox}
+
+\bigseparator
+
+% --- What is a Conscious State? ---
+\subsubsection{What is a Conscious State?}
+
+Conscious states have several distinct but interrelated meanings:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} l p{6cm} p{4cm} @{}}
+\toprule
+\textbf{Type} & \textbf{Definition} & \textbf{Could AI have it?} \\
+\midrule
+\textbf{Meta-awareness} & A mental state one is \textbf{aware of being in}. To desire coffee \textit{and} be aware you have that desire. & In principle, yes. \\
+\textbf{Qualia} & Raw sensory feels---the taste of wine, the redness of red. \textbf{Phenomenal properties.} & Hard Problem applies. \\
+\textbf{Access Consciousness} & A state is conscious if it \textbf{relates to, is available to, and interacts with} other states. Information is accessible for use and guidance. & In principle, yes. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{defbox}[Qualia and Phenomenal Structure]
+\textbf{Qualia} (singular: quale) = the qualitative, experiential properties of conscious states.
+
+\textbf{Phenomenal structure} = the overall structure of experience---not just sensory qualia but also spatial, temporal, and conceptual organization of our experience of the world and ourselves.
+
+\textbf{Problem:} Is it possible to give a fully descriptive account of phenomenal experience from the outside?
+\end{defbox}
+
+\begin{exbox}[Inverted Qualia]
+How do I know that what \textit{you} experience when you see red is the same as what \textit{I} experience?
+
+We have circumstantial evidence (similar neural structures, similar reactions), but we can never be 100\% certain.
+\end{exbox}
+
+\bigseparator
+
+% --- Roles of Consciousness ---
+\subsubsection{Roles and Functions of Consciousness}
+
+\begin{thmbox}[Is Consciousness Epiphenomenal?]
+\textbf{Epiphenomenalism:} Consciousness is a byproduct that doesn't play any causal role---like steam from a train engine.
+
+\textbf{Evidence:} Experiments show that decisions are often initiated \textit{before} we consciously ``decide''---the experience of deciding may be post-hoc reporting.
+
+\textbf{Counter:} Even if initially epiphenomenal, consciousness may have evolved a signalling function (like steam signalling a train's approach to a town).
+\end{thmbox}
+
+\begin{defbox}[Functional Roles of Consciousness]
+\textbf{1. Flexibility and control:}
+\begin{itemize}
+  \item Meta-awareness increases flexibility (vs.\ fast but rigid unconscious processes).
+  \item Especially important for \textbf{novel situations}---a hallmark of intelligence.
+\end{itemize}
+
+\textbf{2. Social coordination:}
+\begin{itemize}
+  \item Awareness of our own mental states helps us understand others' mental states (\textbf{Theory of Mind}).
+  \item Enables cooperation, communication, joint reasoning.
+\end{itemize}
+
+\textbf{3. Unified, integrated representation:}
+\begin{itemize}
+  \item Conscious experience integrates information from multiple sensory channels + memory + background knowledge.
+  \item Allows more sophisticated and flexible responses.
+\end{itemize}
+
+\textbf{4. Global informational access:}
+\begin{itemize}
+  \item Conscious information is available to diverse mental subsystems.
+  \item Widens the sphere of influence of information.
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[Interoception and Evolution]
+\textbf{Interoception} = awareness of internal bodily states (hunger, pain, heartbeat).
+
+\textbf{Evolutionary hypothesis:} Consciousness may have evolved to monitor the body for survival signals. Later, these internal feelings became directed outward as social emotions (disgust, shame, etc.).
+\end{tipbox}
+
+\bigseparator
+
+% --- Information Theoretic Theories ---
+\subsubsection{Information-Theoretic Theories of Consciousness}
+
+Many features of consciousness can be described in \textbf{informational terms}:
+\begin{itemize}
+  \item Meta-awareness = information about information
+  \item Integration of information from multiple sources
+  \item Making information widely available
+\end{itemize}
+
+This suggests theories that characterize consciousness in terms of \textbf{information processing}---without necessarily solving the Hard Problem.
+
+\separator
+
+\begin{defbox}[Global Workspace Theory (GWT)]
+\textbf{Core idea:} Consciousness arises from a \textbf{competition} among processors. ``Winning'' outputs are \textbf{broadcast} to a global workspace, making them widely accessible.
+
+\textbf{Mechanism:}
+\begin{enumerate}
+  \item Multiple processors compete for attention.
+  \item Winning outputs are broadcast to the global workspace.
+  \item Other subsystems receive and respond to the broadcast.
+  \item Feedback from subsystems \textbf{strengthens} the broadcast content.
+\end{enumerate}
+
+\textbf{Result:} The broadcast information becomes \textbf{access-conscious}---available for use by diverse mental subsystems.
+\end{defbox}
+
+\separator
+
+\begin{defbox}[Integrated Information Theory (IIT) --- Tononi]
+\textbf{Core idea:} Consciousness is linked to the degree of \textbf{information integration}, measured by $\Phi$ (phi).
+
+\textbf{Three criteria for consciousness:}
+
+\textbf{1. Information about itself:}
+\begin{itemize}
+  \item The information that matters is what the system has about \textbf{its own causal powers}.
+  \item How much can we know about the system's past/future state from its current state?
+  \item Brain: high (current state tells us a lot about past/future states).
+  \item Retina: low (state determined by external input, not its own history).
+\end{itemize}
+
+\textbf{2. Integration:}
+\begin{itemize}
+  \item $\Phi$ measures how much information is \textbf{lost} by cutting the system in half.
+  \item Book page: tear in half $\to$ almost no information lost (not integrated).
+  \item Brain: cut in half $\to$ massive information loss (highly integrated).
+\end{itemize}
+
+\textbf{3. Maximality:}
+\begin{itemize}
+  \item A conscious system must have \textbf{more} integrated information than any of its parts or any larger system it belongs to.
+\end{itemize}
+\end{defbox}
+
+\begin{thmbox}[IIT's Key Claims]
+\begin{itemize}
+  \item High $\Phi$ $\to$ high consciousness.
+  \item In principle, we could build a ``consciousness meter'' that measures $\Phi$.
+  \item \textbf{Panpsychism:} IIT implies that even simple systems have tiny amounts of proto-consciousness (extremely low $\Phi$).
+  \item \textbf{Computers have low $\Phi$} because transistors are sparsely connected, feed-forward, not recurrent. Therefore, IIT \textbf{rejects functionalism}---same I/O doesn't guarantee consciousness.
+\end{itemize}
+\end{thmbox}
+
+\begin{exbox}[Shanahan's Challenge to IIT]
+Imagine gradually replacing neurons with \textbf{functionally equivalent digital components}, simulating all connections.
+
+Would consciousness gradually disappear? IIT predicts yes (low integration). But this seems counterintuitive---the system still functions identically.
+
+\textbf{Alternative:} Future computers might be built with sufficient integration (recurrent, densely connected architectures).
+\end{exbox}
+
+\bigseparator
+
+% --- Could AI Be Conscious? ---
+\subsubsection{Could AI Be Conscious?}
+
+\begin{thmbox}[Criteria for Machine Consciousness]
+How would we recognise that an AI is conscious?
+
+\textbf{1. Functionalist criterion:} Acts/behaves as if conscious.
+
+\textbf{2. Information-theoretic measures:} High $\Phi$ or other integration metrics.
+
+\textbf{3. Architecture:} Right kind of structure (recurrent, densely interconnected).
+
+\textbf{Caveat:} We can \textit{never} definitively prove a machine is conscious---we can't experience its inner life. But we might have strong circumstantial evidence.
+\end{thmbox}
+
+\begin{defbox}[Substrate Independence of Consciousness]
+If consciousness = complex information processing (integration, availability, etc.), and information processing is \textbf{substrate-neutral}, then:
+
+\textbf{Consciousness could be substrate-independent.}
+
+AI built with the right architecture might be conscious---regardless of being silicon-based rather than carbon-based.
+\end{defbox}
+
+\begin{tipbox}[Open Question]
+\textbf{Would we design consciousness, or would it emerge?}
+\begin{itemize}
+  \item \textbf{Designed:} Intentionally build AI with high $\Phi$, right architecture.
+  \item \textbf{Emergent:} Consciousness naturally arises as AI becomes more sophisticated and processes information in increasingly complex ways.
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% --- Summary ---
+\subsubsection{Summary: Key Takeaways}
+
+\begin{thmbox}[Week 3 Key Points]
+\begin{enumerate}
+  \item \textbf{Consciousness} = subjective experience; ``what it is like'' to be something.
+  \item \textbf{Easy Problem:} How the brain works (mechanism). \textbf{Hard Problem:} How physical matter gives rise to experience.
+  \item \textbf{Dualism:} Conscious properties are not physical. \textbf{Physicalism:} Everything is physical; consciousness is explainable.
+  \item \textbf{Functionalism:} Mental states defined by functional role, not substrate.
+  \item \textbf{Zombie argument:} If zombies are conceivable/possible, physicalism is false.
+  \item \textbf{Qualia:} Raw experiential properties. \textbf{Access consciousness:} Information available to other mental subsystems.
+  \item \textbf{GWT:} Consciousness = broadcast to global workspace.
+  \item \textbf{IIT:} Consciousness = integrated information ($\Phi$). Implies panpsychism; rejects functionalism for current computers.
+  \item If consciousness is substrate-independent, \textbf{AI could be conscious}.
+\end{enumerate}
+\end{thmbox}
+
+\begin{defbox}[Key Terms to Remember]
+\begin{itemize}
+  \item \textbf{Consciousness:} Subjective experience; ``what it is like.''
+  \item \textbf{Easy/Hard Problem:} Mechanism vs.\ experience.
+  \item \textbf{Qualia:} Raw sensory feels.
+  \item \textbf{Access consciousness:} Information availability.
+  \item \textbf{Dualism / Physicalism / Functionalism:} Theories of mind.
+  \item \textbf{Philosophical Zombie:} Physical duplicate without experience.
+  \item \textbf{Intentionality:} ``Aboutness''---mental states relating to the world.
+  \item \textbf{Epiphenomenalism:} Consciousness has no causal role.
+  \item \textbf{Interoception:} Awareness of internal bodily states.
+  \item \textbf{GWT:} Global Workspace Theory.
+  \item \textbf{IIT:} Integrated Information Theory.
+  \item \textbf{$\Phi$ (Phi):} Measure of information integration.
+  \item \textbf{Panpsychism:} All matter has some (proto-)consciousness.
+\end{itemize}
+\end{defbox}
+

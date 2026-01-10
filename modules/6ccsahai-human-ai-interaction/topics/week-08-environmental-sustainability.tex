@@ -1,0 +1,287 @@
+\section{Week 8: Human-Centred Values -- Environmental Sustainability}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item \textbf{HAI3}: Apply critical reasoning skills to identify general (explainability, fairness, efficacy, accountability, transparency) and context-specific constraints on human-AI interactions.
+\end{itemize}
+\end{keybox}
+
+\begin{keybox}[Big Picture]
+AI systems have significant environmental costs---energy, water, minerals, carbon emissions. This week explores:
+\begin{enumerate}
+  \item \textbf{The scale of the problem}: Data centers, training costs, inference costs.
+  \item \textbf{Calculating AI energy usage}: Factors that affect environmental impact.
+  \item \textbf{Eco-feedback tools}: For practitioners and end-users.
+  \item \textbf{Practitioner perceptions}: Why action is difficult.
+\end{enumerate}
+
+The ``Green AI'' movement aims to estimate, analyze, and mitigate AI's environmental impact.
+\end{keybox}
+
+\begin{keybox}[What Examiners Like to Ask]
+\begin{itemize}
+  \item Explain the factors that affect AI's environmental footprint.
+  \item Compare training vs.\ inference energy consumption.
+  \item Describe how region and time affect carbon intensity.
+  \item Give examples of eco-feedback tools for AI practitioners.
+  \item Discuss barriers to sustainable AI practices (from practitioner research).
+  \item Propose design interventions to make AI more sustainable.
+\end{itemize}
+\end{keybox}
+
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{The Scale of the Problem}
+
+\paragraph*{Key Statistics}
+\begin{itemize}
+  \item \textbf{IEA 2024}: Data centers' electricity consumption $\geq$ 1000 TWh by 2026 (double from 2022).
+  \item \textbf{IEA 2025}: Global data center consumption could reach 3500 TWh in 3 years---equivalent to adding Japan's electricity consumption annually.
+  \item \textbf{US by 2028}: Data centers could use 12\% of total US electricity (currently $\approx$4.4\%).
+\end{itemize}
+
+\paragraph*{Real-World Impacts}
+\begin{itemize}
+  \item Delayed retirement of coal plants to meet demand.
+  \item Conflicts with local communities over water and energy.
+  \item West London: Data centers imbalanced grid; new buildings can't be powered.
+  \item Water scarcity in Arizona, Spain, Ireland due to data center cooling.
+\end{itemize}
+
+\subsubsection*{Calculating AI Energy Usage}
+
+\begin{defbox}[Green AI]
+A movement to \textbf{estimate, analyze, and mitigate} the environmental impact of AI systems---including energy consumption, water usage, mineral extraction, and carbon emissions.
+\end{defbox}
+
+\paragraph*{Factors Affecting Environmental Impact}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Factor} & \textbf{Impact} \\
+\midrule
+Training vs.\ Inference & Training is more intensive but one-time; inference adds up across billions of queries. \\
+Cloud vs.\ Local & Cloud allows regional flexibility and batch scheduling. \\
+Region & Energy grid mix varies (nuclear France vs.\ fossil-fuel US). \\
+Time of day/season & Renewable availability varies (solar in summer, wind overnight). \\
+Model architecture & Larger models = more computation = more energy. \\
+Task type & Generative tasks (summarization, image generation) are far more intensive than discriminative (classification). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Life Cycle Analysis}
+
+Three main stages contribute to environmental impact:
+
+\begin{enumerate}
+  \item \textbf{Equipment manufacturing}: Embodied emissions in hardware (servers, GPUs, chips).
+  \item \textbf{Model training}: Most intensive phase; one-time but huge.
+  \item \textbf{Model deployment/inference}: Lower per-query but scales with usage.
+\end{enumerate}
+
+\begin{exbox}[BLOOM Life Cycle Analysis (Luccioni et al., 2022)]
+\textbf{BLOOM}: 176B parameter language model.
+
+\textbf{Training emissions}:
+\begin{itemize}
+  \item Dynamic power only: $\approx$24.7 tons CO$_2$ equivalent.
+  \item Full life cycle (equipment manufacturing + operational): $\approx$50 tons CO$_2$ equivalent.
+\end{itemize}
+
+\textbf{Lesson}: Training large models has substantial carbon footprint---equivalent to $\approx$5 round-trip flights NYC--London per ton.
+\end{exbox}
+
+\subsubsection*{Region and Time Matter}
+
+\paragraph*{Energy Grid Mix}
+Different regions have different carbon intensities:
+\begin{itemize}
+  \item \textbf{France}: Mostly nuclear $\to$ low carbon.
+  \item \textbf{Germany/US/Australia}: More fossil fuels $\to$ high carbon.
+\end{itemize}
+
+\paragraph*{Time of Day/Season}
+Renewable energy availability varies:
+\begin{itemize}
+  \item Solar: Higher during day, summer.
+  \item Wind: Often higher at night, varies by season.
+\end{itemize}
+
+\textbf{Tool}: \texttt{electricitymaps.com} shows real-time carbon intensity by region.
+
+\begin{tipbox}[Cloud Flexibility]
+Cloud training allows you to:
+\begin{itemize}
+  \item Choose low-carbon regions.
+  \item Schedule training during high-renewable periods.
+  \item Batch tasks for efficiency.
+\end{itemize}
+\end{tipbox}
+
+\subsubsection*{Task Type Matters}
+
+\textbf{Generative tasks} are significantly more energy-intensive than \textbf{discriminative tasks}.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Lower Energy (Discriminative)} & \textbf{Higher Energy (Generative)} \\
+\midrule
+Text classification & Summarization \\
+Token classification & Text generation \\
+Image classification & Image generation \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Note}: Difference is \textit{orders of magnitude} (logarithmic scale in original research).
+
+\subsubsection*{Eco-Feedback for AI Practitioners}
+
+\begin{defbox}[Eco-Feedback]
+A device or visualization that provides feedback on environmental impact (e.g., energy consumption) to encourage more sustainable behavior.
+
+\textbf{Hypothesis}: With more information, people will make more sustainable choices.
+\end{defbox}
+
+\paragraph*{Tools for Practitioners}
+
+Research found 16+ tools that calculate, estimate, track, schedule, or label AI energy consumption:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Tool} & \textbf{Description} \\
+\midrule
+CodeCarbon & Python package; tracks CO$_2$ emissions; dashboard over time; equivalents (households, miles driven). \\
+EnergyVis & Interactive tracking; state-by-state US carbon intensity; compare hardware/locations. \\
+AI Energy Score & HuggingFace leaderboard; compare foundational models by energy efficiency per task. \\
+EcoLogits & Calculator + Python library; estimates energy, GHG, resources per prompt. \\
+Chat UI Energy & Measures actual GPU energy during inference (open-source models only). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Industry Transparency}
+
+\textbf{Mistral AI (2024)}: Published peer-reviewed life cycle assessment.
+\begin{itemize}
+  \item 400-token response: 1.14g CO$_2$ equivalent, 45ml water.
+  \item Most emissions from training + inference; most materials from embodied impact.
+\end{itemize}
+
+\textbf{Google Gemini (2024)}: Published inference measurements.
+\begin{itemize}
+  \item Median Gemini prompt: 4,167--10,000 prompts per kWh (depends on metrics).
+  \item Methodology: Active accelerator + CPU + idle time.
+\end{itemize}
+
+\begin{tipbox}[Measurements vs.\ Estimates]
+Many figures are \textbf{estimates}, not measurements. When comparing:
+\begin{itemize}
+  \item Check if data is measured or estimated.
+  \item Open-source models allow measurement; closed-source requires estimation.
+\end{itemize}
+\end{tipbox}
+
+\subsubsection*{Perceptions of AI Practitioners}
+
+\textbf{Research study}: Interviews with 23 ML practitioners (academia + industry).
+
+\paragraph*{Key Findings}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Theme} & \textbf{Example Quote / Finding} \\
+\midrule
+Minimal perceived impact & ``ML affects maybe 2--3\%''---seen as small compared to other sectors. \\
+ML's value outweighs cost & ``I don't care how environmentally friendly it is, I want to save lives'' (medical domain). \\
+Individual powerlessness & ``As an individual, you can't really do much about it.'' \\
+Responsibility deflection & ``My work is just a very small amount of this unsustainable system.'' \\
+Uncertainty about measurement & Hard to know actual impact; many tools give estimates, not measurements. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Paths to Change}
+\begin{itemize}
+  \item Individuals have \textit{some} responsibility (awareness at minimum).
+  \item \textbf{Regulation} can drive action.
+  \item Need more \textbf{transparency and open data} on model impacts.
+  \item Learn from Responsible AI discourse (fairness, accountability).
+\end{itemize}
+
+\subsubsection*{Eco-Feedback for End Users}
+
+End users (not just developers) consume AI through inference. Should they know the cost?
+
+\paragraph*{Tools for End Users}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Tool} & \textbf{Description} \\
+\midrule
+EcoLogits Calculator & Web app: input provider, model, prompt size $\to$ get energy, GHG, resources estimate. \\
+Chat UI Energy & Live energy measurement during chat (open-source models); shows \% of phone charge, latency. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Design opportunity}: Incorporate eco-feedback into user-facing AI products to increase transparency.
+
+\subsubsection*{Key Takeaways}
+
+\begin{enumerate}
+  \item \textbf{AI has real environmental costs}: Energy, water, minerals, carbon.
+  \item \textbf{Scale matters}: 1000+ TWh by 2026; 12\% of US electricity by 2028.
+  \item \textbf{Multiple factors affect impact}: Training vs.\ inference, region, time, model size, task type.
+  \item \textbf{Generative $\gg$ discriminative}: Image generation uses orders of magnitude more than classification.
+  \item \textbf{Cloud enables optimization}: Choose low-carbon regions, schedule during high-renewable periods.
+  \item \textbf{Tools exist}: CodeCarbon, EcoLogits, AI Energy Score---use them.
+  \item \textbf{Practitioners feel powerless}: Need regulation, transparency, cultural shift.
+  \item \textbf{End users can be informed}: Eco-feedback in user-facing products.
+\end{enumerate}
+
+\subsubsection*{Key Definitions Summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Term} & \textbf{Definition} \\
+\midrule
+Green AI & Movement to estimate, analyze, mitigate AI's environmental impact \\
+Eco-feedback & Visualization/feedback to encourage sustainable behavior \\
+Carbon intensity & CO$_2$ emissions per unit of electricity (varies by region/time) \\
+Energy grid mix & Proportion of energy from renewables vs.\ fossil fuels \\
+Embodied emissions & Carbon footprint of manufacturing hardware \\
+Life cycle analysis & Full assessment from manufacturing to disposal \\
+Discriminative task & Classification, labeling (lower energy) \\
+Generative task & Text/image generation (higher energy) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Recommended Tools \& Resources}
+\begin{itemize}
+  \item \textbf{CodeCarbon}: \texttt{codecarbon.io}
+  \item \textbf{EcoLogits}: \texttt{huggingface.co/spaces/genai-impact/ecologits-calculator}
+  \item \textbf{AI Energy Score}: \texttt{huggingface.co/spaces/AIEnergyScore/Leaderboard}
+  \item \textbf{Electricity Maps}: \texttt{electricitymaps.com}
+  \item \textbf{Paper}: Luccioni et al., ``Estimating the Carbon Footprint of BLOOM''
+  \item \textbf{Paper}: Luccioni et al., ``Power Hungry Processing''
+\end{itemize}
+
+

@@ -1,0 +1,423 @@
+% =============================================================================
+%                    WEEK 4: REASONING AND COMMUNICATION
+% =============================================================================
+\section{Week 4: Reasoning and Communication}
+
+% -----------------------------------------------------------------------------
+%                              4.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Explain \textbf{logic-based (symbolic) AI} and its foundations.
+  \item Describe \textbf{machine learning} approaches and their successes.
+  \item Identify \textbf{limitations} of both paradigms.
+  \item Understand \textbf{non-monotonic reasoning} and why it matters.
+  \item Explain \textbf{argumentation theory} as a formalization of reasoning.
+  \item Describe how \textbf{dialogue} enables distributed reasoning among multiple agents.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+AI has two major paradigms: \textbf{logic-based (symbolic)} and \textbf{machine learning}. Each has strengths and limitations. Logic-based AI struggles with real-world complexity and brittleness; ML struggles with explainability, causation, and common-sense reasoning. \textbf{Argumentation theory} offers a middle ground---formalizing non-monotonic reasoning in a way that is understandable to humans, computationally tractable, and supports \textbf{joint reasoning via dialogue}. This has important ethical implications: transparent, collaborative AI-human reasoning.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Compare logic-based AI and machine learning approaches.
+  \item What is monotonic vs.\ non-monotonic reasoning? Why does it matter?
+  \item Explain the symbol grounding problem.
+  \item What are the limitations of machine learning (black box, no causation, etc.)?
+  \item What is argumentation? How do arguments attack each other?
+  \item Explain Dung's argumentation framework and the labeling approach.
+  \item What are grounded and preferred extensions?
+  \item How can argumentation support distributed reasoning via dialogue?
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 4.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Logic-based (symbolic) AI
+  \item Machine learning AI
+  \item Limitations of both paradigms
+  \item Non-monotonic reasoning
+  \item Argumentation theory (Dung's framework)
+  \item Distributed reasoning via dialogue
+\end{enumerate}
+
+\bigseparator
+
+% --- Logic-based AI ---
+\subsubsection{Logic-Based (Symbolic) AI}
+
+\begin{defbox}[Good Old-Fashioned AI (GOFAI)]
+Early AI used \textbf{symbolic formulae} to represent beliefs, desires, and goals. Reasoning involved applying \textbf{inference rules} to derive new facts about the world and determine appropriate actions.
+
+\textbf{Key idea:} Describe the world in a logical language (like natural language describes states of affairs), then apply inference rules to deduce new truths and actions.
+\end{defbox}
+
+\paragraph*{Logic in Mathematics (Background)}
+\begin{itemize}
+  \item Start with \textbf{self-evidently true axioms} (e.g., $\alpha \lor \neg\alpha$).
+  \item Apply \textbf{inference rules} (e.g., disjunctive syllogism: from $\alpha \lor \beta$ and $\neg\alpha$, infer $\beta$).
+  \item Derive complex truths from simple axioms.
+  \item \textbf{Example:} Euclid proved all truths of 2D geometry from 5 basic axioms.
+\end{itemize}
+
+\begin{defbox}[Soundness and Completeness]
+\begin{itemize}
+  \item \textbf{Sound:} Everything inferred from axioms is true in the model.
+  \item \textbf{Complete:} Every true statement about the model can be inferred.
+\end{itemize}
+Ideally, a logical system is both sound and complete.
+\end{defbox}
+
+\paragraph*{Logic in AI}
+\begin{itemize}
+  \item Designer encodes \textbf{axiomatic truths} $\Delta_0$ about the world in the agent's \textbf{knowledge base} (KB).
+  \item Agent uses a \textbf{proof system} (PS) to infer new facts.
+  \item Given goals, agent \textbf{acts}, bringing about changes to the world.
+  \item Agent \textbf{senses} new facts $\Delta_1$, updates KB, and the cycle continues.
+\end{itemize}
+
+\begin{thmbox}[Reductionist Arguments for Logic]
+\begin{enumerate}
+  \item A complete proof system for first-order logic can simulate all Turing-level computation $\to$ achievement of any complex goal.
+  \item If intelligence can be formalized mathematically, and mathematics has logical foundations, then intelligence can be formalized in logic.
+\end{enumerate}
+\end{thmbox}
+
+\separator
+
+\paragraph*{Modal Logics and BDI}
+
+\begin{defbox}[Modal Logic]
+Extends classical logic with \textbf{modalities} that qualify statements:
+\begin{itemize}
+  \item \textbf{Alethic modalities:} $\Box p$ = necessarily $p$ (true in all possible worlds); $\Diamond p$ = possibly $p$ (true in at least one possible world).
+  \item \textbf{Deontic modalities:} $Oq$ = $q$ is obligatory; $Pq$ = $q$ is permitted; $Fq$ = $q$ is forbidden.
+\end{itemize}
+Deontic logic is relevant to AI ethics (reasoning about what agents \textit{ought} to do).
+\end{defbox}
+
+\begin{defbox}[BDI Logic (Belief-Desire-Intention)]
+Based on Bratman's model of practical reasoning:
+\begin{itemize}
+  \item \textbf{Beliefs:} What the agent believes about the world (may not be true).
+  \item \textbf{Desires:} Motivational states (what agent would like to accomplish); can be inconsistent.
+  \item \textbf{Goals:} Desires being actively pursued; must be consistent.
+  \item \textbf{Intentions:} High-level plans to achieve chosen goals.
+\end{itemize}
+
+\textbf{Example inference:} $\text{Intend}(q) \to \text{Bel}(\neg q)$ --- if you intend to bring about $q$, you must believe $q$ is not already the case.
+\end{defbox}
+
+\bigseparator
+
+% --- Machine Learning ---
+\subsubsection{Machine Learning AI}
+
+\begin{defbox}[Machine Learning (Definition)]
+``A computer program is said to \textbf{learn from experience E} with respect to some class of tasks T and performance measure P if its performance at tasks in T, as measured by P, \textbf{improves with experience E}.''
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Type} & \textbf{Description} \\
+\midrule
+\textbf{Supervised} & Learns from labeled data (inputs + desired outputs). \\
+\textbf{Semi-supervised} & Learns from partially labeled data. \\
+\textbf{Unsupervised} & Learns structure from unlabeled data (clustering, etc.). \\
+\textbf{Reinforcement} & Learns from feedback (rewards/punishments) in a dynamic environment. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{thmbox}[Deep Learning]
+\textbf{Deep learning} uses multi-layer neural networks where each layer transforms input into increasingly \textbf{abstract representations}. Responsible for major AI successes:
+\begin{itemize}
+  \item AlphaGo, AlphaZero (game playing)
+  \item Translation, speech recognition
+  \item Computer vision, medical imaging
+  \item Text generation (GPT-3, etc.)
+\end{itemize}
+\end{thmbox}
+
+\bigseparator
+
+% --- Limitations ---
+\subsubsection{Limitations of Both Paradigms}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} p{3.5cm} p{5cm} p{5cm} @{}}
+\toprule
+\textbf{Issue} & \textbf{Logic-Based AI} & \textbf{Machine Learning} \\
+\midrule
+Scalability & Too many rules needed; doesn't scale from toy examples to real world. & Needs very large datasets. \\
+Brittleness & Small damage $\to$ complete failure. & More robust; degrades gracefully. \\
+Sensory tasks & Not designed for low-level perception. & Excels at perception tasks. \\
+Symbol grounding & Hand-crafted representations; not grounded in real-world data. & Learns from data; solves grounding. \\
+Explainability & Transparent (symbolic). & \textbf{Black box}; opaque reasoning. \\
+Hierarchical structure & Natural (recursive rules). & Struggles with hierarchy. \\
+Causal reasoning & Can represent causation. & Learns correlation, not causation. \\
+Common sense & Theoretically addressed by non-monotonic logic, but computationally hard. & Struggles with common-sense inference. \\
+Generalization & Explicit rules generalize. & \textbf{Transfer} problems; poor on novel tasks. \\
+Joint reasoning & Not designed for multiple agents. & Hard to integrate with human reasoning. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{defbox}[The Symbol Grounding Problem]
+In logic-based AI, symbols are \textbf{hand-crafted by designers} rather than grounded in real-world data.
+
+\textbf{Problem:} The semantics (meaning) of symbols relies on the designer's mind, not on direct connection to the world. This prevents ongoing adaptation to unknown environments and is a barrier to full autonomy.
+
+\textbf{ML solution:} Machine learning ``grounds'' representations by extracting them from large datasets.
+\end{defbox}
+
+\begin{defbox}[The Black Box Problem]
+ML reasoning processes are \textbf{opaque}---even designers can't explain how the system reaches its conclusions.
+
+\textbf{Consequences:}
+\begin{itemize}
+  \item Cannot provide symbolic/language-like explanations.
+  \item Cannot integrate human and machine reasoning.
+  \item Has important \textbf{ethical implications} (accountability, trust, bias detection).
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- Non-monotonic Reasoning ---
+\subsubsection{Non-Monotonic Reasoning}
+
+\begin{defbox}[Monotonic vs.\ Non-Monotonic Logic]
+\textbf{Classical logic is monotonic:}
+\[
+\text{KB} \cup \Delta_0 \vdash_{\text{PS}} \alpha \implies \text{KB} \cup \Delta_0 \cup \Delta_1 \vdash_{\text{PS}} \alpha
+\]
+Adding new information never invalidates previous conclusions.
+
+\textbf{Problem:} The real world is too complex to encode all exceptions. We use \textbf{rules of thumb} that can be overridden.
+
+\textbf{Non-monotonic logic:} Conclusions can be \textbf{withdrawn} when new information conflicts with them.
+\end{defbox}
+
+\begin{exbox}[Tweety the Penguin]
+\begin{itemize}
+  \item KB contains: ``Birds typically fly''; ``Tweety is a bird.''
+  \item Infer: Tweety flies.
+  \item New information: ``Tweety is a penguin.''
+  \item Withdraw previous conclusion; infer: Tweety does \textbf{not} fly.
+\end{itemize}
+
+The inference $\neg\text{fly}(\text{Tweety})$ is \textbf{preferred} over $\text{fly}(\text{Tweety})$ because penguins are a \textbf{subclass} of birds (specificity principle).
+\end{exbox}
+
+\begin{defbox}[Defeasible Rules]
+Non-monotonic logics use \textbf{defeasible rules}:
+\begin{itemize}
+  \item ``Birds \textit{typically}/\textit{usually} fly'' (rather than ``necessarily'').
+  \item ``Birds fly \textit{unless there is evidence to the contrary}.''
+\end{itemize}
+These rules can be overridden by more specific information.
+\end{defbox}
+
+\begin{tipbox}[Relevance to AI Ethics]
+The problem of exceptions is crucial for ethical AI. You can specify a moral rule (e.g., ``Do not harm humans''), but there will always be exceptions. How do you encode all possible exceptions? Non-monotonic reasoning and argumentation address this.
+\end{tipbox}
+
+\bigseparator
+
+% --- Argumentation Theory ---
+\subsubsection{Argumentation Theory}
+
+\begin{defbox}[Why Argumentation?]
+Non-monotonic reasoning = deciding among \textbf{conflicting inferences} (beliefs, goals, actions).
+
+\textbf{Argumentation} formalizes this as:
+\begin{itemize}
+  \item More in line with how humans reason (debate, discussion).
+  \item Can be formalized to give rational outcomes under limited resources.
+  \item Enables \textbf{joint reasoning} among multiple agents (human and AI).
+  \item Reasoning becomes \textbf{publicly visible}, not hidden in a black box.
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Arguments and Attacks]
+An \textbf{argument} is a pair: $(\text{Premises}, \text{Claim})$.
+
+\textbf{Example:}
+\begin{itemize}
+  \item $A_1 = (\{\text{penguin}(\text{Tweety}), \text{penguin} \to \neg\text{fly}\}, \neg\text{fly}(\text{Tweety}))$
+  \item $A_2 = (\{\text{bird}(\text{Tweety}), \text{bird} \to \text{fly}\}, \text{fly}(\text{Tweety}))$
+\end{itemize}
+
+$A_1$ and $A_2$ \textbf{attack} each other (contradictory claims).
+
+If $A_1$ is \textbf{preferred} (specificity: penguins are a subclass of birds), then $A_2$'s attack on $A_1$ is cancelled. $A_1$ wins.
+\end{defbox}
+
+\separator
+
+\paragraph*{Dung's Argumentation Framework (1995)}
+
+\begin{defbox}[Argumentation Framework]
+An \textbf{argumentation framework} is a pair $\langle \text{Args}, \text{Attacks} \rangle$ where:
+\begin{itemize}
+  \item $\text{Args}$ = set of arguments.
+  \item $\text{Attacks} \subseteq \text{Args} \times \text{Args}$ = binary attack relation.
+\end{itemize}
+
+Represented as a \textbf{directed graph}: nodes = arguments, edges = attacks.
+\end{defbox}
+
+\begin{defbox}[Labeling Arguments]
+Label each argument as:
+\begin{itemize}
+  \item \textbf{IN} (winning): All attackers are OUT.
+  \item \textbf{OUT} (losing): At least one attacker is IN.
+  \item \textbf{UNDEC} (undecided): At least one attacker is UNDEC, and no attacker is IN.
+\end{itemize}
+
+A \textbf{legal labeling} satisfies these conditions for all arguments.
+\end{defbox}
+
+\begin{exbox}[Labeling Example]
+Framework: $A_3 \to A_2 \to A_1$ (i.e., $A_3$ attacks $A_2$; $A_2$ attacks $A_1$).
+
+\textbf{Legal labeling:}
+\begin{itemize}
+  \item $A_3$: IN (no attackers).
+  \item $A_2$: OUT (attacker $A_3$ is IN).
+  \item $A_1$: IN (all attackers---just $A_2$---are OUT).
+\end{itemize}
+\end{exbox}
+
+\begin{defbox}[Grounded vs.\ Preferred Extensions]
+Given all legal labelings:
+
+\textbf{Grounded extension:}
+\begin{itemize}
+  \item The unique labeling with \textbf{minimum} IN arguments.
+  \item Most skeptical/cautious.
+\end{itemize}
+
+\textbf{Preferred extensions:}
+\begin{itemize}
+  \item Labelings with \textbf{maximal} IN arguments (no superset exists).
+  \item May be multiple preferred extensions.
+  \item More credulous.
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[Mutual Attack: $A_1 \leftrightarrow A_2$]
+Three legal labelings:
+\begin{enumerate}
+  \item $A_1$: IN, $A_2$: OUT --- \textit{preferred}.
+  \item $A_1$: OUT, $A_2$: IN --- \textit{preferred}.
+  \item $A_1$: UNDEC, $A_2$: UNDEC --- \textit{grounded} (minimum IN = $\emptyset$).
+\end{enumerate}
+
+Interpretation: A genuine dilemma. Preferred extensions choose one side; grounded extension remains skeptical.
+\end{exbox}
+
+\bigseparator
+
+% --- Argument Games and Dialogue ---
+\subsubsection{Argument Games and Dialogue}
+
+\begin{defbox}[Argument Game Proof Theory]
+To determine if argument $X$ is in the grounded/preferred extension:
+\begin{enumerate}
+  \item \textbf{PRO} (proponent) moves $X$.
+  \item \textbf{OPP} (opponent) moves an attacking argument.
+  \item PRO and OPP alternate, moving attacks according to game rules.
+  \item If PRO successfully counters all OPP moves, $X$ is \textbf{justified} (in the extension).
+\end{enumerate}
+
+\textbf{Rules differ:}
+\begin{itemize}
+  \item \textbf{Grounded game:} PRO cannot repeat arguments in a dispute.
+  \item \textbf{Preferred game:} OPP cannot repeat arguments in a dispute.
+\end{itemize}
+\end{defbox}
+
+\separator
+
+\begin{defbox}[From Single-Agent to Distributed Reasoning]
+\textbf{Single-agent:} Agent constructs framework from private KB, uses argument game to find winning arguments.
+
+\textbf{Multi-agent (dialogue):} Multiple agents exchange arguments publicly. The framework is built from \textbf{publicly communicated contents}, not private KBs.
+
+\textbf{Public semantics:} Argument $X$ wins iff $X$ is in an extension of the framework built from what has been \textbf{publicly communicated}.
+\end{defbox}
+
+\begin{thmbox}[Dialogical Reasoning]
+A dialogue that establishes $\alpha$ effectively demonstrates that $\alpha$ can be inferred from the contents of the arguments exchanged during the dialogue.
+
+\textbf{Implications:}
+\begin{itemize}
+  \item Reasoning is \textbf{transparent} (publicly visible).
+  \item Multiple minds bring different knowledge and perspectives.
+  \item Enables \textbf{human-AI joint reasoning}.
+  \item Important for ensuring \textbf{ethical AI decisions}.
+\end{itemize}
+\end{thmbox}
+
+\bigseparator
+
+% --- Summary ---
+\subsubsection{Summary: Key Takeaways}
+
+\begin{thmbox}[Week 4 Key Points]
+\begin{enumerate}
+  \item \textbf{Logic-based AI:} Symbolic reasoning; sound/complete proof systems; BDI logics for beliefs, desires, intentions.
+  \item \textbf{Machine learning:} Learns from data; deep learning enables abstraction; major successes in perception/generation.
+  \item \textbf{Limitations:}
+  \begin{itemize}
+    \item Logic: Brittleness, symbol grounding, scalability.
+    \item ML: Black box, no causation, poor transfer, no joint reasoning.
+  \end{itemize}
+  \item \textbf{Non-monotonic reasoning:} Conclusions can be withdrawn; uses defeasible rules; addresses real-world exceptions.
+  \item \textbf{Argumentation:} Arguments attack each other; preferences determine winners; labelings (IN/OUT/UNDEC).
+  \item \textbf{Grounded extension:} Minimum IN (skeptical). \textbf{Preferred extensions:} Maximal IN (credulous).
+  \item \textbf{Dialogue:} Enables distributed reasoning; framework built from public communication; transparent, joint AI-human reasoning.
+  \item \textbf{Ethical relevance:} Argumentation supports explainable, collaborative reasoning---crucial for ethical AI.
+\end{enumerate}
+\end{thmbox}
+
+\begin{defbox}[Key Terms to Remember]
+\begin{itemize}
+  \item \textbf{GOFAI:} Good Old-Fashioned AI (symbolic/logic-based).
+  \item \textbf{Soundness/Completeness:} Proof system properties.
+  \item \textbf{Modal logic:} Modalities ($\Box$, $\Diamond$, $O$, $P$, $F$).
+  \item \textbf{BDI:} Belief-Desire-Intention.
+  \item \textbf{Symbol grounding problem:} Symbols not connected to world.
+  \item \textbf{Black box problem:} Opaque ML reasoning.
+  \item \textbf{Monotonic/Non-monotonic:} Whether new info can retract conclusions.
+  \item \textbf{Defeasible rules:} Rules that can be overridden.
+  \item \textbf{Argumentation framework:} $\langle \text{Args}, \text{Attacks} \rangle$.
+  \item \textbf{IN/OUT/UNDEC:} Argument labels.
+  \item \textbf{Grounded extension:} Minimal IN (skeptical).
+  \item \textbf{Preferred extension:} Maximal IN (credulous).
+  \item \textbf{Dialogical reasoning:} Joint reasoning via public argument exchange.
+\end{itemize}
+\end{defbox}
+

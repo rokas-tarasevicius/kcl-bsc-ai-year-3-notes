@@ -1,0 +1,549 @@
+% =============================================================================
+%                    WEEK 5: TRANSFORMER MODELS AND LLMs
+% =============================================================================
+\section{Week 5: Transformer Models and Large Language Models}
+
+% -----------------------------------------------------------------------------
+%                              5.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Define \textbf{Large Language Models (LLMs)} and explain how they extend earlier language models (n-gram, RNN) through scale and architecture.
+  \item Distinguish the three LLM architectures: \textbf{decoder-only} (GPT, Llama), \textbf{encoder-only} (BERT), and \textbf{encoder-decoder} (T5, Whisper).
+  \item Explain \textbf{self-supervised pretraining} with cross-entropy loss and teacher forcing on large corpora.
+  \item Describe problems with web-scraped training data: quality, bias, privacy, and copyright.
+  \item Evaluate LLMs using \textbf{perplexity} and understand its relationship to probability.
+  \item Explain why \textbf{static embeddings} (word2vec) are insufficient and how \textbf{contextual embeddings} address this.
+  \item Define the \textbf{self-attention} mechanism: queries, keys, values, and scaled dot-product attention.
+  \item Describe \textbf{multi-head attention} and why multiple heads are useful.
+  \item Explain the components of a \textbf{transformer block}: attention, feedforward layers, residual connections, layer normalisation.
+  \item Understand \textbf{causal masking} for autoregressive generation.
+  \item Describe \textbf{positional encodings} and why transformers need them.
+  \item Explain the \textbf{language modelling head}: unembedding layer, logits, and softmax.
+  \item Discuss \textbf{scaling laws} and \textbf{KV caching} for efficient inference.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week introduces the \textbf{transformer architecture}, the foundation of modern LLMs. Unlike RNNs which process sequences step-by-step, transformers use \textbf{self-attention} to process all tokens in parallel, enabling much longer contexts and more efficient training. LLMs are transformers trained on massive corpora with billions of parameters, achieving remarkable capabilities through \textbf{pretraining} followed by instruction tuning and alignment.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Define an LLM and compare it to n-gram/RNN language models.
+  \item Explain the three LLM architectures (decoder, encoder, encoder-decoder) and their use cases.
+  \item Describe \textbf{self-supervised training}: cross-entropy loss, teacher forcing.
+  \item Define \textbf{perplexity} and explain why lower is better.
+  \item Explain why static embeddings fail for polysemous words and how attention solves this.
+  \item Write the \textbf{scaled dot-product attention} formula and explain each component.
+  \item Explain the roles of \textbf{queries, keys, and values} in attention.
+  \item Describe \textbf{multi-head attention} and why it's useful.
+  \item Explain the components of a \textbf{transformer block} (attention, FFN, layer norm, residuals).
+  \item Explain \textbf{causal masking} and why it's needed for language modelling.
+  \item Describe why transformers need \textbf{positional encodings}.
+  \item Explain the \textbf{quadratic complexity} of attention w.r.t.\ sequence length.
+  \item Describe \textbf{weight tying} between embedding and unembedding layers.
+  \item Explain \textbf{scaling laws}: how loss scales with parameters, data, and compute.
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 5.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item What are Large Language Models?
+  \item Three LLM architectures: Decoder, Encoder, Encoder-Decoder
+  \item Pretraining: self-supervision, cross-entropy loss, teacher forcing
+  \item Training data and its problems
+  \item Evaluating LLMs: perplexity
+  \item Static vs contextual embeddings
+  \item Self-attention mechanism
+  \item Multi-head attention
+  \item The transformer block
+  \item Parallelising attention and causal masking
+  \item Positional encodings
+  \item Language modelling head
+  \item Scaling laws and KV cache
+\end{enumerate}
+
+\bigseparator
+
+% --- 5.2.1 Introduction to LLMs ---
+\subsubsection{Introduction to Large Language Models}
+
+\begin{defbox}[Large Language Model (LLM)]
+A \textbf{Large Language Model} is a neural network that:
+\begin{itemize}
+  \item Takes a \textbf{context/prefix} as input
+  \item Outputs a \textbf{probability distribution} over possible next words
+  \item Has \textbf{billions of parameters}
+  \item Is trained on \textbf{massive corpora} (web-scale data)
+\end{itemize}
+
+LLMs can \textbf{generate text} by repeatedly sampling from the next-word distribution.
+\end{defbox}
+
+\begin{keybox}[Continuity with Earlier LMs]
+LLMs share the same fundamental task as n-gram and RNN language models:
+\begin{itemize}
+  \item Assign probabilities to sequences of words
+  \item Generate text by predicting the next word
+  \item Trained to minimise cross-entropy loss
+\end{itemize}
+
+\textbf{What's different:} Scale (billions of parameters), architecture (transformers), and training data (web-scale corpora).
+\end{keybox}
+
+\begin{tipbox}[Fundamental Intuition]
+\textbf{Text contains enormous amounts of knowledge.}
+
+Pretraining on lots of text with all that knowledge is what gives LLMs their remarkable abilities.
+\end{tipbox}
+
+\bigseparator
+
+% --- 5.2.2 Three LLM Architectures ---
+\subsubsection{Three LLM Architectures}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} l p{4cm} p{5.5cm} @{}}
+\toprule
+\textbf{Architecture} & \textbf{Examples} & \textbf{Characteristics} \\
+\midrule
+\textbf{Decoder-only} & GPT, Claude, Llama, Mistral, DeepSeek & Autoregressive (left-to-right); generates one token at a time; what people typically mean by ``LLM'' \\
+\textbf{Encoder-only} & BERT, HuBERT & Masked language model (MLM); sees context on both sides; typically fine-tuned for classification \\
+\textbf{Encoder-Decoder} & T5, Whisper, Flan-T5 & Maps input sequence to output sequence; used for translation, speech recognition, summarisation \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Decoder vs Encoder]
+\begin{itemize}
+  \item \textbf{Decoder:} Causal/autoregressive --- can only see past tokens (left-to-right generation).
+  \item \textbf{Encoder:} Bidirectional --- can see tokens on both sides (used for understanding/classification).
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% --- 5.2.3 Pretraining LLMs ---
+\subsubsection{Pretraining Large Language Models}
+
+\begin{defbox}[Three Stages of LLM Training]
+\begin{enumerate}
+  \item \textbf{Pretraining:} Learn to predict next word on massive unlabelled text.
+  \item \textbf{Instruction Tuning:} Fine-tune on instruction-following examples.
+  \item \textbf{Preference Alignment:} Align with human values and safety norms (e.g., RLHF).
+\end{enumerate}
+
+This week focuses on \textbf{pretraining}.
+\end{defbox}
+
+\begin{defbox}[Self-Supervised Training]
+\textbf{Self-supervision:} The text itself provides the training signal.
+\begin{enumerate}
+  \item Take a corpus of text.
+  \item At each position $t$, ask the model to predict the next word $w_{t+1}$.
+  \item Train using gradient descent to minimise prediction error.
+\end{enumerate}
+
+\textbf{No manual labels required} --- the next word is the label!
+\end{defbox}
+
+\begin{defbox}[Cross-Entropy Loss for LM Training]
+The loss at position $t$ is the negative log probability of the true next word:
+\[
+L_{CE}(\hat{y}_t, y_t) = -\log \hat{y}_t[w_{t+1}]
+\]
+
+\textbf{Intuition:}
+\begin{itemize}
+  \item If model assigns low probability to the correct word $\Rightarrow$ high loss.
+  \item Training pushes the model to assign higher probability to correct words.
+\end{itemize}
+
+Since $y_t$ is one-hot, only the probability of the correct word matters.
+\end{defbox}
+
+\begin{defbox}[Teacher Forcing (Reminder)]
+During training:
+\begin{itemize}
+  \item At each position $t$, compute loss for predicting $w_{t+1}$.
+  \item Move to position $t+1$ using the \textbf{correct word} $w_{t+1}$, not the model's prediction.
+\end{itemize}
+
+\textbf{Why:} Prevents error accumulation during training.
+\end{defbox}
+
+\bigseparator
+
+% --- 5.2.4 Training Data ---
+\subsubsection{Training Data and Its Problems}
+
+\textbf{Common pretraining corpora:}
+\begin{itemize}
+  \item \textbf{Common Crawl:} Snapshots of the entire web (billions of pages).
+  \item \textbf{C4 (Colossal Clean Crawled Corpus):} 156 billion tokens, filtered English.
+  \item \textbf{The Pile:} Curated mix of academic, web, books, and dialogue.
+\end{itemize}
+
+\begin{tipbox}[Problems with Web-Scraped Data]
+\begin{itemize}
+  \item \textbf{Copyright:} Much text is copyrighted; legality unclear.
+  \item \textbf{Privacy:} Websites may contain private information (IP addresses, phone numbers).
+  \item \textbf{Bias/Skew:} Disproportionately US-authored content; reflects societal biases.
+  \item \textbf{Quality:} Boilerplate, adult content, duplicates need filtering.
+  \item \textbf{Toxicity:} Toxicity detection can mistakenly flag minority dialects.
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% --- 5.2.5 Evaluating LLMs: Perplexity ---
+\subsubsection{Evaluating LLMs: Perplexity}
+
+\begin{defbox}[Perplexity]
+\textbf{Perplexity} measures how ``surprised'' the model is by unseen text.
+
+For a test set of $n$ tokens $w_{1:n}$:
+\[
+\text{Perplexity}(w_{1:n}) = P(w_{1:n})^{-\frac{1}{n}} = \sqrt[n]{\prod_{i=1}^{n} \frac{1}{P(w_i \mid w_{<i})}}
+\]
+
+\textbf{Interpretation:}
+\begin{itemize}
+  \item \textbf{Lower perplexity = better model} (less surprised).
+  \item Range: $[1, \infty)$.
+  \item Minimising perplexity $\Leftrightarrow$ maximising probability.
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[Perplexity Comparisons]
+Perplexity is sensitive to tokenisation, so \textbf{only compare models with the same tokeniser}.
+\end{tipbox}
+
+\textbf{Other evaluation factors:}
+\begin{itemize}
+  \item \textbf{Size:} Memory, training time, inference cost.
+  \item \textbf{Energy:} kWh or CO$_2$ emissions.
+  \item \textbf{Fairness:} Stereotypes, performance disparities across groups.
+\end{itemize}
+
+\bigseparator
+
+% --- 5.2.6 Static vs Contextual Embeddings ---
+\subsubsection{Static vs Contextual Embeddings}
+
+\begin{tipbox}[Problem with Static Embeddings]
+\textbf{Word2vec embeddings are static:} The same vector for a word regardless of context.
+
+\textbf{Example:} ``The chicken didn't cross the road because \textbf{it} was too tired.''
+
+What does ``it'' refer to? The static embedding can't distinguish:
+\begin{itemize}
+  \item ``it'' = chicken (tired)
+  \item ``it'' = road (wide)
+\end{itemize}
+\end{tipbox}
+
+\begin{defbox}[Contextual Embeddings]
+\textbf{Contextual embedding:} A word's representation \textbf{changes depending on surrounding words}.
+
+\textbf{Solution:} Use \textbf{attention} to build up the embedding by selectively integrating information from neighbouring words.
+
+We say a word ``attends to'' some neighbours more than others.
+\end{defbox}
+
+\bigseparator
+
+% --- 5.2.7 Self-Attention Mechanism ---
+\subsubsection{Self-Attention Mechanism}
+
+\begin{defbox}[Attention: Definition]
+\textbf{Attention} is a mechanism for computing contextual embeddings by:
+\begin{enumerate}
+  \item Computing \textbf{similarity scores} between the current token and all context tokens.
+  \item Using these scores to compute a \textbf{weighted sum} of context representations.
+\end{enumerate}
+\end{defbox}
+
+\begin{defbox}[Query, Key, Value Roles]
+Each token $x_i$ plays three roles, represented by learned projections:
+\begin{align*}
+q_i &= x_i W^Q & \text{(query: ``what am I looking for?'')} \\
+k_i &= x_i W^K & \text{(key: ``what do I contain?'')} \\
+v_i &= x_i W^V & \text{(value: ``what information do I provide?'')}
+\end{align*}
+
+\textbf{Matrices:} $W^Q, W^K \in \mathbb{R}^{d \times d_k}$, $W^V \in \mathbb{R}^{d \times d_v}$
+\end{defbox}
+
+\begin{thmbox}[Scaled Dot-Product Attention]
+For current token $i$ with query $q_i$, attending to tokens $j \leq i$:
+
+\textbf{1. Compute similarity scores:}
+\[
+\text{score}(x_i, x_j) = \frac{q_i \cdot k_j}{\sqrt{d_k}}
+\]
+
+\textbf{2. Normalise with softmax:}
+\[
+\alpha_{ij} = \text{softmax}(\text{score}(x_i, x_j)) = \frac{\exp(\text{score}(x_i, x_j))}{\sum_{k \leq i} \exp(\text{score}(x_i, x_k))}
+\]
+
+\textbf{3. Weighted sum of values:}
+\[
+a_i = \sum_{j \leq i} \alpha_{ij} v_j
+\]
+\end{thmbox}
+
+\begin{tipbox}[Why Scale by $\sqrt{d_k}$?]
+Dot products can become very large for high-dimensional vectors. Large values cause softmax to saturate (outputs near 0 or 1), leading to vanishing gradients. Scaling by $\sqrt{d_k}$ keeps values in a reasonable range.
+\end{tipbox}
+
+\bigseparator
+
+% --- 5.2.8 Multi-Head Attention ---
+\subsubsection{Multi-Head Attention}
+
+\begin{defbox}[Multi-Head Attention]
+Instead of one attention head, use $h$ heads in parallel:
+\begin{itemize}
+  \item Each head has its own $W^Q_c, W^K_c, W^V_c$ matrices.
+  \item Each head can attend to different aspects of the context.
+\end{itemize}
+
+\textbf{Equations:}
+\begin{align*}
+\text{head}_c &= \text{Attention}(Q_c, K_c, V_c) \\
+\text{MultiHead}(x_i) &= [\text{head}_1; \text{head}_2; \ldots; \text{head}_h] W^O
+\end{align*}
+
+where $W^O \in \mathbb{R}^{h \cdot d_v \times d}$ projects concatenated heads back to dimension $d$.
+\end{defbox}
+
+\begin{tipbox}[Why Multiple Heads?]
+Different heads can learn to attend to different linguistic patterns:
+\begin{itemize}
+  \item One head might attend to syntactic dependencies.
+  \item Another might attend to semantic relationships.
+  \item Another might attend to nearby tokens.
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% --- 5.2.9 The Transformer Block ---
+\subsubsection{The Transformer Block}
+
+\begin{defbox}[Transformer Block Components]
+A transformer block contains:
+\begin{enumerate}
+  \item \textbf{Multi-Head Attention}
+  \item \textbf{Residual Connection} (add input to output)
+  \item \textbf{Layer Normalisation}
+  \item \textbf{Feedforward Network} (2-layer MLP with ReLU)
+  \item \textbf{Another Residual Connection + Layer Norm}
+\end{enumerate}
+\end{defbox}
+
+\begin{defbox}[Transformer Block Equations]
+\begin{align*}
+t^1_i &= \text{LayerNorm}(x_i) \\
+t^2_i &= \text{MultiHeadAttention}(t^1_i, [x_1, \ldots, x_N]) \\
+t^3_i &= t^2_i + x_i & \text{(residual connection)} \\
+t^4_i &= \text{LayerNorm}(t^3_i) \\
+t^5_i &= \text{FFN}(t^4_i) \\
+h_i &= t^5_i + t^3_i & \text{(residual connection)}
+\end{align*}
+\end{defbox}
+
+\begin{defbox}[Layer Normalisation]
+Normalise each vector to have zero mean and unit variance:
+\[
+\hat{x} = \frac{x - \mu}{\sigma}
+\]
+where $\mu = \frac{1}{d}\sum_i x_i$ and $\sigma = \sqrt{\frac{1}{d}\sum_i (x_i - \mu)^2}$
+
+With learnable gain $g$ and bias $b$:
+\[
+\text{LayerNorm}(x) = g \cdot \frac{x - \mu}{\sigma} + b
+\]
+\end{defbox}
+
+\begin{defbox}[Feedforward Network]
+A 2-layer MLP applied independently to each position:
+\[
+\text{FFN}(x) = \text{ReLU}(x W_1 + b_1) W_2 + b_2
+\]
+
+Typically $d_{ff} = 4d$ (e.g., $d = 512$, $d_{ff} = 2048$).
+\end{defbox}
+
+\begin{tipbox}[Residual Stream View]
+Attention is the \textbf{only} component that moves information between tokens. All other components operate on individual residual streams. Attention can be viewed as ``moving information from one token's stream to another.''
+\end{tipbox}
+
+\bigseparator
+
+% --- 5.2.10 Parallelising Attention and Causal Masking ---
+\subsubsection{Parallelising Attention and Causal Masking}
+
+\begin{defbox}[Matrix Form of Attention]
+Pack all $N$ tokens into matrix $X \in \mathbb{R}^{N \times d}$:
+\begin{align*}
+Q &= X W^Q, \quad K = X W^K, \quad V = X W^V \\
+A &= \text{softmax}\left(\frac{Q K^\top}{\sqrt{d_k}}\right) V
+\end{align*}
+
+This computes attention for \textbf{all tokens simultaneously}!
+\end{defbox}
+
+\begin{defbox}[Causal Masking]
+\textbf{Problem:} $QK^\top$ computes scores for \textbf{all} pairs, including future tokens.
+
+\textbf{Solution:} Add a mask matrix $M$ where $M_{ij} = -\infty$ for $j > i$:
+\[
+A = \text{softmax}\left(\text{mask}\left(\frac{Q K^\top}{\sqrt{d_k}}\right)\right) V
+\]
+
+After softmax, positions with $-\infty$ become 0 (no attention to future).
+\end{defbox}
+
+\begin{tipbox}[Quadratic Complexity]
+Attention is \textbf{$O(N^2)$} in sequence length:
+\begin{itemize}
+  \item $QK^\top$ is an $N \times N$ matrix.
+  \item Every token attends to every other token.
+\end{itemize}
+
+This limits context length (though techniques like sparse attention help).
+\end{tipbox}
+
+\bigseparator
+
+% --- 5.2.11 Positional Encodings ---
+\subsubsection{Positional Encodings}
+
+\begin{tipbox}[Why Transformers Need Position Information]
+Attention treats all positions equally --- it has \textbf{no inherent notion of order}.
+
+Without positional encodings, ``the cat sat on the mat'' and ``mat the on sat cat the'' would have the same representation!
+\end{tipbox}
+
+\begin{defbox}[Absolute Position Embeddings]
+Learn a position embedding matrix $E_{\text{pos}} \in \mathbb{R}^{N_{\max} \times d}$:
+\begin{itemize}
+  \item One learned embedding for each position $1, 2, \ldots, N_{\max}$.
+  \item Add position embedding to token embedding: $x_i = E[w_i] + E_{\text{pos}}[i]$
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- 5.2.12 Language Modelling Head ---
+\subsubsection{Language Modelling Head}
+
+\begin{defbox}[From Hidden State to Next-Word Probabilities]
+After $L$ transformer layers, the final hidden state $h^L_N$ is transformed into a probability distribution:
+
+\textbf{1. Unembedding layer:} Project to vocabulary-sized logits:
+\[
+u = h^L_N E^\top \quad \text{(shape: } 1 \times |V| \text{)}
+\]
+
+\textbf{2. Softmax:} Convert logits to probabilities:
+\[
+y = \text{softmax}(u)
+\]
+
+$y_k = P(w_{N+1} = k \mid w_{1:N})$
+\end{defbox}
+
+\begin{defbox}[Weight Tying]
+The unembedding matrix is the \textbf{transpose of the embedding matrix} $E$:
+\begin{itemize}
+  \item \textbf{Embedding:} $E$ maps one-hot $\to$ embedding (shape $|V| \times d$)
+  \item \textbf{Unembedding:} $E^\top$ maps embedding $\to$ logits (shape $d \times |V|$)
+\end{itemize}
+
+\textbf{Benefits:} Fewer parameters, often better generalisation.
+\end{defbox}
+
+\bigseparator
+
+% --- 5.2.13 Scaling Laws and KV Cache ---
+\subsubsection{Scaling Laws and KV Cache}
+
+\begin{defbox}[Scaling Laws]
+LLM performance (loss $L$) scales as a \textbf{power law} with:
+\begin{itemize}
+  \item \textbf{Model size $N$} (number of parameters)
+  \item \textbf{Dataset size $D$} (tokens)
+  \item \textbf{Compute $C$} (FLOPs)
+\end{itemize}
+
+\[
+L(N) = \left(\frac{N_c}{N}\right)^{\alpha_N}, \quad L(D) = \left(\frac{D_c}{D}\right)^{\alpha_D}, \quad L(C) = \left(\frac{C_c}{C}\right)^{\alpha_C}
+\]
+
+\textbf{Key insight:} We can predict final performance from early training!
+\end{defbox}
+
+\begin{exbox}[Estimating Parameters]
+For a transformer with $n$ layers and dimension $d$:
+\[
+N \approx 12 \cdot n \cdot d^2
+\]
+
+GPT-3: $n = 96$ layers, $d = 12288$ $\Rightarrow$ $N \approx 175$ billion parameters.
+\end{exbox}
+
+\begin{defbox}[KV Cache]
+\textbf{Problem:} At inference, we generate tokens one at a time. Recomputing all keys and values at each step is wasteful.
+
+\textbf{Solution:} Cache the key and value vectors for all previous tokens.
+
+At step $i$:
+\begin{itemize}
+  \item Compute $q_i, k_i, v_i$ for the new token.
+  \item Retrieve $k_1, \ldots, k_{i-1}$ and $v_1, \ldots, v_{i-1}$ from cache.
+  \item Compute attention using cached keys/values.
+  \item Store $k_i, v_i$ in cache for future steps.
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- Summary Table ---
+\subsubsection{Summary: Transformers vs RNNs}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+& \textbf{RNN/LSTM} & \textbf{Transformer} \\
+\midrule
+Processing & Sequential (one step at a time) & Parallel (all tokens at once) \\
+Context & Via hidden state (limited) & Via attention (direct access) \\
+Long-range deps & Difficult (vanishing gradients) & Easy (direct attention) \\
+Training & Sequential backprop through time & Highly parallelisable \\
+Complexity & $O(N)$ per step & $O(N^2)$ for attention \\
+Position info & Implicit (order of processing) & Explicit (positional encodings) \\
+\bottomrule
+\end{tabular}
+\end{center}
+

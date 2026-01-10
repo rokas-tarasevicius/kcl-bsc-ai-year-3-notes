@@ -1,0 +1,470 @@
+% =============================================================================
+%                       WEEK 6: ALGORITHMS
+% =============================================================================
+\section{Week 6: Algorithms}
+
+% -----------------------------------------------------------------------------
+%                              6.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Explain the importance of \textbf{accountability and transparency} in algorithmic decision-making.
+  \item Describe \textbf{procedural regularity} and techniques for ensuring it.
+  \item Summarize the \textbf{ACM Principles} for algorithmic transparency and accountability.
+  \item Analyze \textbf{liability and responsibility} frameworks for AI systems.
+  \item Discuss \textbf{moral responsibility}, free will, and their implications for AI.
+  \item Define \textbf{algorithmic bias} and identify its types (data, algorithm, use, feedback).
+  \item Evaluate \textbf{solutions} to algorithmic bias (statistical, discursive, documentation, standards).
+\end{itemize}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+As algorithms increasingly make decisions that affect lives (loans, sentencing, hiring, policing), ensuring \textbf{accountability} becomes critical. This week examines how we assign responsibility when algorithms cause harm, the philosophical issues of moral responsibility and free will (and why they may not apply to AI), and the pervasive problem of \textbf{algorithmic bias}---how societal biases become encoded in data and perpetuated by ML systems.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Why is transparency important for accountability? When might transparency be undesirable?
+  \item What is procedural regularity? What techniques ensure it?
+  \item List and explain the ACM Principles for algorithmic accountability.
+  \item What is data provenance and why is it important?
+  \item Explain the three scenarios for criminal liability (perpetrator via another, natural probable consequence, direct liability).
+  \item How does moral responsibility relate to the notion of self and free will?
+  \item Why might a consequentialist approach be appropriate for AI penalties?
+  \item Define algorithmic bias. What are the main types?
+  \item Give examples of algorithmic bias (COMPAS, PredPol, facial recognition).
+  \item What solutions exist for mitigating algorithmic bias?
+\end{itemize}
+
+\begin{tipbox}[Note on Examinable Content]
+The section on ``Human Selves and Free Will'' through ``Free Will is also an Illusion'' is \textbf{not examinable}. However, the conclusions drawn (no distinct self/free will $\to$ consequentialist approach to penalties) are relevant.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 6.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Accountability and Transparency
+  \item Procedural Regularity
+  \item ACM Principles for Algorithmic Transparency and Accountability
+  \item AI, Liability, and Responsibility
+  \item Moral Responsibility, Free Will, and Justice
+  \item Algorithmic Bias: Definition and Types
+  \item Recent Examples of Bias
+  \item Solutions to Algorithmic Bias
+\end{enumerate}
+
+\bigseparator
+
+% --- Accountability and Transparency ---
+\subsubsection{Accountability and Transparency}
+
+\begin{defbox}[Accountability]
+The ability to demonstrate to the public, regulatory bodies, and courts that automated decisions comply with standards of \textbf{legal fairness} and \textbf{ethical fairness}. Requires assigning responsibility/blame when things go wrong.
+\end{defbox}
+
+\begin{keybox}[Why Accountability Matters]
+\begin{itemize}
+  \item Many critical decisions are now made by algorithms: votes, loans, credit cards, police targeting, tax audits, immigration visas, sentencing.
+  \item Tools designed to oversee \textit{human} decision-makers often fail for computers (e.g., how do you judge the \textit{intent} of software?).
+  \item Automated systems can return incorrect, unjustified, or unfair results---especially critical for life/death decisions.
+\end{itemize}
+\end{keybox}
+
+\begin{defbox}[Transparency]
+The ability to \textbf{examine and explain} how algorithms make decisions. Essential for:
+\begin{itemize}
+  \item Demonstrating ethical fairness.
+  \item Providing incentives for compliance with ethical standards.
+\end{itemize}
+
+\textbf{Plato's Ring of Gyges:} A ring that makes the wearer invisible $\to$ wearer commits wrongdoing (no accountability). Modern analogue: opaque AI systems used by powerful corporations. Transparency lessens this risk.
+\end{defbox}
+
+\begin{tipbox}[Limits of Transparency]
+\begin{itemize}
+  \item \textbf{Black box problem:} Explaining how ML algorithms decide is a major unsolved issue.
+  \item \textbf{Privacy:} Explaining a decision may reveal private data (violates GDPR).
+  \item \textbf{Gaming:} Transparency may be abused (e.g., tax cheats, terrorists learning to evade screening).
+\end{itemize}
+$\to$ Demanding transparency requires \textbf{weighing harms and benefits}---consequentialist reasoning, not a universal rule.
+\end{tipbox}
+
+\separator
+
+% --- Procedural Regularity ---
+\subsubsection{Procedural Regularity}
+
+\begin{defbox}[Procedural Regularity]
+For AI in narrow, predictable contexts: each participant knows the \textbf{same procedure} was applied, and the procedure was not designed to disadvantage them specifically.
+
+\textbf{Requirements:}
+\begin{enumerate}
+  \item Same policy/rule used for each decision.
+  \item Decision policy fully specified \textit{before} decision subjects were known.
+  \item Each decision is \textbf{reproducible} from the policy and inputs.
+  \item Any random inputs are beyond the control of interested parties.
+\end{enumerate}
+\end{defbox}
+
+\begin{keybox}[Techniques for Procedural Regularity]
+\begin{itemize}
+  \item \textbf{Software Verification:} Logic-based techniques to prove a program satisfies \textbf{invariants} (facts always true regardless of state/input).
+  \begin{itemize}
+    \item \textbf{Model Checking:} Exhaustively test all possible inputs to ensure invariant is never violated. (E.g., traffic light algorithm: never set both lights to green simultaneously.)
+  \end{itemize}
+  \item \textbf{Cryptographic Commitments:} Ensure the same decision policy was used for each decision, especially when full transparency is undesirable. (Commit to a value while keeping it hidden; reveal later.)
+\end{itemize}
+\end{keybox}
+
+\separator
+
+% --- ACM Principles ---
+\subsubsection{ACM Principles for Algorithmic Transparency and Accountability}
+
+The Association for Computing Machinery (ACM) is the world's largest computing society. Their principles:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Principle} & \textbf{Description} \\
+\midrule
+\textbf{Awareness} & Stakeholders (owners, designers, users) should be aware of biases in design/implementation/use and potential harm. \\
+\textbf{Access \& Redress} & Regulators should enable questioning and redress for those adversely affected. \\
+\textbf{Accountability} & Institutions are responsible for algorithmic decisions, even if the algorithm is a black box. \\
+\textbf{Explanation} & Systems should produce explanations of procedures and specific decisions (especially in public policy). \\
+\textbf{Data Provenance} & Document inputs, entities, systems, and processes that influence data; explore potential biases. Public scrutiny where possible (restrict access for privacy/security). \\
+\textbf{Auditability} & Models, algorithms, data, and decisions should be recorded for auditing when harm is suspected. \\
+\textbf{Validation \& Testing} & Rigorous methods to validate models; routinely test for discriminatory harm; publish results. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{defbox}[Data Provenance]
+A historical record of data's origins, what processing it underwent (with links to algorithms and parameters), and which systems/entities processed it.
+
+\textbf{Purpose:} Enable exploration of biases; support public scrutiny; provide authoritative source for data integrity (combats ``info-pocalypse'' / fake news).
+\end{defbox}
+
+\bigseparator
+
+% --- Liability and Responsibility ---
+\subsubsection{AI, Liability, and Responsibility}
+
+\begin{keybox}[The Problem]
+With increasingly \textbf{autonomous} AI systems, who is responsible when things go wrong?
+
+\textbf{Example:} Autonomous vehicles (AVs):
+\begin{itemize}
+  \item Driver error causes 94\% of conventional car crashes; AVs could improve this.
+  \item But AVs still crash (30+ accidents in California since 2014).
+  \item Current assumption: Companies behind software/hardware are liable, not car owner.
+  \item But what if AV warned driver to disengage autopilot? Is human then responsible?
+  \item Future AVs may have no steering wheel---carmakers must take full responsibility.
+\end{itemize}
+\end{keybox}
+
+\separator
+
+\paragraph*{Criminal Liability Frameworks}
+
+Criminal liability usually requires \textbf{action} and \textbf{mental intent}. Three scenarios:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Scenario} & \textbf{Description} \\
+\midrule
+\textbf{Perpetrator via Another} & Offense committed by mentally deficient person/animal (innocent agent). The \textit{instructor} is criminally liable. (E.g., dog owner instructs dog to attack.) $\to$ AI as innocent agent; programmer/user as perpetrator. \\
+\textbf{Natural Probable Consequence} & Programmer knew outcome was a probable consequence. (E.g., 1981: AI robot in Japanese factory killed worker by pushing him into machine---did programmer anticipate this?) \\
+\textbf{Direct Liability} & Requires action + intent. Action is easy to prove; intent is harder. (Relates to moral responsibility.) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Civil Liability}
+
+If criminal liability doesn't apply, the matter is settled in civil court. Key question: Is AI a \textbf{product} or a \textbf{service}?
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+& \textbf{Product} & \textbf{Service} \\
+\midrule
+\textbf{Legal Framework} & Product design legislation (warranty). & Rules of negligence. \\
+\textbf{Plaintiff Must Prove} & Warranty/guarantee violated. & (1) Defendant had duty of care; (2) Defendant breached duty; (3) Breach caused injury. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+% --- Moral Responsibility and Free Will ---
+\subsubsection{Moral Responsibility, Free Will, and Justice}
+
+\begin{defbox}[Moral Responsibility]
+A person is morally responsible for a crime if:
+\begin{enumerate}
+  \item They were \textbf{conscious} (understood) that the crime would cause harm.
+  \item They were \textbf{free to do otherwise}---exercised \textbf{free will}.
+\end{enumerate}
+
+Free will implies a \textbf{self} that freely chooses. This also characterizes Moor's \textbf{full ethical agent}.
+\end{defbox}
+
+\begin{keybox}[Functions of Penalties]
+\begin{enumerate}
+  \item \textbf{Protection:} Protect society from criminal, and criminal from society (vigilante justice).
+  \item \textbf{Deterrence:} Deter others from committing the crime.
+  \item \textbf{Rehabilitation:} Ensure criminal doesn't re-offend.
+  \item \textbf{Retribution:} Punish the self for having freely chosen to commit the crime.
+\end{enumerate}
+
+\textbf{Note:} (1)--(3) can be justified on \textbf{consequentialist} grounds (maximize good outcomes). (4) Retribution requires the assumption of a self that freely chose---and is \textit{not} obviously consequentialist.
+\end{keybox}
+
+\separator
+
+\paragraph*{AI Selves and Free Will}
+
+\begin{thmbox}[No Self, No Free Will in AI]
+\begin{itemize}
+  \item AI is ``just algorithms'' processing information, maximizing utility, following rules.
+  \item There is no distinct \textbf{self} (``ghost in the machine'') that freely chooses.
+  \item \textbf{Conclusion:} AI cannot be morally responsible in the traditional sense.
+\end{itemize}
+\end{thmbox}
+
+\begin{tipbox}[Implications for AI Penalties]
+Since AI has no self/free will:
+\begin{itemize}
+  \item Use \textbf{consequentialist} framework to decide penalties.
+  \item \textbf{Protection:} Take AI out of use.
+  \item \textbf{Deterrence:} Penalize developers/companies to discourage similar designs.
+  \item \textbf{Rehabilitation:} Modify the decision-making algorithm.
+  \item \textbf{Retribution:} Doesn't make sense---no self to punish.
+\end{itemize}
+
+However, we may still \textit{treat} AI as if morally responsible (to maintain public trust). If AI commits a serious crime, the public may only trust AI if it is visibly ``punished'' (decommissioned).
+\end{tipbox}
+
+\separator
+
+\paragraph*{Human Selves and Free Will (Not Examinable, but Relevant)}
+
+\begin{keybox}[Summary (Non-Examinable)]
+The same reasoning applies to humans:
+\begin{itemize}
+  \item Neuroscience, philosophy, and Buddhism suggest the \textbf{self is an illusion}---just neurons firing, no CEO/self weaving together experience.
+  \item \textbf{Free will} is also illusory: choices are determined by prior causes (genes + environment + physics).
+  \item The \textit{feeling} of freely choosing is the conscious experience of a deterministic process.
+\end{itemize}
+
+\textbf{Implication:} Abandon retribution; focus on consequentialist penalties (protection, deterrence, rehabilitation). But treating people \textit{as if} they have free will serves a useful social function.
+\end{keybox}
+
+\begin{thmbox}[Does ``Full Ethical Agent'' Make Sense?]
+If:
+\begin{itemize}
+  \item We can't know with certainty if AI is conscious (understands ethical impact).
+  \item AI doesn't have free will (just like humans, arguably).
+\end{itemize}
+Then the distinction between \textbf{explicit ethical agent} and \textbf{full ethical agent} may not be meaningful.
+\end{thmbox}
+
+\bigseparator
+
+% --- Algorithmic Bias ---
+\subsubsection{Algorithmic Bias: Definition and Types}
+
+\begin{defbox}[Algorithmic Bias]
+\textbf{Systematic and repeatable errors} in a computer system that create \textbf{unfair outcomes}, such as favoring one group over another based on \textbf{irrelevant criteria}.
+
+\textbf{Algorithmic system} = algorithms + data + output deployment process.
+
+\textbf{Key principle:} Only \textbf{relevant} criteria should count in a decision. Protected characteristics (gender, ethnicity, sexual orientation) should not be used as decision factors.
+\end{defbox}
+
+\begin{exbox}[Insurance Premiums]
+\begin{itemize}
+  \item EU Court of Justice (2011): Insurers must not give lower premiums to women (to eliminate gender discrimination).
+  \item But statistically, women have fewer accidents.
+  \item If algorithm uses only \textbf{relevant factors} (driving history, experience, car type)---not gender---and women still get lower premiums, is that bias?
+  \item \textbf{Arguably not:} Gender itself isn't a factor; it just correlates with relevant factors.
+  \item \textbf{Inappropriate:} Using gender \textit{directly} as a criterion (a man with identical relevant factors gets higher premium because he's male).
+\end{itemize}
+\end{exbox}
+
+\separator
+
+\paragraph*{Types of Algorithmic Bias}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Type} & \textbf{Description} \\
+\midrule
+\textbf{Data Bias} & Training data is biased $\to$ algorithm perpetuates/compounds biases. Society evolves; data collected at one time may reflect outdated biases. \\
+\quad \textit{Statistical} & Training data not representative for deployment context (e.g., AV trained on London, deployed in rural areas). \\
+\quad \textit{Moral} & Algorithm prioritizes based on success rates, but success differs due to injustice. (E.g., health algorithm prioritizes drug A over B, but B treats underprivileged populations poorly served due to poverty.) \\
+\textbf{Algorithm Bias} & Bias in design. (E.g., search engine shows 3 results per screen $\to$ privileges top 3.) \\
+\textbf{Use/Interpretation Bias} & (i) Use in unintended contexts (AV deployed in untrained environment). (ii) Treating outputs as objectively correct (probation officer blindly accepts algorithm's risk score). \\
+\textbf{Feedback Bias} & Algorithm is further trained on outcomes judged by humans $\to$ biases amplify over time. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% --- Recent Examples ---
+\subsubsection{Recent Examples of Algorithmic Bias}
+
+\begin{exbox}[COMPAS (Criminal Sentencing)]
+\begin{itemize}
+  \item Algorithm predicts likelihood of re-offending, used to guide sentencing in the US.
+  \item \textbf{2016 finding:} Racially biased---predicted Black defendants re-offend at higher rates than they actually do; reverse for White defendants.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[PredPol (Predictive Policing)]
+\begin{itemize}
+  \item Predicts when/where crimes will occur.
+  \item \textbf{2016 finding:} Unfairly targets neighborhoods with high racial minority populations, regardless of actual crime rates.
+  \item \textbf{Cause:} Trained on police reports (not actual crime rates) $\to$ feedback loop: more police $\to$ more reports $\to$ more police.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Facial Recognition]
+\begin{itemize}
+  \item MIT (2018): Gender-recognition AIs from IBM, Microsoft, Megvii.
+  \item 99\% accuracy for \textbf{white men}; 35\% accuracy for \textbf{dark-skinned women}.
+  \item \textbf{Cause:} Training data contained far more white men than Black women.
+  \item \textbf{Risk:} False identification of women and minorities in law enforcement.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Facebook Translation]
+\begin{itemize}
+  \item October 2017: Palestinian worker posted photo with caption ``Good morning'' in Arabic.
+  \item Facebook's auto-translation rendered it as ``Attack them'' in Hebrew.
+  \item Arrested and questioned for hours before the mistake was noticed.
+  \item \textbf{Issue:} AI feeds back to heighten human bias.
+\end{itemize}
+\end{exbox}
+
+\bigseparator
+
+% --- Problems Identifying Bias ---
+\subsubsection{Problems with Identifying Algorithmic Bias}
+
+\begin{itemize}
+  \item \textbf{Complexity:} Decisions made by one designer may be obscured among many pieces of code; over time, their impact is forgotten.
+  \item \textbf{Black Box Problem:} Explaining how ML algorithms decide is a major unsolved issue---even for researchers/developers.
+\end{itemize}
+
+\bigseparator
+
+% --- Solutions ---
+\subsubsection{Solutions to the Problem of Algorithmic Bias}
+
+\paragraph*{1. Statistical Approaches}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Approach} & \textbf{Description} \\
+\midrule
+\textbf{Pre-processing} & Modify training data to prevent algorithm from learning discriminatory rules. \\
+\textbf{In-processing} & Modify the algorithm itself. (E.g., change decision tree branches to ignore/correct for protected characteristics.) \textbf{Problem:} May require access to protected characteristic data (legally sensitive). \\
+\textbf{Post-processing} & Modify model after training. (E.g., reduce significance of postcodes correlated with ethnicity; human officer adjusts risk scores for known biased groups.) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Software toolkits:} Accenture's ``Fairness Tool''; IBM's ``AI Fairness 360 Open Source Toolkit.''
+
+\separator
+
+\paragraph*{2. Discursive Frameworks, Self-Assessment Tools, Learning Materials}
+
+\begin{keybox}[AI Now's Algorithmic Impact Assessments (AIAs)]
+\begin{enumerate}
+  \item Agencies conduct \textbf{self-assessment} of automated systems for fairness, justice, bias.
+  \item Develop \textbf{external researcher review} to discover/measure/track impacts.
+  \item \textbf{Inform the public} of definitions and processes \textit{before} deployment.
+  \item \textbf{Invite public comments} to clarify concerns.
+  \item Governments provide \textbf{mechanisms for redress} for affected individuals/communities.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\paragraph*{3. Documentation Standards}
+
+\begin{itemize}
+  \item Big data analytics involves aggregation of diverse datasets, often with limited understanding of origins/biases.
+  \item \textbf{Documentation standards:} Establish basic information when collecting data or training models.
+  \item Include: creation, contents, intended uses, ethical/legal concerns.
+  \item Helps users interrogate datasets and identify biases before/during processing.
+\end{itemize}
+
+\separator
+
+\paragraph*{4. Technical Standards and Certification Programmes}
+
+\begin{itemize}
+  \item National/international organizations publish technical standards.
+  \item \textbf{IEEE P7003\texttrademark:} Standard for Algorithmic Bias Considerations.
+  \item \textbf{FAT Conference:} Fairness, Accountability, and Transparency---annual interdisciplinary research conference.
+\end{itemize}
+
+\bigseparator
+
+% --- Summary ---
+\subsubsection{Summary: Key Takeaways}
+
+\begin{keybox}[Week 6 Key Points]
+\begin{enumerate}
+  \item \textbf{Accountability} requires transparency, but transparency has limits (black box, privacy, gaming).
+  \item \textbf{Procedural regularity:} Same procedure for all; reproducible; random inputs uncontrollable.
+  \item \textbf{ACM Principles:} Awareness, Access/Redress, Accountability, Explanation, Data Provenance, Auditability, Validation/Testing.
+  \item \textbf{Criminal liability:} Perpetrator via another, natural probable consequence, direct liability.
+  \item \textbf{Civil liability:} Product (warranty) vs. Service (negligence: duty, breach, injury).
+  \item \textbf{Moral responsibility} requires conscious understanding + free will. AI has no self/free will $\to$ use consequentialist penalties.
+  \item \textbf{Algorithmic bias:} Systematic errors creating unfair outcomes. Types: data, algorithm, use/interpretation, feedback.
+  \item \textbf{Examples:} COMPAS (racial bias in sentencing), PredPol (feedback loop), facial recognition (training data), Facebook translation.
+  \item \textbf{Solutions:} Statistical (pre/in/post-processing), discursive (AIAs), documentation standards, technical standards (IEEE, FAT).
+\end{enumerate}
+\end{keybox}
+
+\begin{defbox}[Key Terms]
+\begin{itemize}
+  \item \textbf{Accountability:} Demonstrating decisions comply with fairness standards.
+  \item \textbf{Transparency:} Ability to examine/explain algorithmic decisions.
+  \item \textbf{Procedural Regularity:} Same procedure, specified in advance, reproducible.
+  \item \textbf{Data Provenance:} Historical record of data origins and processing.
+  \item \textbf{Moral Responsibility:} Understanding + free choice $\to$ deserves praise/blame.
+  \item \textbf{Algorithmic Bias:} Systematic errors favoring one group based on irrelevant criteria.
+  \item \textbf{Protected Characteristics:} Gender, ethnicity, sexual orientation---should not be used as decision factors.
+  \item \textbf{Feedback Bias:} Bias amplified over time through feedback loops.
+\end{itemize}
+\end{defbox}
+

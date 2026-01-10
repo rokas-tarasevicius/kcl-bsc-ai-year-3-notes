@@ -1,0 +1,125 @@
+% =============================================================================
+%                  SHARED PREAMBLE – PHILOSOPHY & ETHICS OF AI REVISION NOTES
+% =============================================================================
+
+% --- Page geometry ---
+\usepackage[left=1.35in,right=1.0in,top=1.0in,bottom=1.0in,headheight=14pt]{geometry}
+
+% microtype can cause issues on minimal TeX installs; make it optional
+\IfFileExists{microtype.sty}{
+  \usepackage[expansion=false]{microtype}  % disable expansion to avoid font errors
+}{}
+
+% --- Math ---
+\usepackage{amsmath,amssymb,mathtools}
+
+% --- Graphics and tables ---
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+
+% --- Colors (a richer palette for boxes and accents) ---
+\usepackage[dvipsnames,svgnames,x11names]{xcolor}
+\definecolor{DefBlue}{HTML}{1E3A5F}
+\definecolor{ThmGreen}{HTML}{1B4D3E}
+\definecolor{ExOrange}{HTML}{C45B28}
+\definecolor{TipRed}{HTML}{8B0000}
+\definecolor{KeyGray}{HTML}{4A4A4A}
+
+% --- Links ---
+\usepackage[colorlinks=true,linkcolor=DefBlue,urlcolor=DefBlue]{hyperref}
+
+% --- Headers and footers (optional) ---
+\IfFileExists{fancyhdr.sty}{
+  \usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \fancyhead[L]{\small\nouppercase{\leftmark}}
+  \fancyhead[R]{\small 6CCSAPEA Revision Notes}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+}{}
+
+% --- Better lists (optional) ---
+\IfFileExists{enumitem.sty}{
+  \usepackage{enumitem}
+  \setlist[itemize]{leftmargin=1.5em, itemsep=2pt, parsep=0pt, topsep=4pt}
+  \setlist[enumerate]{leftmargin=1.8em, itemsep=2pt, parsep=0pt, topsep=4pt}
+}{}
+
+% --- Paragraph formatting ---
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt plus 1pt minus 1pt}
+
+% --- Tighter default list spacing (works even without enumitem) ---
+\makeatletter
+\def\@listi{\leftmargin\leftmargini \parsep 0pt \topsep 4pt \itemsep 2pt}
+\let\@listI\@listi
+\@listi
+\makeatother
+
+% --- cleveref (optional) ---
+\IfFileExists{cleveref.sty}{
+  \usepackage[noabbrev,nameinlink]{cleveref}
+}{
+  \providecommand{\cref}[1]{\ref{##1}}
+  \providecommand{\Cref}[1]{\ref{##1}}
+}
+
+% =============================================================================
+%                              BOX ENVIRONMENTS (Simplified)
+% =============================================================================
+
+\newenvironment{defbox}[1][]{%
+  \par\medskip\noindent\textbf{\textcolor{DefBlue}{Definition}}%
+  \if\relax\detokenize{#1}\relax\else\textbf{\textcolor{DefBlue}{ (#1)}}\fi%
+  .\par\smallskip\ignorespaces
+}{\par\medskip}
+
+\newenvironment{thmbox}[1][]{%
+  \par\medskip\noindent\textbf{\textcolor{ThmGreen}{Key Argument}}%
+  \if\relax\detokenize{#1}\relax\else\textbf{\textcolor{ThmGreen}{ (#1)}}\fi%
+  .\par\smallskip\ignorespaces
+}{\par\medskip}
+
+\newenvironment{exbox}[1][]{%
+  \par\medskip\noindent\textbf{\textcolor{ExOrange}{Example}}%
+  \if\relax\detokenize{#1}\relax\else\textbf{\textcolor{ExOrange}{ (#1)}}\fi%
+  .\par\smallskip\ignorespaces
+}{\par\medskip}
+
+\newenvironment{tipbox}[1][]{%
+  \par\medskip\noindent\textbf{\textcolor{TipRed}{Exam Tip}}%
+  \if\relax\detokenize{#1}\relax\else\textbf{\textcolor{TipRed}{ (#1)}}\fi%
+  .\par\smallskip\ignorespaces
+}{\par\medskip}
+
+\newenvironment{keybox}[1][]{%
+  \par\medskip\noindent\textbf{\textcolor{KeyGray}{Key Points}}%
+  \if\relax\detokenize{#1}\relax\else\textbf{\textcolor{KeyGray}{ (#1)}}\fi%
+  .\par\smallskip\ignorespaces
+}{\par\medskip}
+
+% =============================================================================
+%                            UTILITY COMMANDS
+% =============================================================================
+
+% Visual separator (thin rule)
+\newcommand{\separator}{\par\vspace{6pt}\noindent\hrulefill\par\vspace{6pt}}
+
+% Thicker separator for major sections
+\newcommand{\bigseparator}{\par\vspace{10pt}\noindent\rule{\textwidth}{0.8pt}\par\vspace{10pt}}
+
+% TODO marker
+\newcommand{\TODO}{\textcolor{red}{\textbf{[TODO]}}}
+
+% Inline code style
+\newcommand{\code}[1]{\texttt{#1}}
+
+% Quick bold-italics for terms
+\newcommand{\term}[1]{\textbf{\textit{#1}}}
+
+% Philosopher name styling
+\newcommand{\philosopher}[1]{\textsc{#1}}
+

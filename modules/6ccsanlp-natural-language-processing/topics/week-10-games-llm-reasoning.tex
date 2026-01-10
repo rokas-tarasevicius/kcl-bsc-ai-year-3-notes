@@ -1,0 +1,429 @@
+% =============================================================================
+%                    WEEK 10: GAMES AND LLM REASONING
+% =============================================================================
+\section{Week 10: Games and LLM Reasoning}
+
+% -----------------------------------------------------------------------------
+%                              10.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Understand what \textbf{LLM reasoning} is and how it differs from standard language modelling, including the role of \textbf{chain-of-thought} reasoning.
+  \item Explain how reasoning models are trained, including \textbf{supervised fine-tuning (SFT)}, \textbf{reinforced fine-tuning (RLFT)}, and why \textbf{intermediate tokens} matter.
+  \item Apply and evaluate reasoning methods during inference, such as \textbf{self-consistency decoding} and \textbf{retrieval-augmented reasoning}.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week explores how reasoning emerges in LLMs by drawing parallels with game-playing AI (Pacman, Go, strategy games). We examine how models can be trained to improve reasoning through SFT and RLFT, and how inference strategies like self-consistency enhance performance. The key insight: reasoning requires generating variants, evaluating them, and pruning low-quality paths.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Define what makes a task a \textbf{reasoning task}.
+  \item Compare \textbf{complete} vs.\ \textbf{incomplete information games}.
+  \item Explain the \textbf{AlphaGo} approach: policy network, value network, self-play.
+  \item Define \textbf{reward hacking} and give an example.
+  \item Explain why \textbf{intermediate tokens} (chain-of-thought) matter theoretically.
+  \item Compare \textbf{long context} vs.\ \textbf{deep networks} for reasoning.
+  \item Describe \textbf{SFT} and \textbf{RLFT} for training reasoning models.
+  \item Explain \textbf{self-consistency decoding} and how it works.
+  \item Describe how \textbf{reasoning with retrieval} works.
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 10.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Definition of reasoning
+  \item Game-based reasoning: Pacman, Go, strategy games
+  \item AlphaGo: policy networks, value networks, self-play
+  \item Connecting games to LLM reasoning
+  \item Why intermediate tokens matter
+  \item Training reasoning models: SFT and RLFT
+  \item Inference strategies: self-consistency
+  \item Reasoning with retrieval
+\end{enumerate}
+
+\bigseparator
+
+% --- 10.2.1 Definition of Reasoning ---
+\subsubsection{Definition of Reasoning}
+
+\begin{defbox}[What is a Reasoning Task?]
+A \textbf{reasoning task} is one where you need to use:
+\begin{itemize}
+  \item \textbf{Logic} --- applying rules or constraints
+  \item \textbf{Inference} --- deriving conclusions from premises
+  \item \textbf{Step-by-step thinking} --- decomposing into sub-problems
+\end{itemize}
+
+\textbf{Key distinction:} It's not about the task itself, but the \textbf{method} --- reasoning involves deriving an answer through intermediate steps.
+\end{defbox}
+
+\begin{exbox}[Reasoning Example]
+\textbf{Question:} What is the output when concatenating the last letter of each word in ``artificial intelligence''?
+
+\textbf{Direct answer:} ``LE'' (may be wrong)
+
+\textbf{Reasoning answer:} The last letter of ``artificial'' is ``l''. The last letter of ``intelligence'' is ``e''. Concatenating gives ``le''.
+
+The reasoning approach is more reliable because it shows the work.
+\end{exbox}
+
+\bigseparator
+
+% --- 10.2.2 Game-Based Reasoning ---
+\subsubsection{Game-Based Reasoning: From Pacman to Go}
+
+Games provide a useful framework for understanding reasoning:
+
+\begin{defbox}[Key Concepts in Game Reasoning]
+\begin{itemize}
+  \item \textbf{Variants:} Generate multiple solution paths (different moves)
+  \item \textbf{Reward:} Estimate the value/potential of each path
+  \item \textbf{Pruning:} Discard low-value paths early
+  \item \textbf{Action sequence:} Each solution contains multiple actions
+\end{itemize}
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\textbf{Game} & \textbf{Subtasks} & \textbf{Immediate Reward} & \textbf{Complete Info?} \\
+\midrule
+Pacman & Single action & Yes & Yes \\
+Go & Single action & No (needs training) & Yes \\
+StarCraft/Warcraft & Action sequence & No (needs training) & No (fog of war) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% --- 10.2.3 Complete vs Incomplete Information ---
+\subsubsection{Complete vs.\ Incomplete Information Games}
+
+\begin{defbox}[Game Types]
+\textbf{Complete Information Games:}
+\begin{itemize}
+  \item All players share full knowledge of the game state
+  \item Examples: Chess, Go, Checkers
+\end{itemize}
+
+\textbf{Incomplete Information Games:}
+\begin{itemize}
+  \item Players lack full knowledge; some information is private
+  \item Must infer or form beliefs about opponents
+  \item Examples: Poker, StarCraft (fog of war), real-world scenarios
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[AI Milestones in Games]
+\begin{itemize}
+  \item \textbf{Chess (1997):} Deep Blue defeats Kasparov
+  \item \textbf{Go (2016):} AlphaGo defeats Lee Sedol
+  \item \textbf{Poker (2017):} Libratus wins 2-player Texas Hold'em
+  \item \textbf{StarCraft II (2019):} AlphaStar reaches top 0.2\% --- but hasn't beaten world champions
+\end{itemize}
+
+Strategy games remain hard: action sequences, no immediate rewards, fog of war.
+\end{tipbox}
+
+\bigseparator
+
+% --- 10.2.4 AlphaGo ---
+\subsubsection{AlphaGo: Learning to Play Go}
+
+\begin{thmbox}[AlphaGo's Two-Stage Approach]
+\textbf{Stage 1: Learn from human games}
+\begin{itemize}
+  \item \textbf{Policy network:} Predict the next move given board state
+  \item Trained on millions of human game records
+\end{itemize}
+
+\textbf{Stage 2: Learn from self-play}
+\begin{itemize}
+  \item Two models play against each other
+  \item \textbf{Value network:} Estimate win probability from current position
+  \item Distribute rewards: positive for winning moves, negative for losing moves
+\end{itemize}
+\end{thmbox}
+
+\begin{defbox}[Policy vs.\ Value Networks]
+\textbf{Policy network:} ``What move should I make?'' (action selection)
+
+\textbf{Value network:} ``How good is this position?'' (state evaluation)
+
+Together, they enable:
+\begin{itemize}
+  \item Assigning reward to individual moves (not just final outcome)
+  \item Pruning unpromising branches early
+  \item Focusing search on promising directions
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Reward Hacking]
+\textbf{Reward hacking:} The model finds a shortcut to maximise reward that violates the designer's intent.
+
+\textbf{Pacman example:} If we add a reward for staying away from ghosts, Pacman may hide and wait for bonus fruits instead of playing normally.
+
+\textbf{LLM example:} If we reward tool calling, the LLM may call tools repeatedly but never use the results.
+\end{defbox}
+
+\bigseparator
+
+% --- 10.2.5 Connecting Games to LLM Reasoning ---
+\subsubsection{Connecting Games to LLM Reasoning}
+
+\begin{thmbox}[Game Concepts Applied to LLMs]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Game Concept} & \textbf{LLM Reasoning Equivalent} \\
+\midrule
+Action & Generating one token \\
+Subtask & Sequence of tokens (reasoning step) \\
+Variant & Different reasoning paths \\
+Immediate reward & Learned reward function for intermediate steps \\
+Incomplete info & LLM cannot fully recognise user intent \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{thmbox}
+
+\bigseparator
+
+% --- 10.2.6 Why Intermediate Tokens Matter ---
+\subsubsection{Why Intermediate Tokens (Chain-of-Thought) Matter}
+
+\begin{thmbox}[Theoretical Result]
+For problems solvable by boolean circuits of size $T$:
+\begin{itemize}
+  \item \textbf{With $O(T)$ intermediate tokens:} Constant-size transformers can solve them
+  \item \textbf{Without intermediate tokens:} Requires huge depth or cannot solve at all
+\end{itemize}
+
+\textbf{Translation:} You can trade \textbf{long context} for \textbf{deep networks}.
+\end{thmbox}
+
+\begin{defbox}[Long Context vs.\ Deep Networks]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+& \textbf{Long Context (CoT)} & \textbf{Deep Networks} \\
+\midrule
+Training & Easy (SFT/RL on existing model) & Requires new model (expensive) \\
+Inference & Training-free possible (prompting) & Requires trained model \\
+Tokens & More tokens needed & Fewer tokens \\
+Explainability & High (shows reasoning) & Low \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{defbox}
+
+\begin{tipbox}[Pre-trained LLMs Can Reason]
+Research shows that checking more generation candidates reveals reasoning:
+\begin{itemize}
+  \item Greedy decoding may give short, wrong answers
+  \item Sampling diverse candidates often reveals longer, correct reasoning paths
+  \item Longer responses tend to have better answers
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% --- 10.2.7 Training Reasoning Models: SFT ---
+\subsubsection{Supervised Fine-Tuning (SFT) for Reasoning}
+
+\begin{defbox}[SFT for Reasoning]
+\textbf{Goal:} Train a model to think step-by-step without explicit instructions.
+
+\textbf{Process:}
+\begin{enumerate}
+  \item Collect problems with step-by-step solutions (from humans or model self-play)
+  \item Maximise likelihood of correct solutions
+  \item (Optional) Minimise likelihood of incorrect solutions
+\end{enumerate}
+\end{defbox}
+
+\begin{tipbox}[SFT Limitations]
+\begin{itemize}
+  \item \textbf{Easy to implement} but may not generalise well
+  \item \textbf{Human annotators cannot provide large-scale data}
+  \item Similar to AlphaGo's first stage: learns from human examples
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% --- 10.2.8 Reinforced Fine-Tuning (RLFT) ---
+\subsubsection{Reinforced Fine-Tuning (RLFT)}
+
+\begin{defbox}[RLFT for Reasoning]
+\textbf{Goal:} Learn from self-play without human annotations.
+
+\textbf{Process:}
+\begin{enumerate}
+  \item Generate step-by-step solutions from the model itself
+  \item Use a \textbf{verifier} to check if solutions are correct
+  \item Maximise likelihood of correct solutions
+  \item Minimise likelihood of wrong solutions
+  \item Repeat
+\end{enumerate}
+
+Similar to AlphaGo's self-play stage!
+\end{defbox}
+
+\begin{thmbox}[RLFT Benefits and Challenges]
+\textbf{Benefits:}
+\begin{itemize}
+  \item Directly optimises for the reasoning task
+  \item No human annotators needed
+  \item Uses verifiers to evaluate step-by-step solutions
+\end{itemize}
+
+\textbf{Challenges:}
+\begin{itemize}
+  \item How to verify if generated solutions are correct?
+  \item Some tasks cannot be automatically verified (math and code are easier)
+  \item Finding reliable verifiers for non-math domains is hard
+\end{itemize}
+\end{thmbox}
+
+\begin{exbox}[Verifiable Domains]
+\textbf{Math:} Every step can be verified by calculation.
+
+\textbf{Coding:} Execute code to check correctness.
+
+\textbf{24-point game:} Limited vocabulary (4 numbers + 4 operators), verifiable by calculation.
+
+These domains have seen significant RLFT improvements.
+\end{exbox}
+
+\bigseparator
+
+% --- 10.2.9 Self-Consistency Decoding ---
+\subsubsection{Self-Consistency Decoding}
+
+\begin{defbox}[Self-Consistency]
+If we don't need the rationale, generate as many reasoning paths as possible and vote on the answer.
+
+\textbf{Process:}
+\begin{enumerate}
+  \item Generate multiple responses by random sampling (different reasoning paths)
+  \item Extract the final answer from each response
+  \item Choose the answer that appears most frequently (majority vote)
+\end{enumerate}
+
+\textbf{Optional:} Let the LLM self-select the most consistent answer from candidates.
+\end{defbox}
+
+\begin{exbox}[Self-Consistency Example]
+\textbf{Question:} ``Where do people drink less coffee than in Mexico?''
+
+\textbf{Response 1:} ``Japan, China, UK...'' (Answer: Japan)
+
+\textbf{Response 2:} ``Japan, China, India...'' (Answer: Japan)
+
+\textbf{Response 3:} ``1. Japan... 2. China... 3. Saudi Arabia... 4. India...'' (Answer: Japan)
+
+\textbf{Majority vote:} Japan $\checkmark$
+\end{exbox}
+
+\bigseparator
+
+% --- 10.2.10 Latent Reasoning ---
+\subsubsection{Latent Reasoning (Advanced)}
+
+\begin{defbox}[Latent Reasoning Approaches]
+Instead of explicit chain-of-thought tokens, manipulate the model's internal representations:
+\begin{itemize}
+  \item Perturb embeddings with controlled Gaussian noise
+  \item Use Bayesian optimisation to find embeddings that lead to high-reward outputs
+  \item Guide reasoning via internal states rather than language-based instructions
+\end{itemize}
+
+\textbf{Trade-off:} Less interpretable but potentially more efficient.
+\end{defbox}
+
+\bigseparator
+
+% --- 10.2.11 Reasoning with Retrieval ---
+\subsubsection{Reasoning with Retrieval}
+
+\begin{defbox}[Retrieval-Augmented Reasoning]
+Apply game-inspired reasoning to RAG systems:
+
+\textbf{Variant:} Change the order or selection of retrieved documents.
+
+\textbf{Reward:} Use another LLM to evaluate output quality.
+
+\textbf{Pruning:} Update, reorder, or filter retrieved documents based on evaluation.
+\end{defbox}
+
+\begin{exbox}[Retrieval + Reasoning Pipeline]
+\begin{enumerate}
+  \item Retrieve chunks: Chunk$_1$, Chunk$_2$, Chunk$_3$
+  \item Generate answer with LLM$_1$
+  \item Evaluate answer with LLM$_2$ (reward)
+  \item If reward is low: reorder/filter chunks, create variants
+  \item Repeat until satisfactory answer
+\end{enumerate}
+\end{exbox}
+
+\begin{tipbox}[LLMs as Analogical Reasoners]
+Retrieval can provide analogous cases for reasoning:
+\begin{itemize}
+  \item Retrieve similar solved problems
+  \item Use them as in-context examples
+  \item LLM applies analogous reasoning to new problem
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% --- Summary ---
+\subsubsection{Summary: Reasoning Methods Comparison}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4cm} p{4cm} @{}}
+\toprule
+\textbf{Method} & \textbf{Training} & \textbf{Inference} \\
+\midrule
+SFT & Human step-by-step data & Standard decoding \\
+RLFT & Self-play + verifier & Standard decoding \\
+Self-consistency & None (or any) & Multiple samples + voting \\
+CoT prompting & None & ``Let's think step by step'' \\
+Retrieval-augmented & Optional & Retrieve + generate + evaluate \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{thmbox}[Key Takeaways]
+\begin{enumerate}
+  \item \textbf{Reasoning = variants + rewards + pruning} (inspired by game AI)
+  \item \textbf{Intermediate tokens} allow shallow models to solve complex problems
+  \item \textbf{SFT} learns from examples; \textbf{RLFT} learns from self-play with verifiers
+  \item \textbf{Self-consistency} improves accuracy through majority voting
+  \item \textbf{Retrieval} can augment reasoning with analogous cases
+\end{enumerate}
+\end{thmbox}
+

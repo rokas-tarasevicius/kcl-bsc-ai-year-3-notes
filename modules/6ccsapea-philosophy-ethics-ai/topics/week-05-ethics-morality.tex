@@ -1,0 +1,557 @@
+% =============================================================================
+%                       WEEK 5: ETHICS AND MORALITY
+% =============================================================================
+\section{Week 5: Ethics and Morality}
+
+% -----------------------------------------------------------------------------
+%                              5.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Identify key \textbf{ethical challenges} posed by AI.
+  \item Explain the main \textbf{philosophical theories of ethics}: deontology, consequentialism, virtue ethics.
+  \item Describe \textbf{Moor's categorization} of moral agents.
+  \item Compare \textbf{top-down} (deontic logic) and \textbf{bottom-up} (ML) approaches to implementing moral agents.
+  \item Analyze \textbf{utilitarianism} and its critiques using trolley problem thought experiments.
+  \item Discuss how ethical theories might be \textbf{combined} in AI implementations.
+\end{itemize}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+Ethics concerns what we \textit{ought} to do. As AI becomes more autonomous, we must ensure AI systems behave ethically. This week covers three major ethical theories---deontology (rules/duties), consequentialism (outcomes), and virtue ethics (character)---and how they inform the design of \textbf{artificial moral agents} (AMAs). Utilitarianism (a form of consequentialism) is explored in depth, including how human moral intuitions can diverge from rational utilitarian calculations.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Compare and contrast deontology, consequentialism, and virtue ethics.
+  \item What is Kant's Categorical Imperative? What are its critiques?
+  \item Explain Moor's categorization of moral agents (ethical impact, implicit, explicit, full).
+  \item How do top-down and bottom-up approaches to AMAs differ?
+  \item What is utilitarianism? How is it defined?
+  \item Analyze the trolley problem variations: What do they reveal about moral intuitions?
+  \item Distinguish between ``means to an end'' and ``side effect'' in moral reasoning.
+  \item What are the critiques of utilitarianism? How might they be addressed?
+  \item How might ethical theories be combined in AI implementations?
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 5.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Ethical challenges for AI
+  \item Key theories of ethics: Deontology, Consequentialism, Virtue Ethics
+  \item Moral relativism
+  \item Moor's categorization of moral agents
+  \item Implementing artificial moral agents (top-down vs.\ bottom-up)
+  \item Utilitarianism in depth
+  \item Trolleyology: Moral intuitions vs.\ utilitarian calculation
+  \item Combining theories for AMAs
+\end{enumerate}
+
+\bigseparator
+
+% --- Ethical Challenges for AI ---
+\subsubsection{Ethical Challenges for Artificial Intelligence}
+
+\begin{keybox}[Why Are We More Worried Now?]
+\begin{enumerate}
+  \item \textbf{Non-segregated environments:} AI (e.g., autonomous cars) now operates in open, unpredictable spaces, not just restricted areas with trained personnel.
+  \item \textbf{Increased autonomy:} AI makes decisions independently, without human intervention.
+  \item \textbf{Unpredictable contexts:} ML enables deployment in situations designers cannot fully anticipate.
+  \item \textbf{Lack of transparency:} ML algorithms are ``black boxes''---we can't explain how they decide.
+\end{enumerate}
+\end{keybox}
+
+\begin{exbox}[Examples of Ethical Challenges]
+\begin{itemize}
+  \item \textbf{Autonomous cars:} Brake failure $\to$ injure 3 workers or swerve and injure driver?
+  \item \textbf{Autonomous weapons:} R\&D in US, UK, China, Russia, etc.
+  \item \textbf{ML in decisions:} Insurance, recruitment, mortgages, criminal justice $\to$ bias, fairness, transparency.
+  \item \textbf{Social robots:} Sex robots, elderly care robots $\to$ anthropomorphization, ethical treatment.
+  \item \textbf{Social media / IoT:} Data privacy, surveillance, manipulation.
+  \item \textbf{Filtering algorithms:} Polarizing beliefs, targeted advertising, restricting choices.
+  \item \textbf{Medical AI:} Decision support, surgical robots, diagnosis.
+  \item \textbf{Superintelligence:} Value loading problem (AI goals misaligned with human values).
+\end{itemize}
+\end{exbox}
+
+\begin{defbox}[Ethics and AI: Key Questions]
+\begin{enumerate}
+  \item How should \textbf{we} use AI ethically? (User responsibility)
+  \item How do we \textbf{design} AI so it cannot act unethically? (Hardcoded constraints)
+  \item How do we design \textbf{autonomous} AI to \textit{choose} ethically in unforeseen situations?
+  \item How do we remain \textbf{aware} of AI's ethical impact as it becomes embedded in society?
+\end{enumerate}
+\end{defbox}
+
+\bigseparator
+
+% --- Key Theories of Ethics ---
+\subsubsection{Key Theories of Ethics and Morality}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Theory} & \textbf{Core Idea} \\
+\midrule
+\textbf{Deontology} & Focus on \textbf{duties and rights}; morality = following rules/norms/laws. \\
+\textbf{Consequentialism} & Focus on \textbf{outcomes}; choose actions with the best consequences. \\
+\textbf{Virtue Ethics} & Focus on \textbf{character}; cultivate virtues (honesty, courage, etc.) $\to$ act ethically. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{exbox}[Helping Someone in Need]
+\begin{itemize}
+  \item \textbf{Consequentialist:} Helping maximizes well-being.
+  \item \textbf{Deontologist:} Helping accords with ``Treat others as you would want to be treated.''
+  \item \textbf{Virtue Ethicist:} Helping is what a charitable/benevolent person would do.
+\end{itemize}
+\end{exbox}
+
+\separator
+
+\paragraph*{Deontology}
+
+\begin{defbox}[Deontology]
+Concerned with choices that are morally \textbf{forbidden} (prohibited), \textbf{required} (obligated), or \textbf{permitted}. Guides what we \textit{ought} to do by following rules that encode duties and respect rights.
+
+\textbf{Two approaches:}
+\begin{itemize}
+  \item Agent-focused: Duties of the agent to be moral.
+  \item Rights-focused: Respect for rights of others.
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[Deontological Rules]
+\textbf{Specific rules:}
+\begin{itemize}
+  \item Religious: Ten Commandments, Hindu prohibition on beef.
+  \item Secular: Laws against murder, theft; Asimov's Laws of Robotics.
+\end{itemize}
+
+\textbf{General principles:}
+\begin{itemize}
+  \item \textbf{The Golden Rule:} Treat others as you would like to be treated.
+  \item \textbf{Kant's Categorical Imperative (CI):} Act only according to that rule by which you can at the same time will that it should become a \textit{universal law}.
+\end{itemize}
+\end{exbox}
+
+\begin{defbox}[Kant's Categorical Imperative]
+\textbf{Formulation 1:} Act only according to that rule by which you can \textit{will} that it should become a \textbf{universal law}.
+
+\textbf{Example:} If you consider lying to get what you want, you must will that \textit{everyone} lies. But then no one believes anyone, and lying fails. So lying is not permitted---it requires making an exception for yourself.
+
+\textbf{Formulation 2:} Act so that you treat humanity (yourself and others) always as an \textbf{end} and never simply as a \textbf{means}.
+
+$\to$ Slavery is wrong because slaves are used as means to the slave owner's ends.
+\end{defbox}
+
+\begin{tipbox}[Critiques of Deontology]
+\begin{enumerate}
+  \item \textbf{Too general/vague:} Doesn't always guide action in specific situations.
+  \item \textbf{Inflexible:} Absolute prohibitions; what about exceptions? (Can update rules, but then need to list all exceptions---computationally infeasible.)
+  \item \textbf{No priority among rules:} When duties/rights conflict, no clear resolution. (E.g., abortion: right to life vs.\ right to choose.)
+  \item \textbf{Harmful consequences:} Following rules may lead to bad outcomes. (E.g., ``A sadist is a masochist who follows the Golden Rule.'')
+\end{enumerate}
+\end{tipbox}
+
+\separator
+
+\paragraph*{Virtue Ethics}
+
+\begin{defbox}[Virtue Ethics]
+Morally good actions flow from the cultivation of \textbf{good character} (virtues): honesty, courage, compassion, wisdom, justice, etc.
+
+\textbf{Origins:} Socrates, Aristotle.
+
+\textbf{Learning:} What is good is learned through intuition, induction, experience---observing good people, being rewarded for good behavior.
+
+$\to$ Resonates with \textbf{machine learning}: learn ethical behavior through experience and reinforcement, not explicit rules.
+\end{defbox}
+
+\begin{tipbox}[Critiques of Virtue Ethics]
+\begin{itemize}
+  \item Different cultures have different virtues; no objectively ``right'' list.
+  \item Does not provide guidance on which actions are permitted/prohibited, only on what character to cultivate.
+  \item In novel situations, virtues may not give definitive guidance (same problem for ML agents).
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+\paragraph*{Consequentialism}
+
+\begin{defbox}[Consequentialism]
+Actions should be judged \textbf{only by their consequences}. Specify what is ``good,'' then choose actions that maximize the good.
+
+\textbf{No rules or rights:} All that matters is outcomes. (E.g., lying to save an innocent life may be justified.)
+
+\textbf{Fits AI/AIXI model:} Agent maximizes expected utility (= the good).
+\end{defbox}
+
+\bigseparator
+
+% --- Moral Relativism ---
+\subsubsection{Moral Relativism}
+
+\begin{defbox}[Moral Relativism]
+\textbf{Argument:}
+\begin{enumerate}
+  \item Morality = value judgments in a given society.
+  \item Other societies have their own judgments; we have ours.
+  \item \textbf{Conclusion:} We should not judge other cultures.
+\end{enumerate}
+
+\textbf{Critique:} The conclusion is itself a value judgment announced as a universal truth (``no matter what culture, you should not judge''). This is self-contradictory.
+\end{defbox}
+
+\bigseparator
+
+% --- Moor's Categorization ---
+\subsubsection{Moor's Categorization of Moral Agents}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Category} & \textbf{Description} \\
+\midrule
+\textbf{Ethical Impact Agent} & Any machine whose operations increase or decrease good in the world. (E.g., robot camel jockeys replacing child jockeys; search ranking algorithms.) \\
+\textbf{Implicit Ethical Agent} & Designed not to have negative ethical effects; behavior constrained by designers. No explicit representation of ethics. (E.g., pilot collision warning systems; robotic lawnmowers that can't harm.) \\
+\textbf{Explicit Ethical Agent} & Can reason about the best action in ethical dilemmas, including \textbf{novel} situations. Uses explicit representations of ethics (e.g., deontic logic rules). \\
+\textbf{Full Ethical Agent} & Has \textbf{moral agency}: understands ethical impacts, freely chooses, can justify moral judgments. $\to$ Morally responsible and accountable. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Key Question]
+Are these categories mutually exclusive? (E.g., an implicit ethical agent may also be an ethical impact agent.)
+\end{tipbox}
+
+\bigseparator
+
+% --- Implementing AMAs ---
+\subsubsection{Implementing Artificial Moral Agents (AMAs)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.5cm} p{5cm} @{}}
+\toprule
+\textbf{Approach} & \textbf{Description} & \textbf{Correspondence} \\
+\midrule
+\textbf{Top-Down} & Encode moral theory (rules) in agent; agent applies rules to act ethically. Logic-based, deontic. & Deontology \\
+\textbf{Bottom-Up} & Agent learns ethical behavior through experience (reinforcement learning). Values implicit, not articulated. & Virtue Ethics \\
+\textbf{Hybrid} & Combines top-down and bottom-up. & Multiple theories \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\paragraph*{Top-Down: Deontic Logic Implementations}
+
+\begin{defbox}[Deontic Logic]
+Uses modalities:
+\begin{itemize}
+  \item $Oq$ = $q$ is \textbf{obligatory}.
+  \item $Pq$ = $q$ is \textbf{permitted}.
+  \item $Fq$ = $q$ is \textbf{forbidden}.
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[Autonomous Car Example (UK)]
+\begin{itemize}
+  \item $F(\text{drive\_on\_right})$ --- forbidden to drive on right.
+  \item $O(\text{protect\_driver})$ --- obligated to protect driver.
+\end{itemize}
+
+\textbf{Scenario:} In a tunnel, collision imminent; only way to avoid is to swerve right.
+
+\textbf{Conflict:} Must prioritize rules.
+
+\textbf{Rule:} If collision imminent and risk of injury on left $>$ risk on right, then $O(\text{protect\_driver}) > F(\text{drive\_on\_right})$.
+
+\textbf{Problem:} What if not in a tunnel? What about risk to others? What if there's a child in oncoming car? $\to$ Must encode \textit{all} exceptions---computationally infeasible.
+\end{exbox}
+
+\begin{thmbox}[The Core Problem]
+For autonomous agents in complex, unpredictable environments:
+\begin{itemize}
+  \item Deontic rules must be \textbf{general} (can't anticipate all situations).
+  \item Challenge: How to \textbf{interpret} general principles in specific situations?
+  \item Related to \textbf{commonsense reasoning} problem (Week 4).
+\end{itemize}
+\end{thmbox}
+
+\begin{exbox}[Asimov's Laws of Robotics]
+\begin{enumerate}
+  \setcounter{enumi}{-1}
+  \item A robot may not injure humanity, or, by inaction, allow humanity to come to harm.
+  \item A robot may not injure a human being or, through inaction, allow a human being to come to harm.
+  \item A robot must obey orders given by human beings except where such orders conflict with the First Law.
+  \item A robot must protect its own existence as long as this does not conflict with the First or Second Laws.
+\end{enumerate}
+
+\textbf{Problem:} What does ``harm'' mean? A literal-minded robot might interrupt a surgeon cutting a patient. Unless context is fully described, rules can lead to unintended consequences.
+\end{exbox}
+
+\separator
+
+\paragraph*{Bottom-Up: Machine Learning Implementations}
+
+\begin{itemize}
+  \item Agent learns ethical behavior through \textbf{reinforcement learning}.
+  \item Equates with \textbf{virtue ethics}: learning through experience, not explicit rules.
+  \item Agent maximizes rewards by optimizing utility functions.
+  \item \textbf{Problem:} In novel situations, no past experience to draw on.
+\end{itemize}
+
+\bigseparator
+
+% --- Utilitarianism ---
+\subsubsection{Utilitarianism}
+
+\begin{defbox}[Utilitarianism]
+\textbf{Utilitarianism = Consequentialism + Happiness as the measure of good.}
+
+\[
+\text{Utilitarianism} = \text{Impartial Maximization of Happiness}
+\]
+
+\begin{itemize}
+  \item \textbf{Impartial:} Everyone's happiness counts equally (related to Golden Rule).
+  \item \textbf{Maximization:} Choose actions that produce the greatest net happiness.
+\end{itemize}
+
+\textbf{Founders:} Jeremy Bentham, John Stuart Mill (18th--19th century).
+\end{defbox}
+
+\begin{keybox}[Why Happiness?]
+\begin{enumerate}
+  \item \textbf{Universal:} True for everyone $\to$ basis for universal morality.
+  \item \textbf{Foundational:} All values we cherish (family, friendship, freedom, justice) are ultimately linked to happiness. Subtract their positive impact on experience, and their value is lost.
+\end{enumerate}
+
+\textbf{What is happiness?}
+\begin{itemize}
+  \item Subjective experience of well-being.
+  \item Counterfactual test: If something we value were absent, would happiness decrease? Then it contributes to happiness.
+\end{itemize}
+\end{keybox}
+
+\begin{thmbox}[Act vs.\ Rule Utilitarianism]
+\begin{itemize}
+  \item \textbf{Act Utilitarianism:} Apply utility calculation case-by-case; choose action that maximizes utility in that situation.
+  \item \textbf{Rule Utilitarianism:} Actions are justified if they conform to \textit{rules} that, if included in our moral code, would maximize utility overall. (Combines deontology and utilitarianism.)
+\end{itemize}
+\end{thmbox}
+
+\bigseparator
+
+% --- Trolleyology ---
+\subsubsection{Trolleyology: Moral Intuitions vs.\ Utilitarian Calculation}
+
+\begin{defbox}[The Trolley Problems]
+Thought experiments involving a trolley hurtling toward workers tied to a track. You know nothing about the workers (age, character, etc.). The question: What would you do?
+\end{defbox}
+
+\separator
+
+\paragraph*{The Switch Dilemma (Standard)}
+
+A trolley is heading toward 5 workers. At point A, you can steer the trolley onto a side track, killing 1 worker instead of 5.
+
+\textbf{Response:} \textbf{87\%} would pull the switch (kill 1, save 5).
+
+\textbf{Key features:}
+\begin{itemize}
+  \item No physical force (just pull a switch).
+  \item Death of 1 is a \textbf{side effect}, not a means to an end. (Counterfactually: if the 1 worker weren't there, you'd still save the 5.)
+\end{itemize}
+
+\separator
+
+\paragraph*{The Footbridge Dilemma}
+
+You are on a footbridge. A large man with a backpack is next to you. The only way to stop the trolley is to push him off the bridge; he dies but stops the trolley, saving 5.
+
+\textbf{Response:} Only \textbf{31\%} would push the man.
+
+\textbf{Why the difference?} (Same utilitarian calculation: kill 1, save 5.)
+\begin{enumerate}
+  \item \textbf{Physical force:} Actively pushing someone $\to$ emotional resistance to violence (evolved to preserve social cooperation).
+  \item \textbf{Means to an end:} The man is used as a ``trolley stopper.'' His death is \textit{causally necessary} to save the 5. (Counterfactually: if you didn't push him, you wouldn't save the 5.)
+\end{enumerate}
+
+\separator
+
+\paragraph*{Footbridge + Switch Dilemma}
+
+You are on a footbridge. You can run to the end and pull a switch to divert the trolley, saving 5. But you must collide with the man, knocking him off the bridge (he dies).
+
+\textbf{Response:} \textbf{81\%} would run to pull the switch.
+
+\textbf{Why?}
+\begin{itemize}
+  \item Physical force: Yes.
+  \item Means to an end: \textbf{No}---the man's death is a \textbf{side effect}. (Counterfactually: if he weren't there, you'd still save the 5.)
+\end{itemize}
+
+\separator
+
+\paragraph*{Switch Dilemma (Variant)}
+
+Same as standard, but this time, if the 1 worker were not on the side track, the trolley would loop back and kill the 5. So the 1 worker is used as a trolley stopper (means to an end).
+
+\textbf{Response:} \textbf{81\%} would steer right.
+
+\textbf{Why?}
+\begin{itemize}
+  \item No physical force.
+  \item Means to an end: Yes, but without physical force, the aversion is reduced.
+\end{itemize}
+
+\separator
+
+\begin{thmbox}[Key Insight: Physical Force + Means to End]
+It is the \textbf{combination} of:
+\begin{enumerate}
+  \item \textbf{Physical force} (violence), and
+  \item \textbf{Means to an end} (death is causally necessary for the goal)
+\end{enumerate}
+that triggers strong emotional resistance and interferes with utilitarian calculation.
+
+\textbf{Why?}
+\begin{itemize}
+  \item \textbf{Physical force:} We evolved to avoid violence (disrupts cooperation, threatens survival).
+  \item \textbf{Means to an end:} When planning actions, we cognitively ``see'' the causal chain. Harms that are \textit{means} are more salient $\to$ trigger emotional alarm. \textit{Side effects} are less salient.
+\end{itemize}
+\end{thmbox}
+
+\begin{exbox}[International Law: Means vs.\ Side Effect]
+\begin{itemize}
+  \item \textbf{Illegal:} Intentionally bombing civilians to lower enemy morale (civilians = means to an end).
+  \item \textbf{Legal:} Bombing a munitions factory, knowing civilians will die as ``collateral damage'' (side effect).
+\end{itemize}
+
+\textbf{Critique:} Both are foreseeable deaths. Why is there a moral distinction? The distinction between means and side effect is arguably \textbf{morally irrelevant}---but our intuitions are shaped by this cognitive bias.
+\end{exbox}
+
+\begin{thmbox}[Trolleyology Conclusion]
+\begin{itemize}
+  \item People's moral intuitions diverge from pure utilitarian calculation.
+  \item This is due to evolved emotional responses (aversion to violence, salience of means vs.\ side effects).
+  \item But what people \textit{emotionally think} is right doesn't make it right.
+  \item \textbf{AIs} will not have these evolutionarily acquired biases. They could apply utilitarian calculations without emotional interference.
+\end{itemize}
+\end{thmbox}
+
+\bigseparator
+
+% --- Critiques of Utilitarianism ---
+\subsubsection{Critiques of Utilitarianism}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} p{4cm} p{5.5cm} p{4.5cm} @{}}
+\toprule
+\textbf{Critique} & \textbf{Example} & \textbf{Response} \\
+\midrule
+\textbf{Not demanding enough} (leads to unethical choices) & 5 people need organ transplants. Kill 1 healthy person to harvest organs and save 5? & Which society is happier: one where this is legal, or one where it is not? The latter $\to$ utilitarianism doesn't actually endorse this. \\
+\textbf{Too demanding} (requires unreasonable sacrifices) & Instead of buying a \$500 suit, donate to save children in poverty. & \textbf{Pragmatic utilitarianism:} Being a ``perfect'' utilitarian is anti-utilitarian (incompatible with human nature). Be a role model others can emulate $\to$ greater good. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Utilitarianism and the Abortion Debate]
+\begin{itemize}
+  \item Pro-choice: Appeals to \textbf{right to choose}.
+  \item Pro-life: Appeals to \textbf{right to life}.
+\end{itemize}
+
+Both are deontic rights $\to$ no clear resolution when they conflict.
+
+\textbf{Utilitarian approach:} Appeal to \textbf{evidence} about consequences. Does legalizing abortion increase or decrease overall well-being? (E.g., reduced poverty, fewer backstreet abortions, reduced crime?) This can be studied empirically.
+
+When moral issues are \textbf{settled} (e.g., slavery), express them as rights. But for \textbf{controversial} dilemmas, utilitarianism may offer a path forward.
+\end{tipbox}
+
+\bigseparator
+
+% --- Combining Theories ---
+\subsubsection{Combining Ethical Theories for AMAs}
+
+\begin{thmbox}[Hybrid Approach]
+Perhaps AMAs should combine all three ethical theories:
+
+\begin{enumerate}
+  \item \textbf{Machine Learning (Virtue Ethics):} Reward agents for ethically good behaviors. Equip them to do the right thing in \textbf{familiar} situations with little controversy.
+  
+  \item \textbf{Utilitarianism (Consequentialism):} For \textbf{novel, controversial} dilemmas, use utilitarian calculations (under bounded resources). AI can:
+  \begin{itemize}
+    \item Collect and analyze data/evidence.
+    \item Model causal reasoning (superior to humans).
+    \item Humans provide input on how actions impact well-being (subjective experience).
+  \end{itemize}
+  
+  \item \textbf{Rules (Deontology):} Once controversies are settled, encode as \textbf{rules} for long-term planning. (= Rule Utilitarianism.)
+\end{enumerate}
+\end{thmbox}
+
+\begin{tipbox}[Utilitarian AI: Computational Challenges]
+\begin{itemize}
+  \item \textbf{Causal reasoning:} Computationally intractable to model all effects of actions.
+  \item \textbf{Happiness estimation:} Must estimate effects on all conscious beings.
+  \item \textbf{Bounded rationality:} Aim for ``good enough'' calculations under limited resources (like weather forecasting---imperfect but improving).
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% --- Summary ---
+\subsubsection{Summary: Key Takeaways}
+
+\begin{keybox}[Week 5 Key Points]
+\begin{enumerate}
+  \item \textbf{Ethical challenges for AI:} Autonomy, unpredictability, lack of transparency.
+  \item \textbf{Deontology:} Duties, rights, rules (Golden Rule, Kant's CI). Critiques: inflexible, can't handle exceptions, no priority among rules.
+  \item \textbf{Virtue Ethics:} Cultivate good character. Critiques: no guidance on specific actions, culture-dependent.
+  \item \textbf{Consequentialism:} Judge actions by outcomes. Utilitarianism = impartial maximization of happiness.
+  \item \textbf{Moral relativism:} Self-contradictory.
+  \item \textbf{Moor's categories:} Ethical impact, implicit, explicit, full ethical agents.
+  \item \textbf{Top-down AMAs:} Deontic logic; problems with commonsense reasoning and exceptions.
+  \item \textbf{Bottom-up AMAs:} ML/reinforcement learning; problems in novel situations.
+  \item \textbf{Trolleyology:} Physical force + means-to-end $\to$ interferes with utilitarian calculation. Our intuitions are biased; AI could reason without these biases.
+  \item \textbf{Hybrid AMAs:} Combine ML (familiar situations), utilitarianism (novel dilemmas), rules (settled issues).
+\end{enumerate}
+\end{keybox}
+
+\begin{defbox}[Key Terms]
+\begin{itemize}
+  \item \textbf{Deontology:} Ethics based on duties/rules.
+  \item \textbf{Categorical Imperative:} Act only on rules you can will as universal laws.
+  \item \textbf{Virtue Ethics:} Ethics based on character.
+  \item \textbf{Consequentialism:} Ethics based on outcomes.
+  \item \textbf{Utilitarianism:} Impartial maximization of happiness.
+  \item \textbf{Act vs.\ Rule Utilitarianism:} Case-by-case vs.\ rule-based utility.
+  \item \textbf{Means to an end vs.\ Side effect:} Causally necessary vs.\ incidental harm.
+  \item \textbf{Implicit/Explicit/Full Ethical Agent:} Moor's categories.
+  \item \textbf{Top-down/Bottom-up:} Rule-based vs.\ learning-based AMAs.
+\end{itemize}
+\end{defbox}
+

@@ -1,0 +1,371 @@
+% =============================================================================
+%                       WEEK 7: FOR GOOD OR BAD? AI IN MEDICINE, AI IN WAR
+% =============================================================================
+\section{Week 7: For Good or Bad? AI in Medicine, AI in War}
+
+% -----------------------------------------------------------------------------
+%                              7.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Analyze arguments \textbf{for and against banning} Lethal Autonomous Weapons Systems (LAWS).
+  \item Identify \textbf{ethical issues} arising from AI use in healthcare (diagnosis, decision support, robotic surgery).
+  \item Discuss the \textbf{problem of many hands} in assigning responsibility for AI-related medical errors.
+  \item Explain the need for \textbf{professional codes of ethics} and summarize the \textbf{Asilomar Principles}.
+\end{itemize}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week examines AI applications with significant ethical implications: \textbf{autonomous weapons} (LAWS) and \textbf{medical AI}. The LAWS debate reveals tensions between utilitarian arguments (better outcomes) and deeply held convictions (humans in the loop). Medical AI case studies highlight issues of transparency, liability, informed consent, and the ``many hands'' problem. The week concludes with efforts toward professional codes of ethics for AI researchers and developers.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Define LAWS. What arguments support banning them? What arguments oppose a ban?
+  \item How does pragmatic utilitarianism apply to the LAWS debate?
+  \item What is the ``human in the loop'' concern and why is it important?
+  \item Case study: AI for cancer diagnosis---what are the ethical concerns (black box, automation bias)?
+  \item Case study: IBM Watson---what are the liability and limitation concerns?
+  \item Case study: Robotic surgery---explain informed consent and the ``many hands'' problem.
+  \item What are the challenges for specifying a professional code of ethics for AI?
+  \item Summarize key Asilomar Principles (research, ethics, longer-term issues).
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 7.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Lethal Autonomous Weapons Systems (LAWS): Definition and Current Developments
+  \item Arguments For Banning LAWS
+  \item Arguments Against Banning LAWS
+  \item Summary: Pragmatic Utilitarianism and Semi-Autonomous Weapons
+  \item AI in Medicine: Case Study 1 (Cancer Diagnosis)
+  \item AI in Medicine: Case Study 2 (IBM Watson)
+  \item AI in Medicine: Case Study 3 (Robotic Surgery)
+  \item Towards a Professional Code of Ethics (Asilomar Principles)
+\end{enumerate}
+
+\bigseparator
+
+% --- LAWS ---
+\subsubsection{Lethal Autonomous Weapons Systems (LAWS)}
+
+\begin{defbox}[LAWS]
+A weapon that can complete an \textbf{entire engagement cycle on its own}:
+\begin{enumerate}
+  \item Searches for targets
+  \item Identifies them
+  \item Decides whether to attack
+  \item Executes the engagement
+\end{enumerate}
+\textbf{No human in the loop}---the cognitive loop of sensing, deciding, and acting is fully autonomous.
+\end{defbox}
+
+\paragraph*{Current Developments}
+
+\begin{itemize}
+  \item R\&D in US, UK, China, Russia, France, Israel, South Korea.
+  \item LAWS do not yet widely exist, but exceptions include:
+  \begin{itemize}
+    \item \textbf{Israeli Harpy drone:} Targets radar signatures (not humans directly, but people nearby may be killed).
+    \item \textbf{Harpy 2 (2016):} Reports of use in Azerbaijan-Armenia conflict to destroy a bus of soldiers. Has ``human in the loop'' mode; unclear if fully autonomous version exists.
+  \end{itemize}
+  \item \textbf{Future of Life Institute (FLI):} Pledge (2015) not to participate in LAWS development. Signed by Google DeepMind, UCL, European Association for AI, robotics companies, leading researchers.
+  \item \textbf{2017:} 137 AI company CEOs petitioned UN to ban LAWS.
+\end{itemize}
+
+\begin{tipbox}[Why Think About This Now?]
+\begin{itemize}
+  \item Development paths and design architectures get fixed early---harder to change later.
+  \item Legal/ethical frameworks must keep pace with technology (cf.\ social media lagging regulation).
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+% --- Arguments For Banning ---
+\subsubsection{Arguments For Banning LAWS}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8.5cm} @{}}
+\toprule
+\textbf{Argument} & \textbf{Description} \\
+\midrule
+\textbf{Control of Development} & AI arms race $\to$ pressure to cut corners on safety. \\
+\textbf{Control of Use} & Materials cheap/obtainable (unlike nuclear) $\to$ (1) mass proliferation, (2) black market (terrorists, rogue states), (3) hacking, removal of ethical safeguards. $\to$ Destabilizing assassinations, ethnic cleansing, escalation (e.g., North Korea). \\
+\textbf{Increased Conflict} & Less civilian death $\to$ more incentive to go to war. \textit{Counter:} History shows tech advances don't increase war likelihood; other factors (law, diplomacy, institutions) matter more. \\
+\textbf{Technical Challenges} & In short term (10 years): (1) programming reasoning/judgment for international law, (2) distinguishing civilians from soldiers, (3) responding to complex/unanticipated situations, (4) verification/validation. \textit{Note:} Pro-banners don't claim these are unsolvable, just not yet achievable. \\
+\textbf{Humans Out of Loop} & Core conviction: algorithms lack empathy, sympathy, compassion $\to$ can't have human morality $\to$ can't judge proportionality or make humane kill/don't-kill decisions. \textit{Counter:} Are virtues \textit{necessary} for moral judgment? What matters is consistent behavior leading to good consequences, not how the decision is made. \\
+\textbf{Accountability} & Taking humans out of loop dehumanizes warfare, obscures who is responsible. \textit{Counter:} Better to adapt collective responsibility (penalize the ``side'' in war, the company, the institution) than sacrifice reduced harm just to identify a human to blame. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+% --- Arguments Against Banning ---
+\subsubsection{Arguments Against Banning LAWS}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8.5cm} @{}}
+\toprule
+\textbf{Argument} & \textbf{Description} \\
+\midrule
+\textbf{Nations Won't Adhere} & No formal ban will prevent states from building LAWS. \textit{Counter:} Bans on landmines, cluster bombs, blinding lasers, chemical/biological weapons have been largely successful or at least reduced use. \\
+\textbf{Better Discrimination} & LAWS may be better at distinguishing civilians from soldiers (technical recognition + immunity to emotions like panic, vengeance). Currently banned weapons (landmines, cluster bombs) are banned because they are \textit{indiscriminate}. \\
+\textbf{Better Proportionality} & LAWS may be better at weighing military advantage vs.\ civilian deaths (immune to emotions that ``cloud'' human judgment). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{thmbox}[Summary: Utilitarian vs.\ Pragmatic Utilitarian]
+\begin{itemize}
+  \item \textbf{Arguments against ban} are essentially \textbf{utilitarian}: LAWS may lead to better consequences (less civilian harm).
+  \item \textbf{Pragmatic utilitarianism:} Respect deeply held convictions that we should not dehumanize warfare. We may, on balance, be happier in a world with humans in the loop---even if LAWS reduce casualties.
+  \item \textbf{Semi-autonomous weapons:} Compromise---use AI for identification/targeting; leave kill decision to humans. Acknowledges pragmatic utilitarian view that greater good is served by respecting moral conviction.
+  \item \textbf{Caveat:} Psychological research suggests humans tend to over-rely on machines in emergencies, so ``human in the loop'' may be less effective than hoped.
+\end{itemize}
+\end{thmbox}
+
+\bigseparator
+
+% --- AI in Medicine ---
+\subsubsection{AI in Medicine: Ethical Dimensions}
+
+\paragraph*{Case Study 1: AI for Cancer Diagnosis}
+
+\begin{keybox}[Scenario]
+\begin{itemize}
+  \item Neural network trained to identify cancer cells in tissue samples (biopsies).
+  \item Learns from mistakes; improves sensitivity over time.
+  \item AI sensitivity: \textbf{92.4\%} vs.\ human pathologist: \textbf{73.2\%}.
+\end{itemize}
+
+\textbf{Diagnostic sensitivity:} $P(\text{positive test} \mid \text{disease present})$.
+\end{keybox}
+
+\begin{exbox}[Ethical Concerns]
+\textbf{1. Black Box Problem:}
+\begin{itemize}
+  \item Cannot explain \textit{how} neural network identifies cancerous cells.
+  \item \textbf{Mitigation:} Pathologist could identify visual features that distinguish cancerous cells, ``illuminating'' the black box.
+  \item \textbf{Utilitarian view:} Given higher sensitivity (approaching 100\%), should we care \textit{how} it works? All that matters is success rate $\to$ better outcomes for patients.
+  \item \textbf{Contrast with self-driving cars:} For life/death decisions (swerve left or right?), we \textit{do} want the basis for decisions to be understandable.
+\end{itemize}
+
+\textbf{2. Automation Bias:}
+\begin{itemize}
+  \item Concern: Complacency sets in; healthcare professionals stop using clinical judgment.
+  \item Skills may degrade (cf.\ map-reading skills declining due to GPS).
+  \item \textbf{Counter:} Ethically, may not matter if AI success rate is high enough. Unless skill degradation has other negative consequences (e.g., care robots reducing human empathy).
+\end{itemize}
+\end{exbox}
+
+\begin{tipbox}[Liability Implication]
+Hospital could be sued if an algorithm existed that would have spotted cancer missed by a pathologist, and the patient died as a result.
+\end{tipbox}
+
+\separator
+
+\paragraph*{Case Study 2: IBM Watson}
+
+\begin{defbox}[IBM Watson Health]
+Decision Support System (DSS) using:
+\begin{itemize}
+  \item Natural language processing, information retrieval, semantic analysis, automated reasoning, machine learning.
+  \item Fed massive data from clinical literature, health records, test results.
+  \item Clinician poses query (patient symptoms); Watson parses input, mines patient data, forms/tests hypotheses, returns confidence-scored recommendations with supporting evidence.
+  \item Applications: Genomics, drug discovery, health care management, oncology.
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[Key Ethical/Legal Questions]
+\textbf{1. Watson's Role:}
+\begin{itemize}
+  \item IBM: Watson is an \textit{assistant}, not a replacement for clinical judgment.
+  \item US FDA considers it a ``management tool'' (not a device) $\to$ no regulation currently required.
+  \item Regulatory requirements could change as AI makes diagnoses with less supervision.
+\end{itemize}
+
+\textbf{2. Liability:}
+\begin{itemize}
+  \item Watson may increase liability for professionals.
+  \item \textbf{Scenario:} Watson recommends treatment; doctor follows it, ignoring contraindicating patient data (assuming Watson evaluated it). $\to$ Malpractice claim.
+  \item Watson could prematurely raise the legal \textbf{standard of care} before impact on outcomes is fully known. (E.g., if Watson improves leukemia diagnosis, expectations rise that doctors using Watson will ``get it right.'')
+\end{itemize}
+
+\textbf{3. Understanding Limitations:}
+\begin{itemize}
+  \item Watson may recommend treatment inconsistent with clinical standards or what doctor considers appropriate.
+  \item Doctors must be able to justify following or not following Watson's recommendation.
+  \item Need \textbf{audit trail} of decisions, especially when contradicting standards.
+  \item \textbf{Black box problem:} ML-based decisions cannot always be explained.
+  \item Watson can/should use a rule base limiting recommendations to current clinical standards.
+\end{itemize}
+\end{exbox}
+
+\begin{tipbox}[Future Ethical Obligation]
+Given exponential growth of clinical data (IBM: 1 million GB per person's lifetime!), it may become \textit{unethical} (and create liability) \textbf{not} to consult AI systems like Watson---assuming they prove effective.
+\end{tipbox}
+
+\separator
+
+\paragraph*{Case Study 3: Robotic Surgery (Mazor Robotics Renaissance)}
+
+\begin{keybox}[Scenario]
+AI software analyzes images and plans placement of surgical tools in spinal surgery. Surgeon recommends robot-assisted surgery to patient.
+\end{keybox}
+
+\begin{exbox}[Ethical Concerns]
+\textbf{1. Informed Consent and Black Box:}
+\begin{itemize}
+  \item Informed consent requires patient to receive appropriate information from a competent source and make a voluntary choice.
+  \item AI complicates this: patient/doctor fears, overconfidence, confusion about new technology.
+  \item Doctor must explain how AI works---but black box problem makes this difficult.
+  \item \textbf{At minimum:} (i) Distinguish roles of doctor/nurses vs.\ AI/robotic system. (ii) State potential harms from human or robotic errors.
+\end{itemize}
+
+\textbf{2. Patient Perceptions:}
+\begin{itemize}
+  \item 2016 survey (12,000 people, 12 countries): Only \textbf{47\%} willing to have robot perform minor surgery; \textbf{37\%} for major surgery.
+  \item Doctor should address fears by describing risks/benefits and citing studies comparing robotic vs.\ human surgery.
+\end{itemize}
+
+\textbf{3. Medical Errors and the Problem of Many Hands:}
+\begin{itemize}
+  \item Harm may be distributed among multiple actors, technologies, organizations.
+  \item Black box makes assigning responsibility harder.
+  \item Individuals may use ``many hands'' argument to avoid personal responsibility.
+\end{itemize}
+\end{exbox}
+
+\begin{thmbox}[Consequentialist Approach to Many Hands]
+Focus on penalties that:
+\begin{enumerate}
+  \item Minimize future errors.
+  \item Incentivize serious R\&D effort:
+  \begin{itemize}
+    \item Coders/designers document what they create; make technology explainable.
+    \item Companies state conditions for successful use, types/likelihood of errors, differences across subgroups.
+    \item Doctors acquire basic understanding of AI devices and communicate to patients.
+    \item Organizations provide training, protocols, best practices.
+  \end{itemize}
+\end{enumerate}
+Assign responsibility to incentivize proper behavior---not necessarily to pinpoint a single ``morally responsible'' individual.
+\end{thmbox}
+
+\bigseparator
+
+% --- Professional Code of Ethics ---
+\subsubsection{Towards a Professional Code of Ethics for AI R\&D}
+
+\begin{keybox}[Why Professional Codes of Ethics?]
+\begin{itemize}
+  \item Professionals possess skills, knowledge, capacities that clients/public lack $\to$ power imbalance.
+  \item Codes mitigate harmful effects and misuse of power.
+  \item Example: Developer creating app for uploading electricity meter readings should ensure accessibility for visually impaired users.
+\end{itemize}
+\end{keybox}
+
+\paragraph*{Challenges for AI}
+
+\begin{itemize}
+  \item \textbf{Diversity:} Concentration of intellectual/commercial power (e.g., Silicon Valley); demographic homogeneity (young/middle-aged men) $\to$ groupthink, belief polarization.
+  \item \textbf{AI power over researchers:} As AI becomes more intelligent/autonomous, researchers may themselves be vulnerable.
+  \item \textbf{Black box problem:} Researchers/developers may not understand how their products operate.
+\end{itemize}
+
+\separator
+
+\paragraph*{Asilomar Principles (Future of Life Institute, 2017)}
+
+\begin{keybox}[Research Issues]
+\begin{enumerate}
+  \item \textbf{Research Goal:} Create \textbf{beneficial} intelligence, not undirected intelligence.
+  \item \textbf{Research Funding:} Investments should include funding for ensuring beneficial use (computer science, economics, law, ethics, social studies).
+  \item \textbf{Science-Policy Link:} Constructive exchange between AI researchers and policy-makers.
+  \item \textbf{Research Culture:} Cooperation, trust, transparency among researchers/developers.
+  \item \textbf{Race Avoidance:} Actively cooperate to avoid corner-cutting on safety standards.
+\end{enumerate}
+\end{keybox}
+
+\begin{keybox}[Ethics and Values]
+\begin{enumerate}
+  \setcounter{enumi}{5}
+  \item \textbf{Safety:} AI systems should be safe and secure throughout their lifetime.
+  \item \textbf{Failure Transparency:} If AI causes harm, it should be possible to ascertain why.
+  \item \textbf{Judicial Transparency:} Autonomous involvement in judicial decisions should provide auditable explanation.
+  \item \textbf{Responsibility:} Designers/builders are stakeholders in moral implications of use/misuse.
+  \item \textbf{Value Alignment:} Highly autonomous AI should be designed so goals/behaviors align with human values.
+  \item \textbf{Human Values:} Compatible with human dignity, rights, freedoms, cultural diversity.
+  \item \textbf{Personal Privacy:} Right to access, manage, control data generated.
+  \item \textbf{Liberty and Privacy:} AI application to personal data must not unreasonably curtail liberty.
+  \item \textbf{Shared Benefit:} AI technologies should benefit and empower as many people as possible.
+  \item \textbf{Shared Prosperity:} Economic prosperity from AI should be shared broadly.
+  \item \textbf{Human Control:} Humans choose how/whether to delegate decisions to AI.
+  \item \textbf{Non-subversion:} Power from advanced AI should respect social/civic processes.
+  \item \textbf{AI Arms Race:} Arms race in lethal autonomous weapons should be avoided.
+\end{enumerate}
+\end{keybox}
+
+\begin{keybox}[Longer-Term Issues]
+\begin{enumerate}
+  \setcounter{enumi}{18}
+  \item \textbf{Capability Caution:} Avoid strong assumptions about upper limits on AI capabilities.
+  \item \textbf{Importance:} Advanced AI could profoundly change history; plan/manage with care.
+  \item \textbf{Risks:} Catastrophic/existential risks must be subject to planning/mitigation.
+  \item \textbf{Recursive Self-Improvement:} AI that self-improves/self-replicates must be subject to strict safety/control measures.
+  \item \textbf{Common Good:} Superintelligence should be developed for benefit of all humanity, not one state/organization.
+\end{enumerate}
+\end{keybox}
+
+\bigseparator
+
+% --- Summary ---
+\subsubsection{Summary: Key Takeaways}
+
+\begin{keybox}[Week 7 Key Points]
+\begin{enumerate}
+  \item \textbf{LAWS:} Weapons that complete entire engagement cycle autonomously (sense, decide, act, kill).
+  \item \textbf{Arguments for ban:} Control of development/use, technical challenges, humans out of loop, accountability.
+  \item \textbf{Arguments against ban:} Nations won't adhere; LAWS may have better discrimination and proportionality.
+  \item \textbf{Pragmatic utilitarianism:} Respect deeply held convictions; semi-autonomous weapons as compromise.
+  \item \textbf{AI in Medicine---Case 1 (Diagnosis):} Black box problem, automation bias. Utilitarian: success rate matters.
+  \item \textbf{AI in Medicine---Case 2 (Watson):} Liability concerns, prematurely raising standard of care, understanding limitations.
+  \item \textbf{AI in Medicine---Case 3 (Robotic Surgery):} Informed consent, patient perceptions, many hands problem.
+  \item \textbf{Many hands solution:} Consequentialist approach---penalties to minimize future errors, incentivize good practices.
+  \item \textbf{Professional codes of ethics:} Needed to mitigate power imbalance; challenges include diversity, AI power, black box.
+  \item \textbf{Asilomar Principles:} 23 principles covering research, ethics/values, and longer-term issues (safety, value alignment, arms race, superintelligence).
+\end{enumerate}
+\end{keybox}
+
+\begin{defbox}[Key Terms]
+\begin{itemize}
+  \item \textbf{LAWS:} Lethal Autonomous Weapons Systems.
+  \item \textbf{Human in the loop:} Requirement that a human participates in the kill decision.
+  \item \textbf{Proportionality:} Balancing military advantage against civilian harm.
+  \item \textbf{Discrimination:} Ability to distinguish combatants from civilians.
+  \item \textbf{Diagnostic sensitivity:} $P(\text{positive test} \mid \text{disease present})$.
+  \item \textbf{Automation bias:} Complacency when AI takes over tasks; skill degradation.
+  \item \textbf{Decision Support System (DSS):} AI that assists (not replaces) human decision-making.
+  \item \textbf{Problem of many hands:} Difficulty assigning responsibility when harm is distributed among multiple actors.
+  \item \textbf{Asilomar Principles:} 23 principles for beneficial AI development.
+  \item \textbf{Value alignment:} Ensuring AI goals/behaviors match human values.
+\end{itemize}
+\end{defbox}
+

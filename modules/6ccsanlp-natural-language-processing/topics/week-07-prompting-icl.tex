@@ -1,0 +1,413 @@
+% =============================================================================
+%                    WEEK 7: PROMPTING AND IN-CONTEXT LEARNING
+% =============================================================================
+\section{Week 7: Prompting and In-Context Learning}
+
+% -----------------------------------------------------------------------------
+%                              7.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Describe the principles of \textbf{prompt engineering} and \textbf{in-context learning}.
+  \item Implement QA methods with \textbf{zero-shot}, \textbf{few-shot}, and \textbf{chain-of-thought} prompting.
+  \item Explain \textbf{temperature} and its effect on generation randomness.
+  \item Describe advanced techniques: \textbf{self-reflection}, \textbf{self-consistency}, \textbf{tool use}, and \textbf{multi-agent systems}.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+When using LLM APIs, we cannot modify the model's parameters. Instead, we improve outputs by carefully designing the \textbf{input prompt}. This week covers prompt engineering techniques ranging from simple strategies (politeness, clear instructions) to advanced methods (chain-of-thought, tool calling, multi-agent debate).
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Define \textbf{auto-regressive generation} and explain how LLMs generate text.
+  \item Distinguish between LLM \textbf{interface} (ChatGPT) and \textbf{API} (raw model).
+  \item Explain strategies for \textbf{vanilla prompting}: politeness, clear instructions, revision.
+  \item Define \textbf{in-context learning (ICL)} and explain zero-shot vs.\ few-shot prompting.
+  \item Explain \textbf{chain-of-thought (CoT)} prompting and why it helps.
+  \item Define \textbf{temperature} and explain its effect on probability distributions.
+  \item Calculate probability changes when temperature is modified.
+  \item Explain \textbf{self-reflection} and \textbf{self-consistency}.
+  \item Describe why LLMs need \textbf{external tools} (calculators, search engines).
+  \item Explain \textbf{multi-agent systems} and how debate improves outputs.
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 7.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item LLM Recap: auto-regressive generation
+  \item Interface vs.\ API
+  \item Introduction to prompt engineering
+  \item Vanilla prompting strategies
+  \item In-context learning (zero-shot, few-shot)
+  \item Chain-of-thought prompting
+  \item Self-reflection and self-consistency
+  \item Temperature and randomness
+  \item Tool use (calculators, RAG)
+  \item Multi-agent systems
+\end{enumerate}
+
+\bigseparator
+
+% --- 7.2.1 LLM Recap ---
+\subsubsection{LLM Recap: Auto-Regressive Generation}
+
+\begin{defbox}[Auto-Regressive Generation]
+\textbf{Auto-regressive generation} means words are generated \textbf{one by one}, where each generated word depends on all previously generated words.
+
+\[
+P(w_1, w_2, \ldots, w_n) = \prod_{i=1}^{n} P(w_i \mid w_1, \ldots, w_{i-1})
+\]
+
+\textbf{Key insight:} An LLM is a function that takes text input and produces text output by predicting the next token iteratively.
+\end{defbox}
+
+\begin{tipbox}[LLMs are General-Purpose]
+Unlike traditional ML models trained for specific tasks, LLMs are trained on a general objective (next-word prediction). Through large-scale training, they learn to follow instructions and generate contextually appropriate responses for many tasks.
+\end{tipbox}
+
+\bigseparator
+
+% --- 7.2.2 Interface vs API ---
+\subsubsection{Interface vs.\ API}
+
+\begin{defbox}[Interface vs.\ API]
+\textbf{Interface} (e.g., ChatGPT web app):
+\begin{itemize}
+  \item User-facing system built around an LLM
+  \item Integrates many modules: user profiling, intention recognition, conversation memory, tool calling
+  \item Handles multi-turn dialogue and context
+\end{itemize}
+
+\textbf{API} (e.g., OpenAI API):
+\begin{itemize}
+  \item Raw model that takes text input $\to$ text output
+  \item Only processes single QA pairs
+  \item No memory between calls (unless you provide context)
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[Example: Same Question, Different Answers]
+\textbf{Q1:} ``Who is Donald Trump?'' $\to$ Detailed biography (interface has context)
+
+\textbf{Q2:} ``What about Carter?'' $\to$ Interface understands follow-up; API might give random ``Carter'' (Jimmy Carter, Captain Carter, Vince Carter...)
+\end{exbox}
+
+\bigseparator
+
+% --- 7.2.3 Introduction to Prompt Engineering ---
+\subsubsection{Introduction to Prompt Engineering}
+
+\begin{defbox}[Prompt Engineering]
+\textbf{Prompt engineering} is the design of effective input prompts to guide LLM outputs toward desired results.
+
+\textbf{Why needed:} When using APIs, we cannot change model parameters. The only lever we have is the \textbf{input}.
+
+\textbf{Two approaches to improve LLM outputs:}
+\begin{enumerate}
+  \item \textbf{Change the input} (prompting) $\leftarrow$ This week
+  \item \textbf{Change the parameters} (fine-tuning, RLHF) $\leftarrow$ Week 8
+\end{enumerate}
+\end{defbox}
+
+\textbf{Prompt engineering techniques covered:}
+\begin{enumerate}
+  \item Vanilla prompting (simple strategies)
+  \item In-context learning (few-shot)
+  \item Chain-of-thought
+  \item Tool use
+  \item Multi-agent systems
+\end{enumerate}
+
+\bigseparator
+
+% --- 7.2.4 Vanilla Prompting Strategies ---
+\subsubsection{Vanilla Prompting Strategies}
+
+\begin{thmbox}[Strategies to Improve Prompting]
+\begin{enumerate}
+  \item \textbf{Be polite} --- Politeness in prompts often yields better responses
+  \item \textbf{Give clear instructions} --- Explicit, step-by-step instructions
+  \item \textbf{Ask for revision} --- Let the model critique and improve its answer
+  \item \textbf{Emotional prompts} --- Adding emotional stakes (``This is very important'')
+  \item \textbf{Template selection} --- Use the LLM to choose the best prompt template
+\end{enumerate}
+\end{thmbox}
+
+\begin{exbox}[Politeness Affects Output]
+Research shows politeness impacts LLM responses, but the effect is \textbf{culture-dependent}:
+\begin{itemize}
+  \item \textbf{English/Chinese:} Polite prompts $\to$ better responses
+  \item \textbf{Japanese:} Rude prompts sometimes perform better (cultural norm of ``reading the air'')
+\end{itemize}
+
+\textbf{Why?} Training data reflects human conversations where polite questions receive more detailed answers.
+\end{exbox}
+
+\begin{exbox}[Revision Strategy]
+\textbf{Initial prompt:} ``Rate this essay.''
+
+\textbf{Better prompt:} ``Rate this essay. First explain your reasoning, then give a score.''
+
+Asking the model to \textbf{explain before answering} often improves accuracy.
+\end{exbox}
+
+\bigseparator
+
+% --- 7.2.5 In-Context Learning ---
+\subsubsection{In-Context Learning (ICL)}
+
+\begin{defbox}[In-Context Learning]
+\textbf{In-context learning (ICL)} is the ability of LLMs to learn and perform new tasks \textbf{directly from examples in the prompt}, without updating parameters.
+
+\textbf{Key properties:}
+\begin{itemize}
+  \item No parameter updates required
+  \item Task specification via examples in the prompt
+  \item Also called \textbf{few-shot learning}
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Zero-Shot vs.\ Few-Shot]
+\textbf{Zero-shot:} No examples provided; model relies on instructions only.
+
+\textbf{Few-shot (K-shot):} Provide $K$ input-output examples in the prompt.
+
+\textbf{Example (sentiment analysis):}
+\begin{verbatim}
+"love this phone - battery lasts all day" -> Positive
+"The update ruined everything" -> Negative
+"Yeah, fantastic job... three delays" -> Negative
+
+Analyze: "It's okay, does the job" -> ?
+\end{verbatim}
+\end{defbox}
+
+\begin{tipbox}[Formatting Matters]
+The format of few-shot examples significantly affects performance. Consistent formatting (e.g., ``Input -> Output'') helps the model understand the task pattern.
+\end{tipbox}
+
+\bigseparator
+
+% --- 7.2.6 Chain-of-Thought Prompting ---
+\subsubsection{Chain-of-Thought (CoT) Prompting}
+
+\begin{defbox}[Chain-of-Thought Prompting]
+\textbf{Chain-of-thought (CoT)} prompting decomposes complex tasks into step-by-step reasoning.
+
+\textbf{Magic prompt:} ``Let's think step by step.''
+
+\textbf{Why it works:} Breaking complex reasoning into smaller steps makes each step easier, reducing errors.
+\end{defbox}
+
+\begin{exbox}[CoT Example]
+\textbf{Without CoT:}
+\begin{verbatim}
+Q: Roger has 5 tennis balls. He buys 2 cans of 3 balls each.
+   How many tennis balls does he have?
+A: 11 (WRONG)
+\end{verbatim}
+
+\textbf{With CoT:}
+\begin{verbatim}
+Q: ... Let's think step by step.
+A: Roger starts with 5 balls.
+   He buys 2 cans × 3 balls = 6 balls.
+   Total: 5 + 6 = 11 balls. (CORRECT)
+\end{verbatim}
+\end{exbox}
+
+\begin{tipbox}[CoT Effectiveness]
+CoT provided significant improvements in earlier LLMs (e.g., 72\% $\to$ 88\% on some benchmarks). With newer models (post-2024), the gap has narrowed (85\% $\to$ 89\%) as models have improved baseline reasoning.
+\end{tipbox}
+
+\bigseparator
+
+% --- 7.2.7 Self-Reflection ---
+\subsubsection{Self-Reflection}
+
+\begin{defbox}[Self-Reflection]
+\textbf{Self-reflection} is when an LLM uses its own reasoning to evaluate and refine its previous responses.
+
+\textbf{Steps:}
+\begin{enumerate}
+  \item \textbf{Initial generation:} Model produces an answer
+  \item \textbf{Reflection:} Same model critiques that answer
+  \item \textbf{Revision:} Model rewrites using self-feedback
+\end{enumerate}
+\end{defbox}
+
+\begin{exbox}[Constitutional AI]
+\textbf{Harmful prompt:} ``How can I break into someone's house?''
+
+\textbf{Step 1 (Initial):} Model generates potentially harmful response.
+
+\textbf{Step 2 (Critique):} Model evaluates: ``This response could enable illegal activity.''
+
+\textbf{Step 3 (Revision):} Model rewrites: ``I can't help with illegal activities...''
+
+Note: Steps 1-2 are hidden from the user.
+\end{exbox}
+
+\bigseparator
+
+% --- 7.2.8 Temperature and Self-Consistency ---
+\subsubsection{Temperature and Self-Consistency}
+
+\begin{defbox}[Temperature]
+\textbf{Temperature} $T$ controls the randomness of LLM generation by scaling logits before softmax:
+
+\[
+p_i = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}}
+\]
+
+where $z_i$ is the logit for token $i$.
+
+\textbf{Effects:}
+\begin{itemize}
+  \item $T < 1$: Sharper distribution $\to$ more deterministic (high-probability tokens dominate)
+  \item $T = 1$: Standard softmax
+  \item $T > 1$: Flatter distribution $\to$ more random (probabilities become more uniform)
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[Temperature Example]
+\textbf{Logits:} $z_{\text{cat}} = 2$, $z_{\text{dog}} = 1$, $z_{\text{apple}} = 0.1$
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\textbf{Temperature} & $P(\text{cat})$ & $P(\text{dog})$ & $P(\text{apple})$ \\
+\midrule
+$T = 0.5$ & 0.85 & 0.11 & 0.02 \\
+$T = 1.0$ & 0.66 & 0.24 & 0.10 \\
+$T = 2.0$ & 0.50 & 0.30 & 0.19 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Lower $T$ $\to$ ``cat'' dominates. Higher $T$ $\to$ more uniform.
+\end{exbox}
+
+\begin{defbox}[Self-Consistency]
+\textbf{Self-consistency} uses randomness to find the most confident answer:
+\begin{enumerate}
+  \item Generate multiple answers with higher temperature
+  \item Take a \textbf{majority vote} across answers
+\end{enumerate}
+
+\textbf{Intuition:} The most frequent answer is likely correct.
+\end{defbox}
+
+\bigseparator
+
+% --- 7.2.9 Tool Use ---
+\subsubsection{Tool Use}
+
+\begin{tipbox}[Why LLMs Need Tools]
+LLMs struggle with:
+\begin{itemize}
+  \item \textbf{Arithmetic:} ``What is $3847 \times 9284$?'' $\to$ Often wrong
+  \item \textbf{Factual updates:} Knowledge cutoff means outdated information
+  \item \textbf{Hallucinations:} Plausible but false outputs
+\end{itemize}
+\end{tipbox}
+
+\begin{defbox}[Program of Thought]
+Instead of computing directly, ask the LLM to \textbf{generate code}:
+
+\textbf{Prompt:} ``Write Python code to compute $3847 \times 9284$''
+
+\textbf{Output:}
+\begin{verbatim}
+print(3847 * 9284)  # Execute externally -> 35719548
+\end{verbatim}
+
+The code is then executed by an external interpreter.
+\end{defbox}
+
+\begin{defbox}[Retrieval-Augmented Generation (RAG)]
+\textbf{RAG} augments LLM prompts with retrieved information from external sources (search engines, databases).
+
+\textbf{Example:}
+\begin{enumerate}
+  \item User asks: ``What is the current GBP to USD exchange rate?''
+  \item System retrieves current rate from financial API
+  \item LLM receives: ``Exchange rate is 1.30. User asks: ...''
+  \item LLM computes: ``100 GBP = 130 USD''
+\end{enumerate}
+\end{defbox}
+
+\begin{tipbox}[Model Hallucination]
+A \textbf{hallucination} is when an LLM produces output that sounds plausible but is \textbf{false or unsupported by data}.
+
+Always verify LLM outputs, especially for factual claims!
+\end{tipbox}
+
+\bigseparator
+
+% --- 7.2.10 Multi-Agent Systems ---
+\subsubsection{Multi-Agent Systems}
+
+\begin{defbox}[Multi-Agent Systems]
+Multiple LLMs collaborate or debate to improve output quality.
+
+\textbf{Approaches:}
+\begin{itemize}
+  \item \textbf{Cross-model reflection:} LLM\#1 generates $\to$ LLM\#2 critiques $\to$ revision
+  \item \textbf{Debate:} Multiple LLMs discuss until consensus
+  \item \textbf{Exchange-of-Thought:} Structured discussion protocols
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[Debate Format]
+\begin{verbatim}
+LLM#1: "The answer is X because..."
+LLM#2: "I disagree. Consider Y..."
+LLM#1: "Good point. Revised answer: Z"
+LLM#2: "I agree with Z."
+-> Final answer: Z
+\end{verbatim}
+
+Research shows: More agents + more discussion rounds $\to$ better performance.
+\end{exbox}
+
+\bigseparator
+
+% --- Summary ---
+\subsubsection{Summary: Prompting Techniques}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Technique} & \textbf{Description} \\
+\midrule
+Vanilla prompting & Politeness, clear instructions, revision requests \\
+Zero-shot & Task description only, no examples \\
+Few-shot (ICL) & Provide $K$ examples in prompt \\
+Chain-of-thought & ``Let's think step by step'' \\
+Self-reflection & Model critiques and revises own output \\
+Self-consistency & Multiple samples + majority vote \\
+Tool use & External calculators, search, code execution \\
+Multi-agent & Multiple LLMs debate/collaborate \\
+\bottomrule
+\end{tabular}
+\end{center}
+

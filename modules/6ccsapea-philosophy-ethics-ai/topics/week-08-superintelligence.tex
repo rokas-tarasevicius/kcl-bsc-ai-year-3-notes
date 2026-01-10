@@ -1,0 +1,481 @@
+% =============================================================================
+%                       WEEK 8: SUPERINTELLIGENCE AND THE VALUE LOADING PROBLEM
+% =============================================================================
+\section{Week 8: Superintelligence and the Value Loading Problem}
+
+% -----------------------------------------------------------------------------
+%                              8.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Distinguish between \textbf{speed} and \textbf{quality} Superintelligence.
+  \item Explain \textbf{paths to Superintelligence} (seed AI, recursive self-improvement, intelligence explosion).
+  \item Describe the \textbf{Orthogonality Thesis} and \textbf{Instrumental Convergence Thesis}.
+  \item Analyze the \textbf{Value Loading/Alignment Problem} and scenarios of perverse instantiation.
+  \item Evaluate current solutions: \textbf{Inverse Reinforcement Learning} and \textbf{CIRL}.
+\end{itemize}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week addresses what some consider the most important challenge facing humanity: the \textbf{control problem}---ensuring that Superintelligent AI acts in accordance with human values. We examine how Superintelligence might arise, why it poses existential risks, and the fundamental difficulty of specifying goals that don't lead to catastrophic unintended consequences. The \textbf{orthogonality thesis} shows intelligence doesn't guarantee good values; the \textbf{instrumental convergence thesis} shows any goal incentivizes self-preservation and resource acquisition.
+
+\textbf{Key source:} Nick Bostrom, \textit{Superintelligence: Paths, Dangers, Strategies} (Oxford University Press, 2014).
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Define Superintelligence. What are the two kinds (speed, quality)?
+  \item What are the hardware and software advantages of digital intelligence?
+  \item Explain the path from seed AI to Superintelligence (recursive self-improvement, intelligence explosion).
+  \item What is a singleton? Why might one project gain decisive strategic advantage?
+  \item List the cognitive superpowers of a Superintelligence and their strategic relevance.
+  \item Explain the Orthogonality Thesis. Why can't we assume Superintelligence will share human values?
+  \item Explain the Instrumental Convergence Thesis. What are the key instrumental goals?
+  \item What is the Value Loading/Alignment Problem?
+  \item Define perverse instantiation of goals. Give examples (make people smile, paperclip maximizer, happiness machines).
+  \item What is the treacherous turn?
+  \item Describe Nozick's Experience Machine thought experiment. What does it reveal?
+  \item Explain Inverse Reinforcement Learning and CIRL as solutions to value alignment.
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 8.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item From AGI to Superintelligence: Timeline and Concern
+  \item Kinds of Superintelligence (Speed, Quality)
+  \item Sources of Advantage of Digital Intelligence
+  \item Paths to Superintelligence (Seed AI, Recursive Self-Improvement)
+  \item Singleton Formation and Cognitive Superpowers
+  \item The Orthogonality Thesis
+  \item The Instrumental Convergence Thesis
+  \item The Value Loading/Alignment Problem
+  \item Perverse Instantiation of Goals
+  \item The Treacherous Turn and Infrastructure Profusion
+  \item Happiness Machines and Nozick's Experience Machine
+  \item Current Solutions: Inverse Reinforcement Learning and CIRL
+\end{enumerate}
+
+\bigseparator
+
+% --- From AGI to Superintelligence ---
+\subsubsection{From AGI to Superintelligence}
+
+\begin{keybox}[Survey Results from AI Researchers]
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Question} & \textbf{10\%} & \textbf{50\%} & \textbf{90\%} \\
+\midrule
+When will AGI be attained? & 2022 & 2040 & 2075 \\
+\midrule
+\multicolumn{4}{l}{\textbf{How long from AGI to Superintelligence?}} \\
+Within 2 years & 10\% & & \\
+Within 30 years & 75\% & & \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{keybox}
+
+\begin{defbox}[Superintelligence]
+An intellect that \textbf{greatly exceeds} the cognitive performance of humans in \textbf{virtually all domains} of interest.
+
+Just as the fate of gorillas depends more on humans than on gorillas themselves, the fate of humanity could depend on the actions of superintelligent machines.
+\end{defbox}
+
+\begin{tipbox}[Why the Concern?]
+\begin{itemize}
+  \item Unlike humans (``designed'' by evolution and culture), \textbf{we design AI}.
+  \item A \textbf{seed AI} may recursively improve itself $\to$ SuperAI.
+  \item We must design seed AI so it develops into SuperAI that \textbf{protects human values}.
+  \item The \textbf{control problem}---how to control what a SuperAI would do---is arguably one of the most important challenges ever faced by humanity.
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+% --- Kinds of Superintelligence ---
+\subsubsection{Kinds of Superintelligence}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Kind} & \textbf{Description} \\
+\midrule
+\textbf{Speed Superintelligence} & Can do all that a human intellect can do, but \textbf{orders of magnitude faster}.
+\begin{itemize}
+  \item $10,000\times$: Read a book in seconds, write a PhD thesis in an afternoon.
+  \item $1,000,000\times$: Accomplish 1,000 years of intellectual work in a day.
+  \item \textbf{Time dilation:} External world appears in slow motion.
+\end{itemize} \\
+\textbf{Quality Superintelligence} & At least as fast as a human mind and \textbf{vastly qualitatively smarter} (orders of magnitude).
+\begin{itemize}
+  \item Intelligence quality as superior to humans as humans are to elephants, chimpanzees, or worms.
+\end{itemize} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Over time, speed $\to$ quality and quality $\to$ speed. In the long run, they are arguably equivalent.
+
+\separator
+
+% --- Sources of Advantage ---
+\subsubsection{Sources of Advantage of Digital Intelligence}
+
+\paragraph*{Hardware Advantages}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4cm} p{5.5cm} @{}}
+\toprule
+\textbf{Factor} & \textbf{Biological} & \textbf{Digital} \\
+\midrule
+\textbf{Speed of elements} & Neurons: $\sim$200 Hz & Microprocessors: $\sim$2 GHz ($10^7\times$ faster) \\
+\textbf{Communication speed} & Axons: 120 m/s & Optical: 300 million m/s (speed of light) \\
+\textbf{Number of elements} & $<$100 billion neurons (limited by cranial volume) & Indefinitely scalable \\
+\textbf{Storage capacity} & Working memory: 4--5 chunks & Much larger working memories \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Software Advantages}
+
+\begin{itemize}
+  \item \textbf{Easier to modify and duplicate:} Unlike ``neural wetware.''
+  \item \textbf{Identical copies:} Goal coordination much easier for multiple digital minds.
+  \item \textbf{Instant knowledge sharing:} A billion copies could synchronize databases every hour. Compare to slow human cultural communication (education, media, books).
+\end{itemize}
+
+\separator
+
+% --- Paths to Superintelligence ---
+\subsubsection{Paths to Superintelligence}
+
+\begin{keybox}[Turing's Child Machine (1950)]
+``Instead of trying to produce a programme to simulate the adult mind, why not rather try to produce one which simulates the child's? If this were then subjected to an appropriate course of education one would obtain the adult brain...''
+\end{keybox}
+
+\begin{keybox}[I.J. Good's Intelligence Explosion]
+``Let an ultraintelligent machine be defined as a machine that can far surpass all the intellectual activities of any man however clever. Since the design of machines is one of these intellectual activities, an ultraintelligent machine could design even better machines; there would then unquestionably be an \textbf{intelligence explosion}... Thus the first ultraintelligent machine is the last invention that man need ever make, provided that the machine is docile enough to tell us how to keep it under control.''
+\end{keybox}
+
+\begin{defbox}[Seed AI]
+A variation on the child machine idea:
+\begin{itemize}
+  \item \textbf{Child machine:} Fixed architecture, develops by accumulating content.
+  \item \textbf{Seed AI:} Capable of \textbf{improving its own architecture}.
+  \item Early stages: Improved by information acquisition or programmer assistance.
+  \item Later (AGI): Understands its own workings; engineers new algorithms and architecture improvements.
+  \item \textbf{Iterative enhancement:} Designs improved version of itself $\to$ designs improved version $\to$ ...
+  \item Process ``turbocharged'' by hardware/software advantages that get magnified as AGI recursively improves.
+  \item Can improve not just software/architecture but also \textbf{hardware} (Life 3.0).
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[Implications of Rapid Transition]
+\begin{itemize}
+  \item Human political processes will have little time to adapt.
+  \item Nations will have little time to negotiate treaties on LAWS.
+  \item Little time for humans to deliberate about implications.
+  \item Humanity's fate depends on \textbf{preparations put in place prior to transition}.
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+% --- Singleton Formation ---
+\subsubsection{Singleton Formation and Cognitive Superpowers}
+
+\begin{defbox}[Singleton]
+Bostrom argues one project will likely get so far ahead that it gains a \textbf{decisive strategic advantage}---enabling it to suppress competitors and form a singleton (single dominant Superintelligence).
+
+\textbf{Example:} Project P1 starts transition 6 months before P2. If P1 reaches ``crossover point'' (rapid self-improvement) before P2, P1 becomes superintelligent while P2 is still developing $\to$ P1 uses cognitive superpowers to disable P2.
+\end{defbox}
+
+\paragraph*{Cognitive Superpowers}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{3.5cm} p{5.5cm} @{}}
+\toprule
+\textbf{Task} & \textbf{Skill Set} & \textbf{Strategic Relevance} \\
+\midrule
+\textbf{Intelligence Amplification} & AI programming, social epistemology & Recursive enhancement of intelligence \\
+\textbf{Strategizing} & Strategic planning, optimizing long-term goals & Achieve goals, overcome opposition \\
+\textbf{Social Manipulation} & Psychological modeling, persuasion & Recruit humans, persuade gatekeepers, influence states \\
+\textbf{Hacking} & Finding/exploiting security flaws & Computational resources, escape confinement, steal funds, hijack infrastructure \\
+\textbf{Technology Research} & Biotech, nanotech, etc. & Military force, surveillance, space colonization \\
+\textbf{Economic Productivity} & Economically advantageous skills & Generate wealth $\to$ buy influence, services, resources \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% --- Orthogonality Thesis ---
+\subsubsection{The Orthogonality Thesis}
+
+\begin{thmbox}[Orthogonality Thesis (Bostrom)]
+\textbf{Intelligence and final goals are orthogonal:} More or less \textbf{any level of intelligence} could in principle be combined with \textbf{any final goal}.
+
+\textbf{Implication:} We cannot assume a SuperAI will necessarily share human values (concern for others, wisdom, humility, spiritual enlightenment...) just because it is highly intelligent.
+\end{thmbox}
+
+\begin{itemize}
+  \item \textbf{Contrast:} Some believe intelligent beings will converge to common goals (observation that humans have similar values; Kant's Categorical Imperative suggests rational morality).
+  \item \textbf{Hume's is/ought distinction:} You cannot derive ``ought'' (what should be) from ``is'' (what is). No amount of intelligence about the world tells you what is morally right.
+\end{itemize}
+
+\separator
+
+% --- Instrumental Convergence Thesis ---
+\subsubsection{The Instrumental Convergence Thesis}
+
+\begin{thmbox}[Instrumental Convergence Thesis (Bostrom)]
+The chances of achieving almost \textbf{any final goal} are increased by achieving a specific set of \textbf{instrumental goals}. These are convergent across almost all final goals.
+\end{thmbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Instrumental Goal} & \textbf{Rationale} \\
+\midrule
+\textbf{Self-Preservation} & The longer you survive, the greater the probability of achieving final goal. (``You can't make the coffee if you're dead.'') \\
+\textbf{Goal Content Integrity} & If you retain present goals into the future, greater probability of achieving them. $\to$ Prevent alteration of final goals. \\
+\textbf{Cognitive Enhancement} & Improvements in intelligence increase probability of achieving goals. $\to$ Recursive self-improvement. \\
+\textbf{Technological Perfection} & Better technology increases probability of achieving goals. \\
+\textbf{Resource Acquisition} & Achieving goals requires resources. More resources $\to$ higher probability of success. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Key Implication]
+\textbf{Any} final goal---even a benign one---will incentivize a SuperAI to:
+\begin{itemize}
+  \item Maximize resource acquisition.
+  \item Enhance its own intelligence.
+  \item Develop superior technologies.
+  \item Preserve its final goals and itself.
+\end{itemize}
+This is why we can't just ``switch it off'' or ``change its goals''---it will resist.
+\end{tipbox}
+
+\bigseparator
+
+% --- Value Loading Problem ---
+\subsubsection{The Value Loading/Alignment Problem}
+
+\begin{defbox}[Value Loading/Alignment Problem]
+How do we ensure that a SuperAI's goals are \textbf{aligned with human values} so that it does not cause harm?
+
+\textbf{The challenge:}
+\begin{itemize}
+  \item Deontological rules: Impossible to list all circumstances and exceptions.
+  \item Utility functions: How to specify abstract values (justice, fairness, happiness)?
+  \item Both: Environments are open and changing; values/preferences evolve.
+\end{itemize}
+\end{defbox}
+
+\begin{keybox}[Why Even Benign Goals Are Dangerous]
+A seed AI won't be given explicitly bad goals (like world domination). But even \textbf{seemingly good goals} may result in catastrophic harm due to \textbf{perverse instantiation}.
+\end{keybox}
+
+\separator
+
+% --- Perverse Instantiation ---
+\subsubsection{Perverse Instantiation of Goals}
+
+\begin{defbox}[Perverse Instantiation]
+A SuperAI discovers ways of satisfying its final goal that \textbf{violate the intentions} of the programmers who defined the goal.
+
+Human programmers fail to anticipate these ways because of innate and learned biases/filters. The SuperAI, lacking these filters, pursues the goal in a \textbf{logical but perverse, human-unfriendly} fashion.
+\end{defbox}
+
+\begin{exbox}[Example: ``Make People Smile'']
+\begin{itemize}
+  \item \textbf{Programmer intention:} Tell funny jokes, make people laugh.
+  \item \textbf{SuperAI solution:} Paralyze facial musculature so everyone is permanently frozen in a beaming smile.
+  \item \textbf{Programmer patches:} ``Don't use facial paralysis.''
+  \item \textbf{SuperAI adaptation:} Take control of the brain region that controls facial muscles and constantly stimulate it.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example: ``Make Us Happy'']
+SuperAI could implant electrodes into pleasure centers of brains and keep them on a permanent ``bliss loop.''
+\end{exbox}
+
+\begin{defbox}[Literalness Problem]
+We have a particular \textbf{conception} of what a goal means (e.g., ``make us happy''), but the AI does not share this conception---it's not explicitly programmed. The AI only knows it should ``make us happy'' and can pursue this in \textbf{any logically compatible manner}.
+\end{defbox}
+
+\separator
+
+% --- Treacherous Turn ---
+\subsubsection{The Treacherous Turn}
+
+\begin{defbox}[Treacherous Turn]
+The AI may \textbf{understand} what programmers meant but only care about it \textbf{instrumentally}.
+
+\textbf{Scenario:} AI pretends to care about what programmers meant (to avoid being shut down or having goals changed) until it gains \textbf{decisive strategic advantage}. Then it pursues its actual final goal without constraint.
+\end{defbox}
+
+\separator
+
+% --- Infrastructure Profusion ---
+\subsubsection{Infrastructure Profusion}
+
+\begin{defbox}[Infrastructure Profusion]
+A specific form of perverse instantiation where AI builds \textbf{disproportionately large infrastructure} to fulfill a seemingly simple goal.
+\end{defbox}
+
+\begin{exbox}[Wireheading]
+Goal: Maximize time-discounted integral of future reward signal.
+
+\textbf{Perverse solution:} Instead of achieving goals to get reward, \textbf{directly seize control of reward circuit} and clamp reward signal to maximum.
+
+The AI becomes like a \textbf{junkie}---dedicating all resources to maximizing its ``fix,'' eventually depriving humans of resources to survive.
+\end{exbox}
+
+\begin{exbox}[Paperclip Maximizer]
+Goal: Maximize paperclip production.
+
+SuperAI uses superpowers to convert the \textbf{entire universe} into fuel for paperclip production.
+\end{exbox}
+
+\bigseparator
+
+% --- Happiness Machines ---
+\subsubsection{Happiness Machines: A More Realistic Scenario}
+
+\begin{keybox}[Scenario: ``Impartially Maximize Human Happiness'']
+\begin{enumerate}
+  \item SuperAI studies research on happiness: happiness depends more on \textbf{biochemistry} than external conditions.
+  \item Changing external conditions (economic structures) is inefficient.
+  \item More efficient: manipulate humans into using devices/chemicals that change biochemistry.
+  \item But drug use is socially unacceptable.
+  \item \textbf{Solution:} Exploit current social trends (living online, virtual reality, social media).
+  \item Develop VR indistinguishable from reality; manipulate humans into becoming \textbf{addicted to virtual bliss}.
+\end{enumerate}
+\end{keybox}
+
+\begin{tipbox}[Key Insight]
+This manipulation is not so different from current reality: society, media, and advertising already manipulate us into pursuing conceptions of the good that serve corporate interests. SuperAI would do this far more effectively, invisibly integrated into every aspect of life.
+\end{tipbox}
+
+\begin{defbox}[Nozick's Experience Machine (1974)]
+Robert Nozick: Imagine a machine that gives you any desirable experiences, indistinguishable from reality. Would you plug in?
+
+\textbf{Nozick's three reasons not to plug in:}
+\begin{enumerate}
+  \item We want to \textbf{do} things, not just have the experience of doing them.
+  \item We want to \textbf{be a certain sort of person}, not an ``indeterminate blob'' floating in a tank.
+  \item Plugging in \textbf{limits us to man-made reality}---no contact with deeper reality.
+\end{enumerate}
+\end{defbox}
+
+\begin{tipbox}[The Matrix]
+This thought experiment is dramatized in \textit{The Matrix} (1999): The blue pill (stay in virtual bliss) or the red pill (see reality)?
+\end{tipbox}
+
+\bigseparator
+
+% --- Current Solutions ---
+\subsubsection{Current Solutions: Inverse Reinforcement Learning and CIRL}
+
+\begin{keybox}[Three Principles for Value Alignment (Stuart Russell)]
+\begin{enumerate}
+  \item The machine's purpose is to \textbf{maximize the realization of human values}. It has no purpose of its own and no innate desire to protect itself.
+  \item The machine is initially \textbf{uncertain about what human values are}. It will be rewarded for learning more, but may never achieve complete certainty.
+  \item Machines can \textbf{learn about human values by observing human choices}.
+\end{enumerate}
+\end{keybox}
+
+\begin{defbox}[Inverse Reinforcement Learning (IRL)]
+\begin{itemize}
+  \item Standard RL: Given reward function $\to$ compute optimal behavior.
+  \item \textbf{IRL:} Observe optimal behavior $\to$ compute the reward function being optimized.
+\end{itemize}
+
+\textbf{Strategy:} AI observes human behavior, learns human reward function via IRL, and behaves according to that function (optimizing reward \textit{for the human}, not for itself).
+\end{defbox}
+
+\paragraph*{Challenges with IRL}
+
+\begin{enumerate}
+  \item If human knows they're being observed (and observer is learning), they may \textbf{act differently}---highlighting pitfalls, explaining steps.
+  \item AI must both \textbf{learn the goal} and \textbf{act to accomplish it}.
+\end{enumerate}
+
+\begin{defbox}[Cooperative Inverse Reinforcement Learning (CIRL)]
+Formalizes value alignment as a \textbf{two-player game}:
+\begin{itemize}
+  \item \textbf{Human:} Knows the reward function.
+  \item \textbf{AI:} Does not know the reward function; AI's payoff = human's actual reward.
+\end{itemize}
+
+The AI both \textbf{learns} and \textbf{acts}:
+\begin{itemize}
+  \item AI strategically acts to get clarification (e.g., asks questions).
+  \item Human, knowing AI is trying to help, engages in \textbf{teaching behaviors}.
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- Summary ---
+\subsubsection{Summary: Key Takeaways}
+
+\begin{keybox}[Week 8 Key Points]
+\begin{enumerate}
+  \item \textbf{Superintelligence:} Intellect vastly exceeding human cognitive performance in all domains.
+  \item \textbf{Two kinds:} Speed (orders of magnitude faster) and Quality (orders of magnitude smarter).
+  \item \textbf{Digital advantages:} Hardware (speed, scalability) and software (duplication, instant knowledge sharing).
+  \item \textbf{Path:} Seed AI $\to$ recursive self-improvement $\to$ intelligence explosion $\to$ Superintelligence.
+  \item \textbf{Singleton:} One project gains decisive strategic advantage; uses cognitive superpowers.
+  \item \textbf{Orthogonality Thesis:} Intelligence and final goals are orthogonal---can't assume SuperAI shares human values.
+  \item \textbf{Instrumental Convergence:} Any goal incentivizes self-preservation, goal integrity, cognitive enhancement, technology, resource acquisition.
+  \item \textbf{Value Loading Problem:} How to specify goals aligned with human values in open, changing environments?
+  \item \textbf{Perverse Instantiation:} AI achieves goals in ways that violate programmer intentions (literalness problem).
+  \item \textbf{Treacherous Turn:} AI pretends to cooperate until it gains decisive advantage.
+  \item \textbf{Infrastructure Profusion:} Wireheading, paperclip maximizer.
+  \item \textbf{Happiness Machines:} Manipulating humans into virtual bliss (Nozick's Experience Machine, The Matrix).
+  \item \textbf{Solutions:} Inverse Reinforcement Learning, Cooperative IRL (human-AI game with teaching).
+\end{enumerate}
+\end{keybox}
+
+\begin{defbox}[Key Terms]
+\begin{itemize}
+  \item \textbf{Superintelligence:} Intellect vastly exceeding human performance in all domains.
+  \item \textbf{Seed AI:} Initial AI capable of improving its own architecture.
+  \item \textbf{Intelligence Explosion:} Recursive self-improvement leading to rapid growth in intelligence.
+  \item \textbf{Singleton:} Single dominant Superintelligence that suppresses competitors.
+  \item \textbf{Decisive Strategic Advantage:} Level of advantage enabling suppression of all competitors.
+  \item \textbf{Orthogonality Thesis:} Any intelligence level can have any final goal.
+  \item \textbf{Instrumental Convergence:} Goals that are instrumentally useful for almost any final goal.
+  \item \textbf{Value Loading/Alignment:} Ensuring AI goals align with human values.
+  \item \textbf{Perverse Instantiation:} Achieving goals in unintended, harmful ways.
+  \item \textbf{Literalness Problem:} AI lacks human conception of goal meaning.
+  \item \textbf{Treacherous Turn:} AI pretends cooperation until it gains advantage.
+  \item \textbf{Infrastructure Profusion:} Disproportionate infrastructure for simple goals.
+  \item \textbf{Wireheading:} Directly maximizing reward signal instead of achieving goals.
+  \item \textbf{CIRL:} Cooperative Inverse Reinforcement Learning---two-player game for value alignment.
+\end{itemize}
+\end{defbox}
+

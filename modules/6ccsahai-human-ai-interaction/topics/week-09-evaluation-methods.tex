@@ -1,0 +1,409 @@
+\section{Week 9: Evaluation Methods for AI Systems}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Understand the range of methods available to a human-AI designer/practitioner, and describe their pros/cons.
+  \item Apply both simple methods (think-aloud protocol, heuristic analysis) and experiment design thinking.
+  \item Run a think-aloud protocol and extract useful feedback for designs.
+  \item Reason about independent, dependent, and intervening variables and argue about causal effects of system design.
+\end{itemize}
+\end{keybox}
+
+\begin{keybox}[Big Picture]
+Evaluation methods are your \textbf{toolbox}---each has a purpose, and you must know when/why to use each. This week covers:
+\begin{enumerate}
+  \item \textbf{Heuristic evaluation}: Expert-based, uses established principles.
+  \item \textbf{Think-aloud protocol}: Users verbalize thoughts while using system.
+  \item \textbf{Experiments}: Manipulate variables to establish causation.
+\end{enumerate}
+
+Key insight: \textbf{Correlation $\neq$ Causation}. Experiments help us make causal claims.
+\end{keybox}
+
+\begin{keybox}[What Examiners Like to Ask]
+\begin{itemize}
+  \item Compare heuristic evaluation and think-aloud protocol.
+  \item Explain independent vs.\ dependent vs.\ intervening variables.
+  \item Identify threats to internal/external validity and reliability.
+  \item Design an experiment with appropriate controls.
+  \item Compare between-subjects vs.\ within-subjects designs.
+  \item Explain why triangulation is important.
+\end{itemize}
+\end{keybox}
+
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Evaluation in the Design Process}
+
+\paragraph*{Why Evaluate?}
+To check that all aspects of user experience are considered in design.
+
+\paragraph*{What to Evaluate?}
+\begin{itemize}
+  \item Conceptual models
+  \item Early and subsequent prototypes
+  \item Complete prototypes
+  \item Comparisons with competitors' products
+\end{itemize}
+
+\paragraph*{Where?}
+Natural settings, in-the-wild, living labs, lab settings.
+
+\paragraph*{When?}
+Throughout design---even finished products can be evaluated.
+
+\subsubsection*{Map of Evaluation Methods}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Category} & \textbf{Methods} \\
+\midrule
+\textbf{Expert evaluations} (no users) & Heuristic evaluation, model-based evaluation, analytics, cognitive walkthrough \\
+\textbf{Lab studies} & Think-aloud protocol, experiments, usability evaluation \\
+\textbf{Surveys} & Questionnaires, structured interviews \\
+\textbf{Field studies} & Technology probes, prototype deployment, A/B testing \\
+\textbf{Living laboratories} & Long-term instrumented environments \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Three Dimensions of Methods}
+\begin{enumerate}
+  \item \textbf{Abstract vs.\ Concrete}: Are you testing an abstraction or actual user behavior?
+  \item \textbf{Obtrusive vs.\ Unobtrusive}: Do users come to you (lab) or do you observe naturally?
+  \item \textbf{Goals}: Realistic use? Generalizability? Precision?
+\end{enumerate}
+
+\subsubsection*{Method 1: Heuristic Evaluation}
+
+\begin{defbox}[Heuristic Evaluation]
+Experts evaluate whether UI elements conform to tried-and-tested usability principles (heuristics). It is conducted \textbf{by experts}, not users.
+\end{defbox}
+
+\paragraph*{Nielsen's 10 Heuristics (Review)}
+\begin{enumerate}
+  \item Visibility \& Feedback
+  \item Match between system \& real world
+  \item User control \& freedom
+  \item Consistency \& standards
+  \item Error prevention
+  \item Recognition rather than recall
+  \item Efficiency \& flexibility
+  \item Aesthetics \& minimalism
+  \item Help users recognize, diagnose, recover from errors
+  \item Help and documentation
+\end{enumerate}
+
+\paragraph*{Process}
+\begin{enumerate}
+  \item \textbf{Recruit experts}: People who understand heuristics, have design experience.
+  \item \textbf{Briefing}: Prepared script ensures everyone receives same briefing; provide specific user tasks to focus exploration.
+  \item \textbf{Evaluation}: At least \textbf{two passes}:
+  \begin{itemize}
+    \item Pass 1: Get feel for flow and scope.
+    \item Pass 2: Focus on specific elements, identify usability problems.
+  \end{itemize}
+  \item \textbf{Debrief}: Summarize issues and recommendations to designers.
+\end{enumerate}
+
+\begin{tipbox}[When to Use Heuristic Evaluation]
+\begin{itemize}
+  \item Early in design (on sketches, wireframes).
+  \item When experts are available but users are not.
+  \item As a ``cheap, quick'' first pass before user testing.
+  \item Surface-level check regardless of backend functionality.
+\end{itemize}
+\end{tipbox}
+
+\subsubsection*{Method 2: Think-Aloud Protocol}
+
+\begin{defbox}[Think-Aloud Protocol]
+Users use the system while \textbf{continuously verbalizing their thoughts}---what they're thinking, trying to do, questions that arise, things they read.
+\end{defbox}
+
+\paragraph*{Why?}
+Need to know what users are \textbf{thinking}, not just what they're \textbf{doing}.
+
+\paragraph*{Process}
+\begin{enumerate}
+  \item Give user specific tasks (core features you want to test).
+  \item Prompt: ``Tell me what you're thinking.''
+  \item \textbf{Only help on pre-decided things}---track anything you do help on.
+  \item Make recording \& take good notes:
+  \begin{itemize}
+    \item Screen capture
+    \item Audio/video
+    \item Timestamps
+    \item Event logs
+  \end{itemize}
+  \item Do \textbf{not} answer questions or guide user (except pre-decided help).
+\end{enumerate}
+
+\paragraph*{What to Capture}
+\begin{itemize}
+  \item What are they thinking?
+  \item What are they trying to do?
+  \item What questions arise?
+  \item What are they reading/looking at?
+  \item Where do they pause/hesitate?
+\end{itemize}
+
+\begin{tipbox}[Think-Aloud Best Practices]
+\begin{itemize}
+  \item Be quiet---only prompt ``tell me what you're thinking.''
+  \item Don't answer their questions (you're testing the system, not your guidance).
+  \item Record everything for later analysis.
+  \item Note where users are confused vs.\ just thinking hard.
+\end{itemize}
+\end{tipbox}
+
+\subsubsection*{Method 3: Experiments}
+
+\paragraph*{The Problem: Correlation $\neq$ Causation}
+
+\begin{exbox}[Classic Example]
+Ice cream sales and shark attacks both increase in summer. Does ice cream attract sharks? No---both are caused by a \textbf{third variable} (more people at the beach in warm weather).
+\end{exbox}
+
+Experiments help us separate \textbf{accidental correlations} from \textbf{causal relationships}.
+
+\begin{defbox}[Experiment]
+A controlled study that:
+\begin{enumerate}
+  \item States a \textbf{testable hypothesis} (if X then Y).
+  \item \textbf{Manipulates independent variables}.
+  \item \textbf{Measures dependent variables}.
+  \item Uses statistical tests to accept/reject hypothesis.
+\end{enumerate}
+\end{defbox}
+
+\paragraph*{Key Variables}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{7cm} l @{}}
+\toprule
+\textbf{Variable Type} & \textbf{Definition} & \textbf{Example} \\
+\midrule
+Independent (X) & What you \textbf{manipulate} & Mac vs.\ Windows menu bar \\
+Dependent (Y) & What you \textbf{measure} & Time to access menu, errors \\
+Intervening ($\varepsilon$) & Unknown/uncontrolled factors & User fatigue, prior experience \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Model}: $Y = f(X) + \varepsilon$
+
+The purpose of experiment design is to \textbf{minimize or control} $\varepsilon$ so we can draw conclusions about how X affects Y.
+
+\begin{exbox}[Menu Bar Experiment]
+\textbf{Hypothesis}: Mac menu bar (anchored to top of screen) is faster to access than Windows menu bar (attached to application window).
+
+\textbf{Independent variables}:
+\begin{itemize}
+  \item Interface style (Mac vs.\ Windows)
+  \item Training given to users
+\end{itemize}
+
+\textbf{Dependent variables}:
+\begin{itemize}
+  \item Time to access menu
+  \item Errors
+  \item Number of tasks completed
+  \item User satisfaction
+\end{itemize}
+
+\textbf{Intervening variables} (must control):
+\begin{itemize}
+  \item Pointing device (mouse vs.\ trackpad)
+  \item User fatigue
+  \item Prior familiarity with each OS
+\end{itemize}
+\end{exbox}
+
+\subsubsection*{Threats to Validity and Reliability}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+\textbf{Threat} & \textbf{Question} & \textbf{Risk} \\
+\midrule
+Internal validity & Are results caused by independent variables? & Confounding variables cause effect, not your manipulation \\
+External validity & Can results be generalized? & Lab conditions too artificial to apply to real world \\
+Reliability & Will results be consistent if repeated? & Random variation, single trials, non-replicable \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Threats to Internal Validity}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+\textbf{Threat} & \textbf{Problem} & \textbf{Solution} \\
+\midrule
+Ordering effects & People learn, get tired & \textbf{Randomize} or \textbf{counterbalance} order \\
+Selection effects & Pre-existing differences between groups & \textbf{Randomly assign} users to conditions \\
+Experimenter bias & Enthusiasm for one condition & \textbf{Equivalent training}; \textbf{double-blind} design \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Threats to External Validity}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+\textbf{Threat} & \textbf{Problem} & \textbf{Solution} \\
+\midrule
+Population & Sample not representative & Draw \textbf{random sample} from target population \\
+Ecological & Lab conditions unrealistic & Make conditions \textbf{realistic in important respects} \\
+Training & Training doesn't match real learning & Mimic \textbf{real interface encounters} \\
+Task & Tasks not representative & Base on \textbf{task analysis} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Experiment Design: Between vs.\ Within Subjects}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5.5cm} p{5.5cm} @{}}
+\toprule
+& \textbf{Between Subjects} & \textbf{Within Subjects} \\
+\midrule
+\textbf{Design} & Different groups see different conditions & Same participants see all conditions \\
+\textbf{Comparison} & Compare means across groups & Compare within each participant \\
+\textbf{Advantages} & No ordering/training effects & Fewer participants needed; controls for individual differences \\
+\textbf{Disadvantages} & Needs 2$\times$+ participants; inter-participant variation can swamp effects & Risk of ordering/training effects; must counterbalance \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{exbox}[Between Subjects]
+\begin{itemize}
+  \item Group A sees only Mac menu bar.
+  \item Group B sees only Windows menu bar.
+  \item Compare: Is mean(time for A) < mean(time for B)?
+\end{itemize}
+\textbf{Eliminates}: Learning from one interface to the other.
+
+\textbf{Problem}: User differences (skill, preference) may swamp effect.
+\end{exbox}
+
+\begin{exbox}[Within Subjects]
+\begin{itemize}
+  \item Half see Mac first, then Windows.
+  \item Half see Windows first, then Mac.
+  \item Compare: For each person, was Mac faster than Windows?
+\end{itemize}
+\textbf{Eliminates}: Inter-participant variation (each person compared to self).
+
+\textbf{Problem}: Learning/fatigue effects; must counterbalance order.
+\end{exbox}
+
+\subsubsection*{Counterbalancing}
+
+\begin{defbox}[Counterbalancing]
+Systematically varying the order of conditions across participants to control for ordering effects.
+\end{defbox}
+
+\textbf{Example} (2 conditions):
+\begin{itemize}
+  \item Half of participants: A $\to$ B
+  \item Half of participants: B $\to$ A
+\end{itemize}
+
+\textbf{Note}: Becomes complex with $>2$ conditions (Latin square designs).
+
+\subsubsection*{Triangulation}
+
+\begin{defbox}[Triangulation]
+Using \textbf{several different methods} to attack the same question and see if results concur or conflict.
+\end{defbox}
+
+\textbf{Why?} Every method has limitations:
+\begin{itemize}
+  \item Lab experiment: Not externally valid.
+  \item Field study: Not controlled.
+  \item Survey: Biased by self-report.
+\end{itemize}
+
+\textbf{Higher confidence}: Results from multiple methods pointing in same direction.
+
+\subsubsection*{Comparison: Heuristic vs.\ Think-Aloud vs.\ Experiment}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+& \textbf{Heuristic} & \textbf{Think-Aloud} & \textbf{Experiment} \\
+\midrule
+Participants & Experts & Users & Users \\
+Setting & Lab/desk & Lab & Lab \\
+Goal & Check against heuristics & Understand user thinking & Establish causation \\
+Output & Usability problems & Mental model insights & Statistical evidence \\
+Cost & Low & Medium & High \\
+When & Early prototypes & Interactive prototypes & Near-final designs \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Practical Application Flow}
+
+A typical evaluation progression:
+\begin{enumerate}
+  \item \textbf{Heuristic evaluation} on semi-interactive sketches $\to$ check UI is understandable.
+  \item \textbf{Think-aloud protocol} on clickable prototype $\to$ understand user mental models.
+  \item \textbf{Small experiment} on near-final version $\to$ test if AI scaffolding works.
+  \item \textbf{Technology probe/field study} $\to$ observe real-world use over days/weeks.
+\end{enumerate}
+
+\subsubsection*{Key Definitions Summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Term} & \textbf{Definition} \\
+\midrule
+Heuristic evaluation & Expert review against usability principles \\
+Think-aloud protocol & Users verbalize thoughts while using system \\
+Independent variable & What experimenter manipulates \\
+Dependent variable & What experimenter measures \\
+Intervening variable & Uncontrolled factors affecting results \\
+Internal validity & Results caused by independent variables \\
+External validity & Results generalizable to real world \\
+Reliability & Results repeatable \\
+Confounding & Uncontrolled variable systematically affects results \\
+Between subjects & Different groups see different conditions \\
+Within subjects & Same participants see all conditions \\
+Counterbalancing & Varying order of conditions across participants \\
+Triangulation & Using multiple methods on same question \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Exam Tips}
+
+\begin{tipbox}[Experiment Design Questions]
+When asked to design an experiment:
+\begin{enumerate}
+  \item State the \textbf{hypothesis} clearly.
+  \item Identify \textbf{independent variables} (what you manipulate).
+  \item Identify \textbf{dependent variables} (what you measure).
+  \item List \textbf{intervening variables} to control.
+  \item Choose \textbf{between/within subjects} and justify.
+  \item Explain how you'll address \textbf{validity threats}.
+\end{enumerate}
+\end{tipbox}
+
+

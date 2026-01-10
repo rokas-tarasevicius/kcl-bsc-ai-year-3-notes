@@ -1,0 +1,478 @@
+% =============================================================================
+%                    WEEK 2: TEXT REPRESENTATION TECHNIQUES
+% =============================================================================
+\section{Week 2: Text Representation Techniques}
+
+% -----------------------------------------------------------------------------
+%                              2.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Explain the \textbf{distributional hypothesis}: words in similar contexts have similar meanings.
+  \item Represent words/documents as vectors using \textbf{term-document} and \textbf{word-word} co-occurrence matrices.
+  \item Compare word vectors using \textbf{dot product} and \textbf{cosine similarity}.
+  \item Describe weighting methods (\textbf{tf-idf}, \textbf{PMI}) and why they improve on raw counts.
+  \item Understand the motivation for \textbf{dense embeddings} (e.g., Word2Vec) over sparse count vectors.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week answers: \textit{``How can we represent word meaning computationally?''}
+
+Key insight: instead of treating words as opaque symbols, we represent them as \textbf{vectors} in a high-dimensional space where \textbf{similar meanings} correspond to \textbf{nearby points}.
+
+\begin{itemize}
+  \item \textbf{Count-based}: build vectors from co-occurrence statistics (sparse, interpretable).
+  \item \textbf{Prediction-based}: learn vectors by training a classifier (dense, generalises better).
+\end{itemize}
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item State the \textbf{distributional hypothesis} and give an example.
+  \item Explain why \textbf{raw dot product} is problematic; derive or apply \textbf{cosine similarity}.
+  \item Compute or interpret \textbf{tf-idf} weights (especially why common words get weight $\approx 0$).
+  \item Describe \textbf{Skip-Gram with negative sampling}: training objective, role of sigmoid, why scalable.
+  \item Discuss \textbf{bias in embeddings} and the \textbf{parallelogram analogy} method (and its caveats).
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+%                 2.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Desiderata for word meaning (synonymy, similarity, relatedness, connotation)
+  \item The distributional hypothesis
+  \item Co-occurrence matrices: term-document vs.\ word-word
+  \item Similarity metrics: dot product and cosine
+  \item Weighting schemes: tf-idf
+  \item Dense embeddings: Word2Vec (Skip-Gram with negative sampling)
+  \item Properties, analogies, and bias in embeddings
+\end{enumerate}
+
+\bigseparator
+
+% --- Lexical Semantics Desiderata ---
+\subsubsection{Lexical Semantics: Desiderata for Word Meaning}
+
+\begin{defbox}[Key Relations Between Word Senses]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Relation} & \textbf{Description / Example} \\
+\midrule
+\textbf{Polysemy} & One lemma, multiple senses: \code{mouse} (rodent vs.\ device) \\
+\textbf{Synonymy} & Same meaning in some contexts: \code{couch}/\code{sofa}, \code{car}/\code{automobile} \\
+\textbf{Antonymy} & Opposites differing on one feature: \code{hot}/\code{cold}, \code{up}/\code{down} \\
+\textbf{Similarity} & Share meaning elements but not synonyms: \code{car}/\code{bicycle} \\
+\textbf{Relatedness} & Associated via semantic field: \code{coffee}/\code{cup} (related, not similar) \\
+\textbf{Connotation} & Affective meaning: \code{copy} (neutral) vs.\ \code{knockoff} (negative) \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{defbox}
+
+\textbf{Connotation dimensions} (Osgood et al., 1957):
+\begin{itemize}
+  \item \textbf{Valence}: pleasantness (\code{love} = high, \code{toxic} = low)
+  \item \textbf{Arousal}: emotional intensity (\code{frenzy} = high, \code{mellow} = low)
+  \item \textbf{Dominance}: control exerted (\code{powerful} = high, \code{weak} = low)
+\end{itemize}
+
+\begin{tipbox}[Exam Tip: No Perfect Synonyms]
+Even near-synonyms differ in register, formality, or connotation (e.g., \code{water} vs.\ \code{H$_2$O}).
+\end{tipbox}
+
+\separator
+
+% --- Distributional Hypothesis ---
+\subsubsection{The Distributional Hypothesis}
+
+\begin{defbox}[Distributional Hypothesis]
+\textbf{``Words that occur in similar contexts tend to have similar meanings.''}
+
+\hfill --- Zellig Harris (1954); Firth (1957)
+
+\separator
+
+\textbf{Implication:} We can infer word meaning from \textit{usage patterns} rather than dictionary definitions.
+\end{defbox}
+
+\begin{exbox}[Example: Inferring Meaning from Context]
+Suppose you encounter the unknown word \code{ongchoi} in:
+\begin{itemize}
+  \item ``Ongchoi is delicious saut\'{e}ed with garlic.''
+  \item ``Ongchoi leaves with salty sauces.''
+\end{itemize}
+Compare with known contexts for \code{spinach}, \code{chard}, \code{collard greens}.
+
+\textbf{Conclusion:} \code{ongchoi} is a leafy green vegetable --- inferred purely from shared context words.
+\end{exbox}
+
+\separator
+
+% --- Vector Semantics ---
+\subsubsection{Vector Semantics: Words as Points in Space}
+
+\begin{defbox}[Core Idea]
+Represent each word as a \textbf{vector} in a high-dimensional space.
+
+\begin{itemize}
+  \item \textbf{Similar meanings} $\Rightarrow$ \textbf{nearby vectors}.
+  \item Enables graded similarity (not just ``same'' or ``different'').
+  \item Allows generalisation to \textit{unseen but similar} words.
+\end{itemize}
+\end{defbox}
+
+\textbf{Why vectors help ML:}
+\begin{itemize}
+  \item One-hot features require exact word match between train and test.
+  \item Embedding features: similar words have similar vectors $\Rightarrow$ classifier generalises.
+\end{itemize}
+
+\separator
+
+% --- Co-occurrence Matrices ---
+\subsubsection{Co-occurrence Matrices}
+
+\begin{defbox}[Term-Document Matrix]
+Rows = vocabulary words; Columns = documents.
+
+Cell $(w, d)$ = count (or weighted count) of word $w$ in document $d$.
+
+\textbf{Use case:} Information retrieval, document similarity.
+\end{defbox}
+
+\begin{defbox}[Word-Word (Term-Term) Matrix]
+Rows = vocabulary words; Columns = also vocabulary words.
+
+Cell $(w, c)$ = count of context word $c$ within a $\pm k$ window of target word $w$.
+
+\textbf{Use case:} Capturing fine-grained semantic similarity.
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c c @{}}
+\toprule
+ & \textbf{Term-Document} & \textbf{Word-Word} \\
+\midrule
+Columns & Documents & Context words \\
+Window & Whole document & $\pm k$ words (e.g., $\pm 4$) \\
+Typical use & IR, topic models & Word similarity \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{exbox}[Example: Mini Word-Word Matrix]
+Corpus windows:
+\begin{itemize}
+  \item ``\ldots cherry \textbf{pie}, a traditional \ldots''
+  \item ``\ldots strawberry rhubarb \textbf{pie}. Apple \textbf{pie} \ldots''
+  \item ``\ldots personal \textbf{digital} assistants \ldots''
+  \item ``\ldots \textbf{information} available on the internet \ldots''
+\end{itemize}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+ & \code{a} & \code{computer} & \code{pie} \\
+\midrule
+\code{cherry} & 1 & 0 & 1 \\
+\code{strawberry} & 0 & 0 & 2 \\
+\code{digital} & 0 & 1 & 0 \\
+\code{information} & 1 & 1 & 0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Observation: \code{cherry} and \code{strawberry} share the \code{pie} dimension; \code{digital} and \code{information} share \code{computer}.
+\end{exbox}
+
+\begin{tipbox}[Sparsity]
+Full word-word matrices are $|V| \times |V|$ (e.g., $50{,}000 \times 50{,}000$). Most entries are zero $\Rightarrow$ \textbf{sparse vectors}. Efficient sparse-matrix algorithms are essential.
+\end{tipbox}
+
+\separator
+
+% --- Similarity Metrics ---
+\subsubsection{Similarity Metrics: Dot Product and Cosine}
+
+\begin{defbox}[Dot Product]
+\[
+\vec{v} \cdot \vec{w} = \sum_{i=1}^{N} v_i w_i
+\]
+
+High when vectors have large values in the same dimensions.
+
+\textbf{Problem:} Favours \textit{long} vectors $\Rightarrow$ frequent words dominate.
+\end{defbox}
+
+\begin{defbox}[Cosine Similarity]
+\[
+\cos(\vec{v}, \vec{w}) = \frac{\vec{v} \cdot \vec{w}}{|\vec{v}| \, |\vec{w}|} = \frac{\sum_{i} v_i w_i}{\sqrt{\sum_{i} v_i^2} \; \sqrt{\sum_{i} w_i^2}}
+\]
+
+\textbf{Properties:}
+\begin{itemize}
+  \item Normalises by vector length $\Rightarrow$ removes frequency bias.
+  \item Focuses on \textit{direction} (pattern of co-occurrences), not magnitude.
+  \item For non-negative vectors: ranges from $0$ (orthogonal) to $1$ (identical direction).
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[Example: Cosine Calculation]
+Given (from Wikipedia):
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+ & \code{pie} & \code{data} & \code{computer} \\
+\midrule
+\code{cherry} & 442 & 8 & 2 \\
+\code{digital} & 5 & 1683 & 1670 \\
+\code{information} & 5 & 3982 & 3325 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\[
+\cos(\text{cherry}, \text{information}) = \frac{442 \cdot 5 + 8 \cdot 3982 + 2 \cdot 3325}{\sqrt{442^2+8^2+2^2}\;\sqrt{5^2+3982^2+3325^2}} \approx 0.017
+\]
+\[
+\cos(\text{digital}, \text{information}) \approx 0.996
+\]
+
+\textbf{Conclusion:} \code{information} is much closer to \code{digital} than to \code{cherry}.
+\end{exbox}
+
+\separator
+
+% --- tf-idf ---
+\subsubsection{Weighting: tf-idf}
+
+Raw counts overweight frequent but uninformative words (e.g., \code{the}, \code{good}).
+
+\begin{defbox}[tf-idf]
+\[
+\text{tf-idf}(t, d) = \text{tf}_{t,d} \times \text{idf}_t
+\]
+
+\textbf{Term frequency (tf):}
+\[
+\text{tf}_{t,d} = \begin{cases}
+1 + \log_{10}(\text{count}(t,d)) & \text{if count} > 0 \\
+0 & \text{otherwise}
+\end{cases}
+\]
+
+\textbf{Inverse document frequency (idf):}
+\[
+\text{idf}_t = \log_{10}\left(\frac{N}{\text{df}_t}\right)
+\]
+where $N$ = total documents, $\text{df}_t$ = number of documents containing $t$.
+\end{defbox}
+
+\begin{exbox}[Example: idf in Shakespeare's 37 Plays]
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c c l @{}}
+\toprule
+\textbf{Word} & \textbf{df} & \textbf{idf} & \textbf{Interpretation} \\
+\midrule
+\code{Romeo} & 1 & 1.57 & Very discriminative (one play) \\
+\code{Falstaff} & 4 & 0.97 & Moderately discriminative \\
+\code{good} & 37 & 0 & Appears everywhere $\Rightarrow$ no discriminative power \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Key insight:} If $\text{df}_t = N$, then $\text{idf}_t = \log(1) = 0$, so tf-idf $= 0$.
+\end{exbox}
+
+\begin{tipbox}[What Counts as a ``Document''?]
+For tf-idf, a ``document'' can be a play, article, paragraph, or even a sentence --- whatever granularity suits the task.
+\end{tipbox}
+
+\bigseparator
+
+% --- Word2Vec ---
+\subsubsection{Dense Embeddings: Word2Vec}
+
+\begin{defbox}[Sparse vs.\ Dense Vectors]
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+ & \textbf{Sparse (count-based)} & \textbf{Dense (learned)} \\
+\midrule
+Dimensionality & $|V|$ (20k--50k) & 50--1000 \\
+Most entries & Zero & Non-zero \\
+Synonymy & Distinct dimensions & Similar vectors \\
+Generalisation & Limited & Better \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{defbox}
+
+\begin{defbox}[Word2Vec: Skip-Gram with Negative Sampling (SGNS)]
+\textbf{Idea:} Learn embeddings by training a classifier to predict whether a word $c$ appears near target $w$.
+
+\textbf{Self-supervision:} Positive examples come from actual context; no manual labels needed.
+\end{defbox}
+
+\textbf{Training procedure:}
+\begin{enumerate}
+  \item For each target word $w$ in the corpus, collect context words $c_1, \ldots, c_L$ within window $\pm k$.
+  \item These $(w, c_i)$ pairs are \textbf{positive examples}.
+  \item Randomly sample $k$ \textbf{negative examples} $(w, c_{\text{neg}})$ from the vocabulary.
+  \item Train a logistic classifier to distinguish positive from negative pairs.
+  \item The learned weight matrices become the embeddings.
+\end{enumerate}
+
+\begin{defbox}[Skip-Gram Probability Model]
+Probability that $c$ is a true context word of $w$:
+\[
+P(+|w, c) = \sigma(c \cdot w) = \frac{1}{1 + \exp(-c \cdot w)}
+\]
+
+\textbf{Sigmoid} converts the dot product into a probability.
+
+For all context words (assuming independence):
+\[
+P(+|w, c_{1:L}) = \prod_{i=1}^{L} \sigma(c_i \cdot w)
+\]
+\end{defbox}
+
+\begin{defbox}[Skip-Gram Loss Function (Negative Sampling)]
+For one target $w$ with positive context $c_{\text{pos}}$ and $k$ negative samples $c_{\text{neg}_1}, \ldots, c_{\text{neg}_k}$:
+\[
+\mathcal{L} = -\left[ \log \sigma(c_{\text{pos}} \cdot w) + \sum_{i=1}^{k} \log \sigma(-c_{\text{neg}_i} \cdot w) \right]
+\]
+
+\textbf{Goal:} Maximise dot product with true context; minimise dot product with noise.
+\end{defbox}
+
+\begin{tipbox}[Why Negative Sampling?]
+Full softmax requires normalising over all $|V|$ words at each step --- computationally prohibitive. Negative sampling approximates this by contrasting against a small random sample.
+\end{tipbox}
+
+\begin{exbox}[Example: Skip-Gram Training Data]
+Sentence: ``\ldots lemon, a \textbf{tablespoon of apricot jam, a} pinch \ldots''
+
+Target: \code{apricot}, window $\pm 2$
+
+\textbf{Positive pairs:} (\code{apricot}, \code{tablespoon}), (\code{apricot}, \code{of}), (\code{apricot}, \code{jam}), (\code{apricot}, \code{a})
+
+\textbf{Negative pairs} (sampled): (\code{apricot}, \code{aardvark}), (\code{apricot}, \code{matrix}), \ldots
+\end{exbox}
+
+\textbf{Gradient descent update intuition:}
+\begin{itemize}
+  \item Move $w$ and $c_{\text{pos}}$ closer (increase their dot product).
+  \item Move $w$ and each $c_{\text{neg}}$ apart (decrease their dot products).
+\end{itemize}
+
+\begin{defbox}[Two Embedding Matrices]
+Skip-Gram learns:
+\begin{itemize}
+  \item $W$ --- target word embeddings
+  \item $C$ --- context word embeddings
+\end{itemize}
+
+Common practice: combine them as $\vec{w}_i + \vec{c}_i$ for the final representation.
+\end{defbox}
+
+\separator
+
+% --- Properties of Embeddings ---
+\subsubsection{Properties of Embeddings}
+
+\textbf{Window size effects:}
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Window} & \textbf{Nearest Neighbours} \\
+\midrule
+Small ($\pm 2$) & Syntactically/taxonomically similar (e.g., \code{Hogwarts} $\to$ other fictional schools) \\
+Large ($\pm 5$) & Topically related (e.g., \code{Hogwarts} $\to$ \code{Dumbledore}, \code{Malfoy}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{Analogical reasoning (parallelogram method):}
+
+\begin{thmbox}[Parallelogram Model for Analogies]
+To solve ``$a$ is to $b$ as $a^*$ is to ?'':
+\[
+\hat{b}^* = \arg\max_{x} \; \text{similarity}(x, \; a^* - a + b)
+\]
+
+\textbf{Examples:}
+\begin{itemize}
+  \item $\vec{\text{king}} - \vec{\text{man}} + \vec{\text{woman}} \approx \vec{\text{queen}}$
+  \item $\vec{\text{Paris}} - \vec{\text{France}} + \vec{\text{Italy}} \approx \vec{\text{Rome}}$
+\end{itemize}
+\end{thmbox}
+
+\begin{tipbox}[Caveats with Analogies]
+\begin{itemize}
+  \item Works mainly for \textbf{frequent words} and \textbf{certain relation types} (capitals, POS).
+  \item Fails for rarer words, longer distances, and many semantic relations.
+  \item Nearest neighbours may include query words themselves.
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+\textbf{Bias in embeddings:}
+
+\begin{tipbox}[Embeddings Reflect Corpus Biases]
+\begin{itemize}
+  \item ``father : doctor :: mother : ?'' $\to$ \code{nurse}
+  \item ``man : computer programmer :: woman : ?'' $\to$ \code{homemaker}
+\end{itemize}
+
+\textbf{Implication:} Systems using biased embeddings (e.g., for hiring) can perpetuate discrimination.
+
+\textbf{Historical embeddings} trained on different decades reveal changing cultural biases (e.g., gender stereotypes declining 1960--1990).
+\end{tipbox}
+
+\bigseparator
+
+% --- Summary Table ---
+\subsubsection{Summary: Sparse vs.\ Dense Methods}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5.5cm} p{5.5cm} @{}}
+\toprule
+ & \textbf{Count-Based (Sparse)} & \textbf{Word2Vec (Dense)} \\
+\midrule
+Representation & Co-occurrence counts (tf-idf, PMI) & Learned weight vectors \\
+Dimensionality & $|V|$ & 50--1000 \\
+Training & Direct matrix construction & SGD on prediction task \\
+Synonymy & Separate dimensions & Similar vectors \\
+Interpretability & High (dimensions = words) & Low (abstract dimensions) \\
+Generalisation & Limited & Better (nearby = similar) \\
+\bottomrule
+\end{tabular}
+\end{center}

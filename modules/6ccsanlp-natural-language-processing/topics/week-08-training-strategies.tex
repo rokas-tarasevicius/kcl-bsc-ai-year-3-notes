@@ -1,0 +1,533 @@
+% =============================================================================
+%                    WEEK 8: LLM TRAINING STRATEGIES
+% =============================================================================
+\section{Week 8: LLM Training Strategies}
+
+% -----------------------------------------------------------------------------
+%                              8.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Describe the principles of \textbf{supervised fine-tuning (SFT)} and \textbf{reinforcement learning from human feedback (RLHF)}.
+  \item Explain the three-stage LLM training pipeline: \textbf{pre-training} $\to$ \textbf{instruction fine-tuning} $\to$ \textbf{RLHF}.
+  \item Describe the difference between \textbf{PPO}, \textbf{DPO}, and \textbf{GRPO}.
+  \item Explain \textbf{LoRA} and how it reduces memory requirements for fine-tuning.
+  \item Calculate PPO objectives given probability ratios and advantages.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week explains how LLMs are trained through pre-training, instruction fine-tuning, and human-feedback methods (RLHF, PPO, DPO, GRPO) to turn raw next-token predictors into aligned, instruction-following models. We also address challenges such as memorisation, catastrophic forgetting, annotation cost, and training stability.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Describe the three stages of LLM training and their purposes.
+  \item Explain the \textbf{loss function} and \textbf{data requirements} for pre-training vs.\ SFT vs.\ RLHF.
+  \item Define \textbf{catastrophic forgetting} and other SFT challenges.
+  \item Explain \textbf{RLHF} and the role of \textbf{reward models}.
+  \item Calculate \textbf{PPO objectives}: ratio, clipped ratio, unclipped term, final objective.
+  \item Explain \textbf{LoRA}: how it reduces parameters via matrix decomposition.
+  \item Compare \textbf{DPO} and \textbf{GRPO} to PPO-based RLHF.
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 8.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Challenges in LLM training
+  \item The three-step training pipeline
+  \item Pre-training: next-token prediction
+  \item Memorisation vs.\ learning
+  \item Instruction fine-tuning (SFT)
+  \item SFT challenges and data considerations
+  \item RLHF and reward models
+  \item PPO: clipping and stability
+  \item LoRA: efficient fine-tuning
+  \item DPO and GRPO: simpler alternatives
+\end{enumerate}
+
+\bigseparator
+
+% --- 8.2.1 Challenges in LLM Training ---
+\subsubsection{Challenges in LLM Training}
+
+\begin{defbox}[LLM Training as Supervised Learning?]
+Traditional supervised learning has three components:
+\begin{itemize}
+  \item \textbf{Loss function:} The learning target
+  \item \textbf{Optimiser:} How to find the target
+  \item \textbf{Labelled data:} Where to train the model
+\end{itemize}
+
+\textbf{LLM challenges:}
+\begin{itemize}
+  \item \textbf{Loss function:} How to define correctness for language generation?
+  \item \textbf{Optimiser:} How to optimise when loss is unclear?
+  \item \textbf{Labelled data:} Impossible to manually label all human knowledge
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[Solution: Step-by-Step Training]
+LLM training is a systematic task with no simple solution. The key insight: break it into steps, each solving part of the problem.
+\end{tipbox}
+
+\bigseparator
+
+% --- 8.2.2 Three-Step Training Pipeline ---
+\subsubsection{The Three-Step LLM Training Pipeline}
+
+\begin{thmbox}[LLM Training Pipeline]
+\begin{enumerate}
+  \item \textbf{Step 1: Pre-training} --- ``Speak like a human''
+  \begin{itemize}
+    \item Train to predict next token
+    \item Uses plain text (no labels needed)
+    \item Gives fluency and world knowledge
+  \end{itemize}
+  
+  \item \textbf{Step 2: Instruction Fine-Tuning (SFT)} --- ``Understand instructions''
+  \begin{itemize}
+    \item Train on instruction-response pairs
+    \item Teaches task-following behavior
+  \end{itemize}
+  
+  \item \textbf{Step 3: RLHF} --- ``Learn from interaction''
+  \begin{itemize}
+    \item Align with human preferences
+    \item Uses comparative feedback (which response is better?)
+  \end{itemize}
+\end{enumerate}
+\end{thmbox}
+
+\bigseparator
+
+% --- 8.2.3 Pre-training ---
+\subsubsection{Pre-training: Next-Token Prediction}
+
+\begin{defbox}[Pre-training]
+\textbf{Goal:} Train the model to predict the next token given context.
+
+\textbf{How it simplifies the three challenges:}
+\begin{itemize}
+  \item \textbf{Loss function:} Cross-entropy loss on next-token prediction
+  \item \textbf{Optimiser:} Standard gradient descent
+  \item \textbf{Data:} Plain text --- no annotation required!
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[Pre-training Example]
+\textbf{Training sentence:} ``May the force be with you''
+
+\textbf{Training steps:}
+\begin{center}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Context} & \textbf{Predicted} & \textbf{Target} \\
+\midrule
+``May the force'' & LLM $\to$ ? & ``be'' \\
+``May the force be'' & LLM $\to$ ? & ``with'' \\
+``May the force be with'' & LLM $\to$ ? & ``you'' \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Loss:} $\mathcal{L} = -\log P(\text{target} \mid \text{context})$
+
+If the model predicts the correct word with high probability, loss is low $\to$ small parameter updates.
+\end{exbox}
+
+\begin{tipbox}[Teacher Forcing]
+During training, even if the model predicts incorrectly, we use the \textbf{correct word} as input for the next step (not the model's wrong prediction).
+\end{tipbox}
+
+\bigseparator
+
+% --- 8.2.4 Memorisation vs Learning ---
+\subsubsection{Memorisation vs.\ Learning}
+
+\begin{tipbox}[The Risk of Complex Models]
+\textbf{Trade-off:} Model complexity vs.\ generalisability.
+
+LLMs are extremely complex (billions of parameters). This creates risks:
+\begin{itemize}
+  \item \textbf{Overfitting:} Learning noise in training data
+  \item \textbf{Memorisation:} Storing patterns rather than understanding them
+\end{itemize}
+
+\textbf{Question:} Does the model truly understand, or just memorise?
+\end{tipbox}
+
+\begin{exbox}[Spurious Correlations Example]
+\textbf{Task:} Classify Pok\'{e}mon vs.\ Digimon images.
+
+\textbf{Model accuracy:} 98\% on training and test data.
+
+\textbf{Reality:} The model learned that:
+\begin{itemize}
+  \item Pok\'{e}mon images are PNG (transparent $\to$ black background)
+  \item Digimon images are JPEG (white background)
+\end{itemize}
+
+The model discriminated based on \textbf{background colour}, not the actual characters!
+\end{exbox}
+
+\bigseparator
+
+% --- 8.2.5 Instruction Fine-Tuning ---
+\subsubsection{Instruction Fine-Tuning (SFT)}
+
+\begin{defbox}[Instruction Fine-Tuning]
+\textbf{Goal:} Teach the model to follow human instructions.
+
+\textbf{Process:}
+\begin{enumerate}
+  \item Collect instruction-response pairs
+  \item Initialise with pre-trained parameters
+  \item Fine-tune on the instruction data
+\end{enumerate}
+
+\textbf{Key difference from pre-training:}
+\begin{itemize}
+  \item Pre-training: Predict every next word
+  \item SFT: Only train on the \textbf{response} part (instruction is just context)
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[SFT Example]
+\textbf{Instruction:} ``What's the iconic expression from the Star Wars movie?''
+
+\textbf{Training (fine-tune on response only):}
+\begin{center}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Context} & \textbf{Target} \\
+\midrule
+{[Instruction]} & ``May'' \\
+{[Instruction]} May & ``the'' \\
+{[Instruction]} May the & ``force'' \\
+\ldots & \ldots \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{exbox}
+
+\begin{tipbox}[Cross-lingual Transfer]
+Fine-tuning on one language can transfer to others! Example: Pre-train on 104 languages, fine-tune only on Chinese QA $\to$ model can answer English QA questions too.
+\end{tipbox}
+
+\bigseparator
+
+% --- 8.2.6 SFT Challenges ---
+\subsubsection{SFT Challenges}
+
+\begin{defbox}[Common SFT Problems]
+\begin{itemize}
+  \item \textbf{Catastrophic Forgetting:} Learning new tasks overwrites previous knowledge
+  \item \textbf{Instruction Ambiguity:} Different tasks expect different formats (bullets vs.\ long-form)
+  \item \textbf{Data Imbalance:} Model overfits to tasks with more data
+  \item \textbf{Domain Shift:} Mixing domains (medical vs.\ casual) confuses the model
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[Two Paths to Multi-Task AI]
+\textbf{Path 1:} Train separate models for each task (more accurate, less general)
+
+\textbf{Path 2:} Continuously fine-tune one model on all tasks (more general, risk of forgetting)
+
+Most commercial LLMs use Path 2 with careful data mixing and curriculum.
+\end{tipbox}
+
+\begin{tipbox}[Data Quality Matters]
+\textbf{LIMA paper:} Just 1,000 high-quality examples can match GPT-4 in 43\% of cases.
+
+``Less Is More for Alignment'' --- quality beats quantity.
+\end{tipbox}
+
+\bigseparator
+
+% --- 8.2.7 Self-Instruct ---
+\subsubsection{Self-Instruct: Generating Training Data}
+
+\begin{defbox}[Self-Instruct]
+\textbf{Problem:} Manual annotation is expensive.
+
+\textbf{Solution:} Use LLMs to generate instruction-response pairs automatically.
+
+\textbf{Benefits:}
+\begin{itemize}
+  \item Reduces annotation cost
+  \item Expands datasets beyond human-written examples
+\end{itemize}
+
+\textbf{Risks:}
+\begin{itemize}
+  \item Generated labels may be incorrect
+  \item May violate API terms of service (e.g., OpenAI prohibits using outputs to train competing models)
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- 8.2.8 RLHF ---
+\subsubsection{Reinforcement Learning from Human Feedback (RLHF)}
+
+\begin{defbox}[RLHF]
+\textbf{Problem with SFT:} Requires word-level annotation (expensive); ignores overall response quality.
+
+\textbf{RLHF solution:} Annotators only need to \textbf{compare} responses (which is better?), not write correct answers.
+
+\textbf{Process:}
+\begin{enumerate}
+  \item Generate multiple responses to a prompt
+  \item Human ranks responses (or picks the better one)
+  \item Increase probability of preferred responses; decrease probability of dispreferred ones
+\end{enumerate}
+\end{defbox}
+
+\begin{exbox}[RLHF Example]
+\textbf{Prompt:} ``What's the iconic Star Wars expression?''
+
+\textbf{Response A:} ``May the force be with you'' $\leftarrow$ Human prefers
+
+\textbf{Response B:} ``If necessary, please learn to let it go''
+
+\textbf{Training:} Increase $P(\text{Response A})$, decrease $P(\text{Response B})$.
+\end{exbox}
+
+\bigseparator
+
+% --- 8.2.9 Reward Models ---
+\subsubsection{Reward Models}
+
+\begin{defbox}[Reward Model]
+\textbf{Problem:} Human annotation doesn't scale; humans struggle to distinguish good responses from well-trained models.
+
+\textbf{Solution:} Train a \textbf{reward model} to simulate human preferences.
+
+\textbf{Training:} Use human-ranked examples to train a model that predicts preference scores.
+
+\textbf{Risk:} The LLM may learn to \textbf{exploit} the reward model (reward hacking), producing responses that score high but aren't actually good.
+\end{defbox}
+
+\bigseparator
+
+% --- 8.2.10 PPO ---
+\subsubsection{PPO: Proximal Policy Optimization}
+
+\begin{defbox}[PPO Principles]
+\textbf{Goal:} Update model to increase probability of good responses.
+
+\textbf{Key principles:}
+\begin{enumerate}
+  \item If reward is high $\to$ increase generative probability
+  \item If reward is low $\to$ decrease generative probability
+  \item Don't move too far from the previous model (stability)
+\end{enumerate}
+
+\textbf{Challenge:} Requires keeping two models in memory (current + previous version).
+\end{defbox}
+
+\begin{thmbox}[PPO Clipping Mechanism]
+\textbf{Ratio:} $r = \frac{P_{\text{current}}}{P_{\text{previous}}}$
+
+\textbf{Clipped ratio:} Constrain $r$ to range $[1-\varepsilon, 1+\varepsilon]$ (typically $\varepsilon = 0.2$)
+
+\textbf{PPO objective:}
+\[
+L^{\text{CLIP}} = \min\left( r \cdot A, \text{clip}(r, 1-\varepsilon, 1+\varepsilon) \cdot A \right)
+\]
+
+where $A$ is the \textbf{advantage} (reward signal).
+
+\textbf{Why clip?} Prevents extremely large updates that could destabilise training.
+\end{thmbox}
+
+\begin{exbox}[PPO Calculation Example 1]
+\textbf{Given:} $P_{\text{current}} = 0.3$, $P_{\text{previous}} = 0.2$, Advantage $= 2.0$, $\varepsilon = 0.2$
+
+\textbf{Step 1:} Ratio $= 0.3 / 0.2 = 1.5$
+
+\textbf{Step 2:} Unclipped term $= 1.5 \times 2.0 = 3.0$
+
+\textbf{Step 3:} Clipped ratio $= \min(1.5, 1.2) = 1.2$ (since $1+\varepsilon = 1.2$)
+
+\textbf{Step 4:} Clipped term $= 1.2 \times 2.0 = 2.4$
+
+\textbf{Step 5:} Final objective $= \min(3.0, 2.4) = \boxed{2.4}$
+\end{exbox}
+
+\begin{exbox}[PPO Calculation Example 2]
+\textbf{Given:} $P_{\text{current}} = 0.25$, $P_{\text{previous}} = 0.20$, Advantage $= 1.5$, $\varepsilon = 0.1$
+
+\textbf{Step 1:} Ratio $= 0.25 / 0.20 = 1.25$
+
+\textbf{Step 2:} Unclipped term $= 1.25 \times 1.5 = 1.875$
+
+\textbf{Step 3:} Clipped ratio $= \min(1.25, 1.1) = 1.1$
+
+\textbf{Step 4:} Clipped term $= 1.1 \times 1.5 = 1.65$
+
+\textbf{Step 5:} Final objective $= \min(1.875, 1.65) = \boxed{1.65}$
+\end{exbox}
+
+\begin{tipbox}[Interpreting the Ratio]
+\begin{itemize}
+  \item $r > 1$: Current model already favours this response $\to$ less update needed
+  \item $r < 1$: Current model doesn't favour this response $\to$ more update needed
+\end{itemize}
+
+Clipping prevents the model from over-focusing on single examples.
+\end{tipbox}
+
+\bigseparator
+
+% --- 8.2.11 LoRA ---
+\subsubsection{LoRA: Low-Rank Adaptation}
+
+\begin{defbox}[LoRA]
+\textbf{Problem:} PPO requires two models in memory $\to$ very expensive for large LLMs.
+
+\textbf{Solution:} Instead of updating the full weight matrix $W$ (size $m \times n$), decompose updates into two smaller matrices:
+\[
+W' = W + L \times R
+\]
+where $L$ is $m \times r$ and $R$ is $r \times n$, with $r \ll m, n$.
+
+\textbf{Parameter savings:}
+\begin{itemize}
+  \item Full matrix: $m \times n$ parameters
+  \item LoRA: $m \times r + r \times n$ parameters
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[LoRA Parameter Calculation]
+\textbf{Full matrix:} $6 \times 5 = 30$ parameters
+
+\textbf{LoRA with $r = 2$:}
+\begin{itemize}
+  \item $L$: $6 \times 2 = 12$ parameters
+  \item $R$: $2 \times 5 = 10$ parameters
+  \item Total: $12 + 10 = 22$ parameters
+\end{itemize}
+
+\textbf{Savings:} $30 - 22 = 8$ parameters (27\% reduction)
+
+For large matrices, savings are dramatic: $1000 \times 1000 = 1M$ vs.\ $1000 \times 16 + 16 \times 1000 = 32K$.
+\end{exbox}
+
+\begin{tipbox}[LoRA Trade-offs]
+\textbf{Pros:}
+\begin{itemize}
+  \item Reduces trainable parameters significantly
+  \item Enables fine-tuning large LLMs with limited GPU memory
+\end{itemize}
+
+\textbf{Cons:}
+\begin{itemize}
+  \item Does NOT guarantee same accuracy as full fine-tuning
+  \item Smaller $r$ $\to$ more compression but lower accuracy
+  \item No free lunch: accuracy vs.\ efficiency trade-off
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% --- 8.2.12 DPO ---
+\subsubsection{DPO: Direct Preference Optimization}
+
+\begin{defbox}[DPO]
+\textbf{Problem with PPO:} Complex pipeline (generate $\to$ get reward $\to$ policy gradient $\to$ clip).
+
+\textbf{DPO solution:} Directly optimise preferences without RL.
+
+\textbf{Key idea:} We already know which responses humans prefer. Just make preferred responses more likely than dispreferred ones directly.
+
+\textbf{Advantages over PPO:}
+\begin{itemize}
+  \item No reward model needed during training
+  \item No reinforcement learning required
+  \item Simpler and cheaper to implement
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- 8.2.13 GRPO ---
+\subsubsection{GRPO: Group Relative Policy Optimization}
+
+\begin{defbox}[GRPO]
+\textbf{Problem with PPO:} Needs a critic/value function to estimate advantages.
+
+\textbf{GRPO solution:} Compute advantages by comparing responses \textbf{within a group}.
+
+\textbf{Process:}
+\begin{enumerate}
+  \item For a prompt, generate multiple candidate responses
+  \item Compute statistics (mean, std) over the group
+  \item Define advantage as how much better each response is relative to peers
+\end{enumerate}
+
+\textbf{Advantages:}
+\begin{itemize}
+  \item No learned value function needed (simpler)
+  \item More stable training
+  \item Reward function can be simple (e.g., response length)
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- Summary Table ---
+\subsubsection{Summary: Training Methods Comparison}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4cm} p{4cm} @{}}
+\toprule
+\textbf{Method} & \textbf{Key Idea} & \textbf{Requirements} \\
+\midrule
+Pre-training & Next-token prediction & Plain text (no labels) \\
+SFT & Train on instruction-response pairs & Labelled instruction data \\
+RLHF + PPO & RL with clipped updates & Reward model + two LLMs in memory \\
+LoRA & Low-rank weight decomposition & Reduced memory \\
+DPO & Direct preference optimisation & Preference pairs (no RL) \\
+GRPO & Group-relative advantages & Multiple responses per prompt \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+\subsubsection{Key Equations Summary}
+
+\begin{thmbox}[Essential Formulas]
+\textbf{Pre-training loss (cross-entropy):}
+\[
+\mathcal{L} = -\sum_{t} \log P(w_t \mid w_1, \ldots, w_{t-1})
+\]
+
+\textbf{PPO ratio and clipping:}
+\[
+r = \frac{P_{\text{current}}}{P_{\text{previous}}}, \quad L^{\text{CLIP}} = \min(r \cdot A, \text{clip}(r, 1-\varepsilon, 1+\varepsilon) \cdot A)
+\]
+
+\textbf{LoRA decomposition:}
+\[
+W' = W + L \times R, \quad \text{params} = m \times r + r \times n \ll m \times n
+\]
+\end{thmbox}
+

@@ -1,0 +1,641 @@
+% =============================================================================
+%                    WEEK 4: NEURAL LMs, RNNs, AND LSTMs
+% =============================================================================
+\section{Week 4: Neural Language Models, RNNs, and LSTMs}
+
+% -----------------------------------------------------------------------------
+%                              4.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Explain \textbf{embeddings} and the \textbf{embedding matrix}, including how token indices (or one-hot vectors) are mapped to embedding vectors.
+  \item Use embeddings as input to \textbf{neural classifiers}, and combine them with methods such as \textbf{pooling} to produce sentence-level representations.
+  \item Describe simple \textbf{feedforward neural language models}, which use token embeddings in a fixed window to predict the next word.
+  \item Compare neural LMs with n-gram models, highlighting advantages such as \textbf{generalisation} and longer context.
+  \item Explain \textbf{recurrent neural networks (RNNs)} and how they process sequences with hidden states.
+  \item Describe how RNNs are trained, including \textbf{backpropagation through time} and \textbf{teacher forcing}.
+  \item Apply RNNs to language modelling and NLP tasks, such as sequence labelling and text generation.
+  \item Motivate and explain \textbf{LSTMs}, including their \textbf{gating mechanisms} for handling long-distance dependencies.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week transitions from count-based and simple neural methods to \textbf{sequence-aware architectures}. We start with embeddings as learned representations fed into feedforward classifiers and language models, then introduce \textbf{RNNs} which maintain hidden states across time steps, enabling modelling of sequences of arbitrary length. Finally, we cover \textbf{LSTMs}, which solve the vanishing gradient problem through gating mechanisms, enabling capture of long-distance dependencies.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Explain how the \textbf{embedding matrix} $E$ maps one-hot vectors (or indices) to dense embeddings.
+  \item Describe \textbf{pooling} (mean pooling) for converting variable-length sequences into fixed-size representations.
+  \item Compare \textbf{feedforward neural LMs} to \textbf{n-gram LMs}: context size, generalisation, sparsity handling.
+  \item Write the \textbf{RNN forward equations} ($h_t = g(Uh_{t-1} + Wx_t)$, $y_t = f(Vh_t)$).
+  \item Explain \textbf{unrolling} for training and why RNNs require incremental inference.
+  \item Define \textbf{teacher forcing} and \textbf{weight tying} in RNN language model training.
+  \item Describe the \textbf{vanishing gradient problem} and why it motivates LSTMs.
+  \item Explain the \textbf{LSTM gating mechanisms}: forget gate, input/add gate, output gate.
+  \item Describe the \textbf{encoder-decoder architecture} and its components.
+  \item Explain \textbf{attention} as a solution to the context bottleneck in encoder-decoder models.
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+%                 4.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Embeddings and the embedding matrix $E$
+  \item Embeddings as input to feedforward classifiers (pooling)
+  \item Feedforward neural language models
+  \item Neural LMs vs.\ n-gram models
+  \item Recurrent Neural Networks (RNNs / Elman Nets)
+  \item Training RNNs: unrolling, backpropagation through time, teacher forcing
+  \item RNNs for NLP tasks: LM, sequence labelling, classification, generation
+  \item LSTMs: gating mechanisms for long-distance dependencies
+  \item Encoder-decoder architecture
+  \item Attention mechanism
+\end{enumerate}
+
+\bigseparator
+
+% --- 4.2.1 Embeddings and the Embedding Matrix ---
+\subsubsection{Embeddings and the Embedding Matrix}
+
+\begin{defbox}[Embedding Matrix $E$]
+An \textbf{embedding} is a dense vector of dimension $d$ representing a token.
+
+The \textbf{embedding matrix} $E$ is a learned lookup table:
+\begin{itemize}
+  \item Shape: $|V| \times d$ (one row per vocabulary token)
+  \item Each row $E[i]$ is the embedding for token $i$
+\end{itemize}
+
+Embedding matrices are \textbf{central to all modern NLP systems}.
+\end{defbox}
+
+\begin{defbox}[One-Hot to Embedding Conversion]
+\textbf{Method 1: Indexing} (efficient)
+\begin{itemize}
+  \item Given token index $i$, select row $E[i]$ directly.
+\end{itemize}
+
+\textbf{Method 2: Matrix multiplication} (conceptual)
+\begin{itemize}
+  \item Represent token as one-hot vector $\vec{x} \in \mathbb{R}^{|V|}$ where $x_i = 1$, all others $0$.
+  \item Multiply: $\vec{e} = \vec{x}^\top E$ selects row $i$.
+\end{itemize}
+
+Both are equivalent; indexing is faster in practice.
+\end{defbox}
+
+\begin{exbox}[Example: Selecting Embeddings]
+\textbf{Vocabulary:} $|V| = 10000$, embedding dimension $d = 300$
+
+\textbf{Token:} ``dessert'' has index $i = 3$
+
+\textbf{One-hot vector:} $\vec{x} = [0, 0, 1, 0, \ldots, 0]$ (1 at position 3)
+
+\textbf{Embedding:} $\vec{e}_{\text{dessert}} = E[3] \in \mathbb{R}^{300}$
+
+For $N$ tokens, we get $N$ embeddings, forming an $N \times d$ matrix.
+\end{exbox}
+
+\bigseparator
+
+% --- 4.2.2 Embeddings as Input to Classifiers ---
+\subsubsection{Embeddings as Input to Feedforward Classifiers}
+
+\begin{keybox}[Representation Learning]
+Instead of hand-crafted features (like ``count of positive lexicon words''), we use \textbf{learned embeddings} as input features.
+
+\textbf{Benefit:} The network learns useful representations from data.
+\end{keybox}
+
+\textbf{Problem:} Text comes in variable lengths, but classifiers need fixed-size input.
+
+\textbf{Solutions:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Method} & \textbf{Description} \\
+\midrule
+Concatenation & Concatenate all $N$ embeddings into one vector of shape $[1 \times Nd]$. Pad shorter sequences; truncate longer ones. \\
+Pooling & Combine $N$ embeddings into a single $[1 \times d]$ vector (same dimensionality as one word). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{defbox}[Mean Pooling]
+Given $N$ token embeddings $e(w_1), \ldots, e(w_N)$, compute the element-wise mean:
+\[
+\vec{x}_{\text{mean}} = \frac{1}{N} \sum_{i=1}^{N} e(w_i)
+\]
+
+\textbf{Intuition:} For sentiment analysis, exact word position matters less than overall word content.
+
+\textbf{Equations for pooled classifier:}
+\begin{align*}
+\vec{x} &= \text{mean}(e(w_1), \ldots, e(w_N)) \\
+\vec{h} &= \sigma(W\vec{x} + \vec{b}) \\
+\vec{z} &= U\vec{h} \\
+\hat{\vec{y}} &= \text{softmax}(\vec{z})
+\end{align*}
+\end{defbox}
+
+\begin{tipbox}[Pooling vs.\ Concatenation Trade-off]
+\begin{itemize}
+  \item \textbf{Pooling:} Less information (loses position), but efficient and handles variable length naturally.
+  \item \textbf{Concatenation:} Preserves position, but requires padding/truncation and more parameters.
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% --- 4.2.3 Feedforward Neural Language Models ---
+\subsubsection{Feedforward Neural Language Models}
+
+\begin{defbox}[Feedforward Neural LM]
+\textbf{Task:} Predict next word $w_t$ given prior words $w_{t-1}, w_{t-2}, \ldots$
+
+\textbf{Approach:} Use a \textbf{sliding window} of fixed size $N-1$ (like n-grams).
+
+\textbf{Architecture:}
+\begin{enumerate}
+  \item Look up embeddings for context words: $e_{t-1}, e_{t-2}, \ldots, e_{t-N+1}$
+  \item Concatenate into input vector: $\vec{e} = [e_{t-N+1}; \ldots; e_{t-1}]$
+  \item Pass through hidden layer: $\vec{h} = \sigma(W\vec{e} + \vec{b})$
+  \item Output layer with softmax over vocabulary: $\hat{\vec{y}} = \text{softmax}(U\vec{h})$
+\end{enumerate}
+\end{defbox}
+
+\begin{exbox}[Example: 4-gram Feedforward LM]
+\textbf{Context:} ``and thanks for all the \underline{~~~}''
+
+\textbf{Window ($N=4$):} [``for'', ``all'', ``the''] $\to$ predict ``fish''
+
+\textbf{Dimensions:}
+\begin{itemize}
+  \item Embedding layer: $[1 \times Nd]$ (concatenated embeddings)
+  \item Hidden layer: $[1 \times d_h]$
+  \item Output layer: $[1 \times |V|]$ (probability over vocabulary)
+\end{itemize}
+
+$\hat{y}_{42}$ gives $P(w_t = \text{``fish''} | w_{t-3}, w_{t-2}, w_{t-1})$
+\end{exbox}
+
+\bigseparator
+
+% --- 4.2.4 Neural LMs vs N-gram LMs ---
+\subsubsection{Neural LMs vs.\ N-gram LMs}
+
+\begin{thmbox}[Why Neural LMs Outperform N-gram LMs]
+\textbf{Generalisation through embeddings:}
+
+\textbf{Training data:} ``I have to make sure that the \textbf{cat} gets fed.''
+
+\textbf{Test data:} ``I forgot to make sure that the \textbf{dog} gets \underline{~~~}''
+
+\begin{itemize}
+  \item \textbf{N-gram LM:} Never saw ``dog gets''; cannot predict ``fed''.
+  \item \textbf{Neural LM:} Uses similarity of ``cat'' and ``dog'' embeddings to generalise and predict ``fed''.
+\end{itemize}
+\end{thmbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+& \textbf{N-gram LM} & \textbf{Neural LM} \\
+\midrule
+Representation & Discrete word identities & Continuous embeddings \\
+Generalisation & None (exact match only) & Similar words $\to$ similar predictions \\
+Sparsity & Severe (many zero counts) & No zeros (dense vectors) \\
+Context & Fixed $N-1$ words & Fixed window (feedforward) \\
+Parameters & $O(|V|^N)$ & $O(|V| \cdot d + d \cdot d_h)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% --- 4.2.5 Recurrent Neural Networks (RNNs) ---
+\subsubsection{Recurrent Neural Networks (RNNs)}
+
+\begin{defbox}[Recurrent Neural Network (RNN)]
+A \textbf{recurrent neural network} is any network containing a \textbf{cycle} in its connections.
+
+The hidden state $h_t$ depends on:
+\begin{itemize}
+  \item The current input $x_t$
+  \item The previous hidden state $h_{t-1}$
+\end{itemize}
+
+This allows information to \textbf{persist across time steps}.
+\end{defbox}
+
+\begin{defbox}[Simple RNN (Elman Net) Equations]
+\textbf{Forward inference:}
+\begin{align*}
+h_t &= g(U h_{t-1} + W x_t) \\
+y_t &= f(V h_t)
+\end{align*}
+
+where:
+\begin{itemize}
+  \item $x_t$: input at time $t$ (e.g., embedding)
+  \item $h_t$: hidden state at time $t$
+  \item $y_t$: output at time $t$
+  \item $W$: input-to-hidden weights $[d_h \times d]$
+  \item $U$: hidden-to-hidden weights $[d_h \times d_h]$
+  \item $V$: hidden-to-output weights $[|V| \times d_h]$
+  \item $g$: activation function (e.g., tanh, ReLU)
+  \item $f$: output function (e.g., softmax)
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[Key Property: Sequential Inference]
+Computing $h_t$ \textbf{requires} $h_{t-1}$.
+
+$\Rightarrow$ Inference must proceed \textbf{incrementally} from start to end.
+
+$\Rightarrow$ Cannot parallelise across time steps (unlike feedforward networks).
+\end{tipbox}
+
+\begin{exbox}[RNN Forward Inference Algorithm]
+\begin{verbatim}
+function FORWARD_RNN(x, network):
+    h_0 = 0  # initial hidden state
+    for i = 1 to LENGTH(x):
+        h_i = g(U * h_{i-1} + W * x_i)
+        y_i = f(V * h_i)
+    return y
+\end{verbatim}
+
+\textbf{Note:} Matrices $U$, $V$, $W$ are \textbf{shared across all time steps}.
+\end{exbox}
+
+\bigseparator
+
+% --- 4.2.6 RNNs as Language Models ---
+\subsubsection{RNNs as Language Models}
+
+\begin{keybox}[RNN LM vs.\ Feedforward LM]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+& \textbf{Feedforward LM} & \textbf{RNN LM} \\
+\midrule
+Context & Fixed window size & Entire preceding history (via $h_{t-1}$) \\
+Representation & Concatenated embeddings & Hidden state encodes history \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{keybox}
+
+\begin{defbox}[RNN Language Model Equations]
+\begin{align*}
+e_t &= E x_t & \text{(embedding lookup)} \\
+h_t &= g(U h_{t-1} + W e_t) & \text{(update hidden state)} \\
+\hat{y}_t &= \text{softmax}(V h_t) & \text{(predict next word)}
+\end{align*}
+
+\textbf{Probability of next word being $k$:}
+\[
+P(w_{t+1} = k \mid w_1, \ldots, w_t) = \hat{y}_t[k]
+\]
+
+\textbf{Probability of entire sequence:}
+\[
+P(w_{1:n}) = \prod_{i=1}^{n} P(w_i \mid w_{<i}) = \prod_{i=1}^{n} \hat{y}_{i-1}[w_i]
+\]
+\end{defbox}
+
+\bigseparator
+
+% --- 4.2.7 Training RNNs ---
+\subsubsection{Training RNNs}
+
+\begin{defbox}[Unrolling Through Time]
+To train an RNN, we \textbf{unroll} it into a feedforward computational graph:
+\begin{enumerate}
+  \item Given input sequence, create copies of the network for each time step.
+  \item Weight matrices ($U$, $V$, $W$) are \textbf{shared} across all copies.
+  \item Apply standard backpropagation to the unrolled graph.
+\end{enumerate}
+
+This is called \textbf{Backpropagation Through Time (BPTT)}.
+\end{defbox}
+
+\begin{defbox}[Self-Supervision for LM Training]
+\textbf{Self-supervision:} The text itself provides the training signal.
+\begin{itemize}
+  \item At each time step $t$, the model predicts $w_{t+1}$.
+  \item The true next word $w_{t+1}$ serves as the gold label.
+  \item No manual annotation required.
+\end{itemize}
+
+\textbf{Loss function:} Cross-entropy at each position.
+\[
+L_{CE}(\hat{y}_t, y_t) = -\log \hat{y}_t[w_{t+1}]
+\]
+
+Since $y_t$ is one-hot, only the probability of the correct word matters.
+\end{defbox}
+
+\begin{defbox}[Teacher Forcing]
+\textbf{Teacher forcing:} During training, always feed the \textbf{correct (gold) previous word} as input, not the model's prediction.
+
+\textbf{Why?}
+\begin{itemize}
+  \item Early in training, predictions are poor.
+  \item Feeding wrong predictions would compound errors.
+  \item Gold context ensures stable training signal.
+\end{itemize}
+
+\textbf{At test time:} We must use the model's own predictions (no gold available).
+\end{defbox}
+
+\begin{defbox}[Weight Tying]
+The embedding matrix $E$ and output matrix $V$ serve similar roles:
+\begin{itemize}
+  \item $E$: maps words to embeddings (rows are word vectors)
+  \item $V$: maps hidden states to word scores (rows are word vectors)
+\end{itemize}
+
+\textbf{Weight tying:} Use $V = E^\top$ instead of learning separate matrices.
+
+\textbf{Weight-tied RNN LM equations:}
+\begin{align*}
+e_t &= E x_t \\
+h_t &= g(U h_{t-1} + W e_t) \\
+\hat{y}_t &= \text{softmax}(E^\top h_t)
+\end{align*}
+
+\textbf{Benefits:} Fewer parameters, often better generalisation.
+\end{defbox}
+
+\bigseparator
+
+% --- 4.2.8 RNNs for NLP Tasks ---
+\subsubsection{RNNs for NLP Tasks}
+
+\textbf{Four main architectures:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4cm} p{6cm} @{}}
+\toprule
+\textbf{Task Type} & \textbf{Example} & \textbf{Architecture} \\
+\midrule
+Sequence Labelling & POS tagging, NER & One output per input token \\
+Sequence Classification & Sentiment analysis & One output for entire sequence (use final $h_n$ or pooling) \\
+Language Modelling & Next word prediction & Output at each step predicts next token \\
+Encoder-Decoder & Translation, Summarisation & Separate encoder and decoder RNNs \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{defbox}[Stacked RNNs]
+Multiple RNN layers stacked on top of each other:
+\begin{itemize}
+  \item Output of layer 1 becomes input to layer 2.
+  \item Captures more abstract representations at higher layers.
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Bidirectional RNNs]
+Run \textbf{two separate RNNs}:
+\begin{itemize}
+  \item \textbf{Forward RNN:} processes $x_1, \ldots, x_n$ (left-to-right)
+  \item \textbf{Backward RNN:} processes $x_n, \ldots, x_1$ (right-to-left)
+\end{itemize}
+
+\textbf{Concatenate} their hidden states:
+\[
+h_t = [\overrightarrow{h}_t ; \overleftarrow{h}_t]
+\]
+
+\textbf{Benefit:} Each position has context from \textbf{both} left and right.
+
+\textbf{Use case:} Sequence labelling, classification (but \textbf{not} language modelling, which must be left-to-right).
+\end{defbox}
+
+\begin{exbox}[Autoregressive Generation]
+To generate text:
+\begin{enumerate}
+  \item Start with \code{<s>} token.
+  \item Predict distribution over next word.
+  \item \textbf{Sample} from distribution (or take argmax for greedy decoding).
+  \item Feed sampled word as next input.
+  \item Repeat until \code{</s>} or max length.
+\end{enumerate}
+\end{exbox}
+
+\bigseparator
+
+% --- 4.2.9 LSTMs ---
+\subsubsection{Long Short-Term Memory Networks (LSTMs)}
+
+\begin{tipbox}[Motivation: Problems with Vanilla RNNs]
+\textbf{Problem 1: Long-distance dependencies}
+\begin{itemize}
+  \item Example: ``The flights the airline was canceling \textbf{were} full.''
+  \item ``were'' depends on ``flights'' (far away), not ``canceling'' (nearby).
+  \item Hidden state must carry information over many steps.
+\end{itemize}
+
+\textbf{Problem 2: Vanishing gradients}
+\begin{itemize}
+  \item During backpropagation, gradients are multiplied through many time steps.
+  \item Gradients can shrink exponentially, preventing learning of long-range dependencies.
+\end{itemize}
+\end{tipbox}
+
+\begin{defbox}[LSTM Key Idea]
+LSTMs divide context management into two subproblems:
+\begin{enumerate}
+  \item \textbf{Removing} information no longer needed
+  \item \textbf{Adding} information likely needed for future decisions
+\end{enumerate}
+
+LSTMs introduce:
+\begin{itemize}
+  \item An explicit \textbf{context/cell state} $c_t$ (separate from hidden state $h_t$)
+  \item \textbf{Gates}: neural circuits that control information flow
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[LSTM Gates]
+\textbf{1. Forget Gate} --- decides what to \textbf{remove} from context:
+\begin{align*}
+f_t &= \sigma(U_f h_{t-1} + W_f x_t) \\
+k_t &= c_{t-1} \odot f_t
+\end{align*}
+
+\textbf{2. Input/Add Gate} --- decides what to \textbf{add} to context:
+\begin{align*}
+g_t &= \tanh(U_g h_{t-1} + W_g x_t) & \text{(candidate values)} \\
+i_t &= \sigma(U_i h_{t-1} + W_i x_t) & \text{(gate)} \\
+j_t &= g_t \odot i_t \\
+c_t &= j_t + k_t & \text{(new context)}
+\end{align*}
+
+\textbf{3. Output Gate} --- decides what to \textbf{output} as hidden state:
+\begin{align*}
+o_t &= \sigma(U_o h_{t-1} + W_o x_t) \\
+h_t &= o_t \odot \tanh(c_t)
+\end{align*}
+
+where $\odot$ denotes element-wise (Hadamard) multiplication.
+\end{defbox}
+
+\begin{tipbox}[Intuition for LSTM Gates]
+\begin{itemize}
+  \item \textbf{Forget gate $f_t$:} Values near 0 erase; values near 1 preserve.
+  \item \textbf{Input gate $i_t$:} Values near 0 block new info; values near 1 allow it.
+  \item \textbf{Output gate $o_t$:} Controls how much of cell state reaches hidden state.
+\end{itemize}
+
+The cell state $c_t$ acts as a \textbf{conveyor belt} carrying information across time with minimal modification (additive updates, not multiplicative).
+\end{tipbox}
+
+\bigseparator
+
+% --- 4.2.10 Encoder-Decoder Architecture ---
+\subsubsection{Encoder-Decoder Architecture}
+
+\begin{defbox}[Encoder-Decoder Model]
+For sequence-to-sequence tasks (translation, summarisation):
+
+\textbf{Three components:}
+\begin{enumerate}
+  \item \textbf{Encoder:} Reads input sequence $x_{1:n}$, produces hidden states $h^e_{1:n}$.
+  \item \textbf{Context vector:} $c = h^e_n$ (final encoder hidden state).
+  \item \textbf{Decoder:} Takes $c$ as initial state, generates output sequence $y_{1:m}$.
+\end{enumerate}
+\end{defbox}
+
+\begin{defbox}[Encoder-Decoder Equations]
+\textbf{Encoder:}
+\[
+h^e_t = g(h^e_{t-1}, x_t)
+\]
+
+\textbf{Context:}
+\[
+c = h^e_n
+\]
+
+\textbf{Decoder:}
+\begin{align*}
+h^d_0 &= c \\
+h^d_t &= g(\hat{y}_{t-1}, h^d_{t-1}, c) \\
+\hat{y}_t &= \text{softmax}(h^d_t)
+\end{align*}
+
+\textbf{Conditional probability:}
+\[
+P(y \mid x) = \prod_{t=1}^{m} P(y_t \mid y_{1:t-1}, x)
+\]
+\end{defbox}
+
+\begin{tipbox}[Bottleneck Problem]
+The entire source sequence must pass through \textbf{one fixed-size vector $c$}.
+
+For long sequences, this is a severe \textbf{information bottleneck}.
+
+\textbf{Solution:} Attention mechanism.
+\end{tipbox}
+
+\bigseparator
+
+% --- 4.2.11 Attention Mechanism ---
+\subsubsection{Attention Mechanism}
+
+\begin{defbox}[Attention: Key Idea]
+Instead of using only the final encoder state:
+\begin{itemize}
+  \item Compute a \textbf{weighted average} of \textbf{all} encoder hidden states.
+  \item Weights depend on \textbf{relevance} to the current decoder state.
+  \item Different decoder steps attend to different parts of the input.
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Attention Computation]
+At decoder time step $i$:
+
+\textbf{1. Compute attention scores} (dot-product attention):
+\[
+\text{score}(h^d_{i-1}, h^e_j) = h^d_{i-1} \cdot h^e_j
+\]
+
+\textbf{2. Normalise with softmax to get weights:}
+\[
+\alpha_{ij} = \frac{\exp(\text{score}(h^d_{i-1}, h^e_j))}{\sum_k \exp(\text{score}(h^d_{i-1}, h^e_k))}
+\]
+
+\textbf{3. Compute context vector as weighted sum:}
+\[
+c_i = \sum_j \alpha_{ij} h^e_j
+\]
+
+\textbf{4. Use $c_i$ in decoder:}
+\[
+h^d_i = g(\hat{y}_{i-1}, h^d_{i-1}, c_i)
+\]
+\end{defbox}
+
+\begin{tipbox}[Attention Interpretation]
+\begin{itemize}
+  \item $\alpha_{ij}$: how much decoder step $i$ ``attends to'' encoder position $j$.
+  \item High $\alpha_{ij}$: encoder position $j$ is relevant for predicting output $i$.
+  \item Attention weights are often visualised as alignment matrices.
+\end{itemize}
+\end{tipbox}
+
+\begin{exbox}[Example: Translation with Attention]
+\textbf{Source (English):} ``The green witch arrived''
+
+\textbf{Target (Spanish):} ``Lleg\'{o} la bruja verde''
+
+When generating ``bruja'' (witch):
+\begin{itemize}
+  \item High attention weight on ``witch''
+  \item Lower weights on ``The'', ``green'', ``arrived''
+\end{itemize}
+
+The model learns soft word alignments automatically!
+\end{exbox}
+
+\bigseparator
+
+% --- Summary Table ---
+\subsubsection{Summary: Neural Architectures for Sequences}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{3cm} p{3cm} p{4cm} @{}}
+\toprule
+\textbf{Architecture} & \textbf{Context} & \textbf{Key Feature} & \textbf{Use Cases} \\
+\midrule
+Feedforward NN & Fixed window & Simple, parallelisable & Classification, fixed-context LM \\
+Simple RNN & Unbounded (via $h_{t-1}$) & Sequential processing & LM, sequence tasks \\
+LSTM & Unbounded + gated & Handles long-range dependencies & LM, translation, tagging \\
+Encoder-Decoder & Full source sequence & Seq-to-seq mapping & Translation, summarisation \\
++ Attention & Dynamic focus & Soft alignment & Improved translation \\
+\bottomrule
+\end{tabular}
+\end{center}
+

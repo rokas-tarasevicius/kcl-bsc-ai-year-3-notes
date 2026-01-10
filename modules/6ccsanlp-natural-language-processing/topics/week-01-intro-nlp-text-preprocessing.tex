@@ -1,0 +1,406 @@
+% =============================================================================
+%                    WEEK 1: INTRODUCTION TO NLP AND TEXT PREPROCESSING
+% =============================================================================
+\section{Week 1: Introduction to NLP and Text Preprocessing}
+
+% -----------------------------------------------------------------------------
+%                              1.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Differentiate \textbf{word tokens} and \textbf{word types}, and explain why the distinction matters.
+  \item Recognise tokenisation challenges: contractions, disfluencies, punctuation, cross-linguistic variation.
+  \item Explain \textbf{Heaps'/Herdan's Law} and why vocabulary size grows with corpus size.
+  \item Describe \textbf{Unicode} and \textbf{UTF-8} as standards for representing text.
+  \item Understand \textbf{subword tokenisation (BPE)} as a solution to open-vocabulary problems.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week addresses a deceptively simple question: \textit{``What is a unit of text?''}
+
+The answer is surprisingly complex:
+\begin{itemize}
+  \item ``Words'' are not universally defined (some languages don't use spaces).
+  \item Vocabulary grows unboundedly with more text data.
+  \item Modern NLP uses \textbf{subword} units instead of whole words.
+\end{itemize}
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Explain or compute \textbf{types vs tokens} on an example sentence; discuss case/punctuation choices.
+  \item Identify tokenisation challenges: contractions, disfluencies, no-whitespace languages.
+  \item State and apply \textbf{Heaps' Law}; interpret the exponent $b$.
+  \item Unicode/UTF-8 basics: code points vs bytes, ASCII compatibility, typical byte lengths.
+  \item BPE algorithm: what is merged, \textbf{train vs test time} behaviour, why it helps with unknown words.
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+%                 1.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item What a ``word'' can mean (tokens, types, morphemes)
+  \item How text is stored (Unicode and UTF-8)
+  \item Why unknown words are inevitable (vocabulary explosion)
+  \item Heaps'/Herdan's Law (formalises vocabulary growth)
+  \item Byte-Pair Encoding (BPE): training and inference
+\end{enumerate}
+
+\bigseparator
+
+% --- 1.2.1 Tokens vs Types ---
+\subsubsection{Tokens vs Types}
+
+\begin{defbox}[Tokens vs Types]
+\textbf{Token (instance):} A single occurrence of a word/unit in running text.
+
+\textbf{Type:} A distinct vocabulary item. The vocabulary size is denoted $|V|$.
+
+\separator
+
+\textbf{Why it matters:}
+\begin{itemize}
+  \item Probabilities and counts behave differently for tokens (occurrences) vs types (unique forms).
+  \item ``How many words in a sentence?'' depends on whether you mean tokens or types.
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[Example: Counting Tokens and Types]
+\textbf{Sentence:} ``They picnicked by the pool, then lay back on the grass and looked at the stars.''
+
+\textbf{Analysis (ignoring punctuation):}
+\begin{itemize}
+  \item \textbf{Tokens:} 16 (count each word occurrence)
+  \item \textbf{Types:} 14 (``the'' appears 3 times but counts as 1 type)
+\end{itemize}
+
+\textbf{Edge cases to consider:}
+\begin{itemize}
+  \item Are ``They'' and ``they'' the same type? (Case-folding decision)
+  \item Do we count punctuation marks as tokens?
+\end{itemize}
+\end{exbox}
+
+\begin{tipbox}[Exam Tip: Token/Type Questions]
+When asked ``how many words'', immediately clarify:
+\begin{itemize}
+  \item Punctuation as tokens?
+  \item Case-folding (They = they)?
+  \item Contractions split (I'm → I + 'm)?
+  \item Speech fillers kept or removed?
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+% --- 1.2.2 What Counts as a Word? ---
+\subsubsection{What Counts as a Word?}
+
+Defining ``word'' is harder than it seems:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Challenge} & \textbf{Example} \\
+\midrule
+Contractions & \code{I'm} = 1 orthographic token, but 2 grammatical words (\code{I} + \code{am}) \\
+Disfluencies & Speech contains fragments (\code{main-}) and fillers (\code{uh}, \code{um}) \\
+Punctuation & Is ``,'' a word? Is ``...'' a word? \\
+No whitespace & Chinese, Japanese, Thai have no spaces between words \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{exbox}[Example: Contractions]
+\textbf{Question:} ``\code{I'm}'' is orthographically one token in English. Grammatically it corresponds to how many words?
+
+\textbf{Answer:} Two words:
+\begin{enumerate}
+  \item \code{I} --- subject pronoun
+  \item \code{'m} (short for \code{am}) --- auxiliary verb
+\end{enumerate}
+\end{exbox}
+
+\begin{tipbox}[Cross-Linguistic Awareness]
+\textbf{Chinese tokenisation} is especially tricky:
+\begin{itemize}
+  \item Each character (hanzi) represents a morpheme.
+  \item Words average 2.4 characters, but word boundaries are disputed.
+  \item Different standards (Chinese Treebank, Peking University) segment differently.
+  \item Some systems just use characters as tokens.
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+% --- 1.2.3 Morphemes ---
+\subsubsection{Morphemes: The Minimal Units of Meaning}
+
+\begin{defbox}[Morpheme]
+A \textbf{morpheme} is a minimal meaning-bearing unit in a language.
+
+\begin{itemize}
+  \item \code{fox} = 1 morpheme
+  \item \code{cats} = 2 morphemes: \code{cat} + \code{-s} (plural marker)
+\end{itemize}
+\end{defbox}
+
+\textbf{Types of morphemes:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l p{7cm} @{}}
+\toprule
+\textbf{Type} & \textbf{Role} & \textbf{Example} \\
+\midrule
+Root & Main meaning & \code{work} in \code{worked} \\
+Inflectional & Grammatical features & \code{-ed} (past), \code{-s} (plural) \\
+Derivational & Changes word class & \code{care} (N) → \code{careful} (Adj) → \code{carefully} (Adv) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{defbox}[Clitic]
+A \textbf{clitic} is a morpheme that:
+\begin{itemize}
+  \item Behaves syntactically like a word, but
+  \item Cannot stand alone (reduced form, attached to another word)
+\end{itemize}
+
+\textbf{Examples:}
+\begin{itemize}
+  \item English: \code{'ve} in \code{I've} (can't say *``ve'')
+  \item English: \code{'s} in \code{the teacher's book}
+  \item French: \code{l'} in \code{l'op\'{e}ra}
+\end{itemize}
+\end{defbox}
+
+\separator
+
+% --- 1.2.4 Morphological Typology ---
+\subsubsection{Morphological Typology (Brief Overview)}
+
+Languages vary along two dimensions relevant to tokenisation:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5.5cm} p{5.5cm} @{}}
+\toprule
+\textbf{Dimension} & \textbf{Low End} & \textbf{High End} \\
+\midrule
+Morphemes per word & \textbf{Analytic} (few): Chinese, Vietnamese & \textbf{Polysynthetic} (many): Inuit \\
+Segmentability & \textbf{Agglutinative} (clean boundaries): Turkish & \textbf{Fusional} (features packed): Russian, English \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Exam Tip: Typology Pairing]
+\textbf{Agglutinative} = clean morpheme boundaries (easy to segment).
+
+\textbf{Fusional} = multiple grammatical features packed into one affix (hard to segment).
+\end{tipbox}
+
+\bigseparator
+
+% --- 1.2.5 Unicode and UTF-8 ---
+\subsubsection{Unicode and UTF-8}
+
+\begin{defbox}[Unicode]
+\textbf{Unicode} is a standard that assigns a unique \textbf{code point} to every character across all scripts.
+
+\begin{itemize}
+  \item Over 150,000 characters from 168+ scripts
+  \item Code points written as \code{U+XXXX} (hexadecimal)
+  \item First 127 code points = ASCII (backwards compatible)
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[UTF-8 Encoding]
+\textbf{UTF-8} is a variable-length \textit{encoding} of Unicode code points into bytes.
+
+\textbf{Typical byte lengths:}
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c @{}}
+\toprule
+\textbf{Script/Character Type} & \textbf{Bytes in UTF-8} \\
+\midrule
+ASCII (English letters, digits) & 1 \\
+Most European scripts (accents, etc.) & 2 \\
+Most CJK characters & 3 \\
+Rare CJK / Emoji & 4 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{defbox}
+
+\begin{exbox}[Example: ASCII and UTF-8]
+\textbf{Question:} Which string is ASCII-only (identical in UTF-8)?
+
+\begin{itemize}
+  \item \code{"hello"} --- \textbf{Yes}, ASCII-only → same bytes in UTF-8
+  \item \code{"Se\~{n}or"} --- No, contains accented characters (non-ASCII)
+  \item Chinese characters --- No (would require multi-byte UTF-8)
+\end{itemize}
+\end{exbox}
+
+\begin{tipbox}[Python 3 Note]
+In Python 3:
+\begin{itemize}
+  \item Strings are sequences of Unicode \textit{code points}.
+  \item \code{len("hello")} returns 5 (code points, not bytes).
+  \item Files must be encoded/decoded when reading/writing.
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% --- Heaps' Law ---
+\subsubsection{Heaps'/Herdan's Law}
+
+\begin{thmbox}[Heaps'/Herdan's Law (Empirical)]
+\[
+|V| = k N^b
+\]
+
+where:
+\begin{itemize}
+  \item $|V|$ = vocabulary size (number of types)
+  \item $N$ = corpus size (number of tokens)
+  \item $k > 0$ and $0 < b < 1$ are constants (typically $b \approx 0.5$)
+\end{itemize}
+
+\separator
+
+\textbf{Interpretation:} Vocabulary grows \textit{sublinearly} with corpus size. As you collect more text, you keep discovering new word types---but at a decreasing rate.
+\end{thmbox}
+
+\begin{exbox}[Example: Scaling with Heaps' Law]
+\textbf{Given:} $|V| = k N^{0.5}$
+
+\textbf{Question:} If we quadruple the corpus size ($N \to 4N$), how does vocabulary change?
+
+\textbf{Solution:}
+\[
+\frac{|V_{\text{new}}|}{|V_{\text{old}}|} = \frac{k(4N)^{0.5}}{k N^{0.5}} = \sqrt{4} = 2
+\]
+
+\textbf{Answer:} Vocabulary size \textbf{doubles}.
+\end{exbox}
+
+\begin{tipbox}[Why This Matters]
+No matter how big your vocabulary, there will always be \textbf{unknown words}. This motivates \textbf{subword tokenisation}.
+\end{tipbox}
+
+\separator
+
+% --- BPE ---
+\subsubsection{Byte-Pair Encoding (BPE)}
+
+BPE is the dominant subword tokenisation algorithm in modern NLP (used by GPT, BERT variants, etc.).
+
+\begin{thmbox}[BPE Token Learner (Training)]
+\textbf{Input:} Training corpus, number of merges $k$
+
+\textbf{Algorithm:}
+\begin{enumerate}
+  \item Initialise vocabulary $V$ with all unique characters/bytes.
+  \item Repeat $k$ times:
+  \begin{enumerate}
+    \item Find the most frequent adjacent pair $(t_L, t_R)$ in the corpus.
+    \item Create new token $t_{\text{new}} = t_L t_R$ and add to $V$.
+    \item Replace all occurrences of $(t_L, t_R)$ with $t_{\text{new}}$.
+  \end{enumerate}
+\end{enumerate}
+
+\textbf{Note:} Merges typically happen \textit{within} word boundaries (no cross-word merges).
+\end{thmbox}
+
+\begin{exbox}[Example: BPE Training on a Toy Corpus]
+\textbf{Corpus:} \code{set new new renew reset renew}
+
+\textbf{After preprocessing} (with space markers):
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c @{}}
+\toprule
+\textbf{Word} & \textbf{Count} \\
+\midrule
+\code{\_new} & 2 \\
+\code{\_renew} & 2 \\
+\code{\_set} & 1 \\
+\code{\_reset} & 1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Initial vocabulary:} \code{\_}, \code{e}, \code{n}, \code{r}, \code{s}, \code{t}, \code{w}.
+
+\textbf{First merge:} \code{n e} → \code{ne} (count = 4: appears in both \code{new} and \code{renew})
+
+\textbf{Subsequent merges:}
+\begin{itemize}
+  \item \code{ne w} → \code{new}
+  \item \code{\_ r} → \code{\_r}
+  \item \code{\_r e} → \code{\_re} (learns the prefix \code{re-}!)
+\end{itemize}
+\end{exbox}
+
+\begin{thmbox}[BPE Encoder (Test Time)]
+\textbf{Input:} New text to tokenise
+
+\textbf{Algorithm:}
+\begin{enumerate}
+  \item Split the input into characters/bytes.
+  \item Apply the learned merge rules \textbf{greedily, in the order they were learned}.
+  \item Return the resulting token sequence.
+\end{enumerate}
+
+\textbf{Critical point:} Test-set frequencies are \textbf{not used}. Merges follow the fixed learned order.
+\end{thmbox}
+
+\begin{tipbox}[Why BPE Works]
+\begin{itemize}
+  \item \textbf{No unknown tokens:} At worst, falls back to individual bytes (only 256 values).
+  \item \textbf{Learns meaningful subwords:} Frequent morphemes (like \code{-ing}, \code{re-}) become tokens.
+  \item \textbf{Deterministic:} Same input always produces same tokenisation.
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+% --- BPE Cross-Lingual ---
+\subsubsection{BPE Across Languages}
+
+\begin{tipbox}[Tokenisation Inequality]
+Even multilingual BPE tokenisers are trained mostly on English data.
+
+\textbf{Result:} English words are often single tokens, while other languages get split into many pieces.
+
+\textbf{Example (GPT-4o tokenisation):}
+\begin{itemize}
+  \item English recipe sentence: 18 tokens (14 words, no splits)
+  \item Spanish translation: 33 tokens (16 words, many splits like \code{h ondo} for ``deep'')
+\end{itemize}
+
+This affects inference cost and potentially model quality for non-English languages.
+\end{tipbox}
+
+\bigseparator
+

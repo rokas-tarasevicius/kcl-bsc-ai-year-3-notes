@@ -1,0 +1,27 @@
+\contentsline {section}{\numberline {1}Week 1: Introduction to Interaction Design}{5}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Topic Summary}{5}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Overview + Core Concepts + Extended Theory}{5}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Week 2: Human Cognition and Mental Models}{12}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Topic Summary}{12}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Overview + Core Concepts + Extended Theory}{12}{subsection.2.2}%
+\contentsline {section}{\numberline {3}Week 3: Interface and Interaction Patterns for Human-AI Systems}{19}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Topic Summary}{19}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Overview + Core Concepts + Extended Theory}{19}{subsection.3.2}%
+\contentsline {section}{\numberline {4}Week 4: Understanding Requirements in Human-AI Systems}{26}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Topic Summary}{26}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Overview + Core Concepts + Extended Theory}{26}{subsection.4.2}%
+\contentsline {section}{\numberline {5}Week 5: Prototyping Human-Centred AI Systems}{33}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Topic Summary}{33}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Overview + Core Concepts + Extended Theory}{33}{subsection.5.2}%
+\contentsline {section}{\numberline {6}Week 7: Human-Centred Values -- Automation, Agency \& Fairness}{39}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Topic Summary}{39}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Overview + Core Concepts + Extended Theory}{39}{subsection.6.2}%
+\contentsline {section}{\numberline {7}Week 8: Human-Centred Values -- Environmental Sustainability}{45}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Topic Summary}{45}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Overview + Core Concepts + Extended Theory}{45}{subsection.7.2}%
+\contentsline {section}{\numberline {8}Week 9: Evaluation Methods for AI Systems}{50}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Topic Summary}{50}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Overview + Core Concepts + Extended Theory}{50}{subsection.8.2}%
+\contentsline {section}{\numberline {9}Week 10: Technology Probes and Red-Teaming}{57}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Topic Summary}{57}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Overview + Core Concepts + Extended Theory}{57}{subsection.9.2}%

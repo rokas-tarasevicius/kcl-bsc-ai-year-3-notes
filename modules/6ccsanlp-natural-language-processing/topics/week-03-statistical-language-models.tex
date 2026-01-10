@@ -1,0 +1,568 @@
+% =============================================================================
+%                    WEEK 3: STATISTICAL LANGUAGE MODELS
+% =============================================================================
+\section{Week 3: Statistical Language Models}
+
+% -----------------------------------------------------------------------------
+%                              3.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Define a \textbf{language model} and use the \textbf{chain rule} with the \textbf{Markov assumption} to build N-gram approximations.
+  \item Estimate N-gram probabilities with \textbf{maximum likelihood estimation (MLE)} from corpus counts.
+  \item Handle sparsity via \textbf{smoothing}, \textbf{interpolation}, and \textbf{backoff}.
+  \item Evaluate language models using \textbf{training/dev/test sets} and \textbf{perplexity}.
+  \item Explain strengths and limitations of N-gram models, including their inability to capture \textbf{long-distance dependencies}.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week answers: \textit{``How can we predict the next word in a sequence?''}
+
+\textbf{N-gram language models} assign probabilities to word sequences by:
+\begin{itemize}
+  \item Decomposing $P(w_1, \ldots, w_n)$ using the \textbf{chain rule}.
+  \item Approximating long histories with the \textbf{Markov assumption} (only last $N-1$ words matter).
+  \item Estimating probabilities from \textbf{corpus counts} (MLE).
+\end{itemize}
+
+\textbf{Why study N-grams?} They introduce foundational concepts (perplexity, smoothing, train/test splits) that carry over to modern LLMs.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Define a language model; write the chain rule decomposition.
+  \item State the Markov assumption for bigrams/trigrams.
+  \item Compute bigram probabilities from counts (MLE).
+  \item Explain why zeros occur and how \textbf{add-one smoothing} addresses them.
+  \item Define \textbf{perplexity}; explain why lower is better.
+  \item Compare \textbf{interpolation} vs.\ \textbf{backoff}.
+  \item Explain why N-grams fail on long-distance dependencies.
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+%                 3.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item What is a language model?
+  \item Chain rule and Markov assumption
+  \item N-gram models: unigram, bigram, trigram
+  \item Maximum likelihood estimation (MLE)
+  \item Practical issues: log probabilities, vocabulary
+  \item Evaluation: train/dev/test sets and perplexity
+  \item Sampling from N-gram models
+  \item Sparsity and zeros
+  \item Smoothing: add-one (Laplace)
+  \item Interpolation and backoff
+  \item Limitations of N-gram models
+\end{enumerate}
+
+\bigseparator
+
+% --- What is a Language Model? ---
+\subsubsection{What is a Language Model?}
+
+\begin{defbox}[Language Model (LM)]
+A \textbf{language model} assigns probabilities to sequences of words.
+
+\textbf{Two equivalent views:}
+\begin{enumerate}
+  \item Probability of a whole sentence: $P(w_1, w_2, \ldots, w_n)$
+  \item Probability of the next word given history: $P(w_n | w_1, \ldots, w_{n-1})$
+\end{enumerate}
+\end{defbox}
+
+\textbf{Applications:}
+\begin{itemize}
+  \item \textbf{Spell/grammar checking:} ``Their are two midterms'' $\to$ ``There are two midterms''
+  \item \textbf{Speech recognition:} ``I will be back soonish'' vs.\ ``I will be bassoon dish''
+  \item \textbf{Text generation:} LLMs predict words left-to-right (autoregressive).
+\end{itemize}
+
+\separator
+
+% --- Chain Rule ---
+\subsubsection{The Chain Rule of Probability}
+
+\begin{defbox}[Chain Rule]
+For any sequence of random variables:
+\[
+P(x_1, x_2, \ldots, x_n) = \prod_{k=1}^{n} P(x_k | x_1, \ldots, x_{k-1})
+\]
+
+Applied to words:
+\[
+P(w_1, \ldots, w_n) = P(w_1) \cdot P(w_2|w_1) \cdot P(w_3|w_1, w_2) \cdots P(w_n|w_1, \ldots, w_{n-1})
+\]
+\end{defbox}
+
+\begin{exbox}[Example: Chain Rule]
+$P(\text{``The water of Walden Pond''})$
+\[
+= P(\text{The}) \times P(\text{water}|\text{The}) \times P(\text{of}|\text{The water}) \times \cdots
+\]
+\end{exbox}
+
+\textbf{Problem:} We can't estimate $P(w_n | w_1, \ldots, w_{n-1})$ directly --- there are too many possible histories!
+
+\separator
+
+% --- Markov Assumption ---
+\subsubsection{The Markov Assumption}
+
+\begin{defbox}[Markov Assumption]
+Approximate the full history by only the last $N-1$ words:
+\[
+P(w_n | w_1, \ldots, w_{n-1}) \approx P(w_n | w_{n-N+1}, \ldots, w_{n-1})
+\]
+
+\textbf{Intuition:} Recent context is most predictive; distant history matters less.
+\end{defbox}
+
+\separator
+
+% --- N-gram Models ---
+\subsubsection{N-gram Models}
+
+\begin{defbox}[N-gram Model]
+An \textbf{N-gram model} conditions on the previous $N-1$ words.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l c l @{}}
+\toprule
+\textbf{Model} & \textbf{N} & \textbf{Approximation} \\
+\midrule
+Unigram & 1 & $P(w_n)$ --- no context \\
+Bigram & 2 & $P(w_n | w_{n-1})$ --- 1 word of context \\
+Trigram & 3 & $P(w_n | w_{n-2}, w_{n-1})$ --- 2 words of context \\
+4-gram & 4 & $P(w_n | w_{n-3}, w_{n-2}, w_{n-1})$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{defbox}
+
+\begin{exbox}[Example: Bigram Approximation]
+Instead of:
+\[
+P(\text{blue} | \text{The water of Walden Pond is so beautifully})
+\]
+Approximate with:
+\[
+P(\text{blue} | \text{beautifully})
+\]
+\end{exbox}
+
+\begin{exbox}[Example: Shakespeare Generation by N-gram Order]
+\textbf{Unigram:} ``To him swallowed confess hear both. Which. Of save on trail for are ay device\ldots''
+
+\textbf{Bigram:} ``Why dost stand forth thy canopy, forsooth; he is this palpable hit the King Henry.''
+
+\textbf{Trigram:} ``Fly, and will rid me these news of price. Therefore the sadness of parting, as they say, 'tis done.''
+
+\textbf{4-gram:} ``King Henry. What! I will go seek the traitor Gloucester.''
+
+\textbf{Observation:} Higher N $\Rightarrow$ more coherent text (but more memorisation of training data).
+\end{exbox}
+
+\separator
+
+% --- MLE ---
+\subsubsection{Maximum Likelihood Estimation (MLE)}
+
+\begin{defbox}[MLE for Bigrams]
+\[
+P(w_n | w_{n-1}) = \frac{C(w_{n-1}, w_n)}{C(w_{n-1})}
+\]
+
+where $C(\cdot)$ denotes corpus count.
+
+\textbf{General N-gram:}
+\[
+P(w_n | w_{n-N+1}^{n-1}) = \frac{C(w_{n-N+1}^{n})}{C(w_{n-N+1}^{n-1})}
+\]
+\end{defbox}
+
+\begin{exbox}[Example: Bigram Counts (Berkeley Restaurant Project)]
+From 9,222 sentences:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c c c c @{}}
+\toprule
+ & \code{want} & \code{to} & \code{eat} & \code{chinese} \\
+\midrule
+\code{i} & 827 & 0 & 9 & 0 \\
+\code{want} & 0 & 608 & 1 & 6 \\
+\code{to} & 0 & 4 & 686 & 2 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Given unigram counts: $C(\text{i}) = 2533$, $C(\text{want}) = 927$, $C(\text{to}) = 2417$
+
+\[
+P(\text{want} | \text{i}) = \frac{827}{2533} = 0.33, \quad P(\text{to} | \text{want}) = \frac{608}{927} = 0.66
+\]
+\end{exbox}
+
+\begin{exbox}[Example: Sentence Probability]
+$P(\text{<s> i want english food </s>})$
+\[
+= P(\text{i}|\text{<s>}) \times P(\text{want}|\text{i}) \times P(\text{english}|\text{want}) \times P(\text{food}|\text{english}) \times P(\text{</s>}|\text{food})
+\]
+\[
+= 0.25 \times 0.33 \times 0.0011 \times 0.5 \times 0.68 \approx 0.000031
+\]
+\end{exbox}
+
+\begin{tipbox}[What N-grams Capture]
+\begin{itemize}
+  \item \textbf{Grammar:} $P(\text{to}|\text{want}) = 0.66$ (want $\to$ infinitive)
+  \item \textbf{World knowledge:} $P(\text{chinese}|\text{want}) > P(\text{english}|\text{want})$
+  \item \textbf{Semantics:} ``dinner'' and ``lunch'' have similar distributions
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+% --- Log Probabilities ---
+\subsubsection{Practical Issues: Log Probabilities}
+
+\begin{defbox}[Log Probabilities]
+Multiplying many small probabilities $\Rightarrow$ \textbf{underflow}.
+
+\textbf{Solution:} Work in log space.
+\[
+\log(p_1 \times p_2 \times \cdots \times p_n) = \log p_1 + \log p_2 + \cdots + \log p_n
+\]
+
+Convert back at the end: $p = \exp(\text{logprob})$
+\end{defbox}
+
+\separator
+
+% --- Sentence Boundaries ---
+\subsubsection{Sentence Boundary Tokens}
+
+\begin{defbox}[Start and End Tokens]
+Insert special tokens to model sentence boundaries:
+\begin{itemize}
+  \item \code{<s>} --- start of sentence
+  \item \code{</s>} --- end of sentence
+\end{itemize}
+
+This allows the model to learn $P(w_1 | \text{<s>})$ and $P(\text{</s>} | w_n)$.
+\end{defbox}
+
+\bigseparator
+
+% --- Evaluation ---
+\subsubsection{Evaluation: Train / Dev / Test Sets}
+
+\begin{defbox}[Data Splits]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Set} & \textbf{Purpose} \\
+\midrule
+\textbf{Training} & Estimate model parameters (N-gram counts) \\
+\textbf{Development (Dev)} & Tune hyperparameters (e.g., interpolation $\lambda$s); can evaluate repeatedly \\
+\textbf{Test} & Final evaluation \textit{only once} (or very few times) \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{defbox}
+
+\begin{tipbox}[Training on the Test Set = Bad Science!]
+If test sentences influence training:
+\begin{itemize}
+  \item Model assigns artificially high probability to test data.
+  \item Evaluation metric is falsely optimistic.
+  \item Results don't generalise.
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+% --- Perplexity ---
+\subsubsection{Perplexity}
+
+\begin{defbox}[Perplexity (PP)]
+\[
+\text{PP}(W) = P(w_1, w_2, \ldots, w_N)^{-1/N} = \sqrt[N]{\frac{1}{P(w_1, \ldots, w_N)}}
+\]
+
+\textbf{Interpretation:}
+\begin{itemize}
+  \item Inverse probability, normalised by sequence length.
+  \item \textbf{Weighted average branching factor:} how many equally likely words could follow on average.
+  \item \textbf{Lower perplexity = better model.}
+\end{itemize}
+
+\textbf{Range:} $[1, \infty)$ (probability in $[0, 1]$).
+\end{defbox}
+
+\begin{exbox}[Example: Perplexity Calculation]
+Deterministic language $L = \{\text{red}, \text{blue}, \text{green}\}$, each word equally likely ($p = 1/3$).
+
+Test set $T = $ ``red red red red blue'' (5 words).
+
+\[
+P(T) = (1/3)^5, \quad \text{PP}(T) = ((1/3)^5)^{-1/5} = (1/3)^{-1} = 3
+\]
+
+Now suppose training made \code{red} very likely: $P(\text{red}) = 0.8$, $P(\text{blue}) = 0.1$.
+
+\[
+P(T) = 0.8^4 \times 0.1 = 0.04096, \quad \text{PP}(T) = 0.04096^{-1/5} \approx 1.89
+\]
+
+\textbf{Lower perplexity} $\Rightarrow$ model better predicts the test set.
+\end{exbox}
+
+\begin{exbox}[Example: Perplexity by N-gram Order (WSJ)]
+Training: 38M words; Test: 1.5M words.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+ & Unigram & Bigram & Trigram \\
+\midrule
+Perplexity & 962 & 170 & 109 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Observation:} More context $\Rightarrow$ lower perplexity.
+\end{exbox}
+
+\begin{tipbox}[Why Log Perplexity?]
+Log perplexity turns products into sums, making computation \textbf{numerically stable}.
+\end{tipbox}
+
+\bigseparator
+
+% --- Sampling ---
+\subsubsection{Sampling from N-gram Models}
+
+\begin{defbox}[Shannon Sampling Method]
+\begin{enumerate}
+  \item Sample $w_1$ from $P(w | \text{<s>})$.
+  \item Sample $w_2$ from $P(w | w_1)$ (for bigram).
+  \item Repeat until \code{</s>} is sampled.
+  \item Concatenate the words.
+\end{enumerate}
+
+\textbf{Use:} Visualise what the model has learned; diagnose overfitting.
+\end{defbox}
+
+\separator
+
+% --- Sparsity and Zeros ---
+\subsubsection{Sparsity and Zeros}
+
+\begin{defbox}[The Sparsity Problem]
+\textbf{Most possible N-grams never appear in training.}
+
+\textbf{Shakespeare corpus:} $N = 884{,}647$ tokens, $V = 29{,}066$ types.
+\begin{itemize}
+  \item Possible bigrams: $V^2 \approx 844$ million.
+  \item Observed bigram types: $\sim 300{,}000$ (only 0.04\%).
+\end{itemize}
+
+\textbf{Consequence:} Unseen N-grams get $P = 0$ under MLE.
+\end{defbox}
+
+\begin{tipbox}[Why Zeros Are Fatal]
+\begin{itemize}
+  \item If any N-gram in test set has $P = 0$, the whole sentence has $P = 0$.
+  \item Perplexity = $\infty$ (can't divide by 0).
+\end{itemize}
+\end{tipbox}
+
+\begin{exbox}[Example: Zero Probability]
+Training: ``ate lunch'', ``ate dinner'', ``ate a'', ``ate the''
+
+Test: ``ate \textbf{breakfast}''
+
+$\Rightarrow P(\text{breakfast} | \text{ate}) = 0$ under MLE.
+\end{exbox}
+
+\bigseparator
+
+% --- Smoothing ---
+\subsubsection{Smoothing: Add-One (Laplace)}
+
+\begin{defbox}[Add-One Smoothing]
+Pretend every N-gram was seen one extra time.
+
+\textbf{MLE:}
+\[
+P(w_n | w_{n-1}) = \frac{C(w_{n-1}, w_n)}{C(w_{n-1})}
+\]
+
+\textbf{Add-one (Laplace):}
+\[
+P_{\text{Laplace}}(w_n | w_{n-1}) = \frac{C(w_{n-1}, w_n) + 1}{C(w_{n-1}) + V}
+\]
+
+where $V$ = vocabulary size.
+\end{defbox}
+
+\begin{exbox}[Example: Add-One Smoothing]
+Raw counts:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+ & \code{want} & \code{to} & \code{eat} \\
+\midrule
+\code{i} & 827 & 0 & 9 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+With $C(\text{i}) = 2533$ and $V = 1446$:
+
+\[
+P_{\text{Laplace}}(\text{to} | \text{i}) = \frac{0 + 1}{2533 + 1446} = \frac{1}{3979} \approx 0.00025
+\]
+
+Previously zero $\Rightarrow$ now non-zero!
+\end{exbox}
+
+\begin{tipbox}[Problem with Add-One]
+Add-one is a \textbf{blunt instrument}:
+\begin{itemize}
+  \item Shifts too much probability mass from frequent to rare/unseen events.
+  \item Reconstituted counts show dramatic changes (e.g., 827 $\to$ 527).
+  \item Generally \textbf{not used} for N-grams in practice.
+\end{itemize}
+
+\textbf{When it's used:} Naive Bayes text classification, domains with fewer zeros.
+\end{tipbox}
+
+\separator
+
+% --- Interpolation and Backoff ---
+\subsubsection{Interpolation and Backoff}
+
+\begin{defbox}[Interpolation]
+Combine estimates from different N-gram orders:
+\[
+\hat{P}(w_n | w_{n-2}, w_{n-1}) = \lambda_1 P(w_n | w_{n-2}, w_{n-1}) + \lambda_2 P(w_n | w_{n-1}) + \lambda_3 P(w_n)
+\]
+
+where $\lambda_1 + \lambda_2 + \lambda_3 = 1$.
+
+\textbf{Key idea:} If trigram evidence is sparse, lean more on bigram/unigram.
+\end{defbox}
+
+\begin{defbox}[Backoff]
+Use the highest-order N-gram with sufficient evidence:
+\begin{enumerate}
+  \item If $C(w_{n-2}, w_{n-1}, w_n) > 0$, use trigram.
+  \item Else if $C(w_{n-1}, w_n) > 0$, use bigram.
+  \item Else use unigram.
+\end{enumerate}
+
+\textbf{Complication:} Must discount higher-order N-grams so probabilities sum to 1.
+\end{defbox}
+
+\begin{defbox}[Stupid Backoff]
+Simplified backoff without proper discounting (not a true probability distribution):
+\[
+S(w_i | w_{i-k+1}^{i-1}) = 
+\begin{cases}
+\dfrac{C(w_{i-k+1}^i)}{C(w_{i-k+1}^{i-1})} & \text{if } C(w_{i-k+1}^i) > 0 \\[8pt]
+0.4 \cdot S(w_i | w_{i-k+2}^{i-1}) & \text{otherwise}
+\end{cases}
+\]
+
+\textbf{Works well at web scale} (e.g., Google N-grams).
+\end{defbox}
+
+\begin{tipbox}[How to Set $\lambda$s?]
+Tune on a \textbf{held-out (dev) set}:
+\begin{enumerate}
+  \item Fix N-gram probabilities from training data.
+  \item Search for $\lambda$s that minimise perplexity on dev set.
+\end{enumerate}
+\end{tipbox}
+
+\begin{tipbox}[Interpolation vs.\ Backoff]
+\textbf{Interpolation} usually works better because it always uses information from all orders, not just the highest available.
+\end{tipbox}
+
+\bigseparator
+
+% --- Limitations ---
+\subsubsection{Limitations of N-gram Models}
+
+\begin{tipbox}[Why N-grams Fail]
+\begin{enumerate}
+  \item \textbf{Long-distance dependencies:}
+  
+  ``The soups that I made from that new cookbook I bought yesterday \textbf{were} amazingly delicious.''
+  
+  Trigram can't see that ``soups'' (plural) requires ``were'' --- too far away.
+  
+  \item \textbf{No generalisation across similar meanings:}
+  
+  N-grams treat ``car'' and ``automobile'' as completely unrelated dimensions.
+  
+  \item \textbf{Sparsity grows exponentially with N.}
+\end{enumerate}
+
+\textbf{Solution:} Large language models (LLMs) with embeddings and attention.
+\end{tipbox}
+
+\textbf{But N-grams are still useful:}
+\begin{itemize}
+  \item Fast and lightweight.
+  \item Good for constrained domains.
+  \item Introduce key concepts: perplexity, smoothing, train/test, sampling.
+\end{itemize}
+
+\bigseparator
+
+% --- Summary ---
+\subsubsection{Summary: N-gram Language Models}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Concept} & \textbf{Key Point} \\
+\midrule
+Language model & Assigns probability to word sequences \\
+Chain rule & $P(w_1, \ldots, w_n) = \prod_k P(w_k | w_1, \ldots, w_{k-1})$ \\
+Markov assumption & Approximate history with last $N-1$ words \\
+MLE & $P(w_n | w_{n-1}) = C(w_{n-1}, w_n) / C(w_{n-1})$ \\
+Perplexity & $\text{PP} = P(W)^{-1/N}$; lower = better \\
+Add-one smoothing & Add 1 to all counts; blunt but simple \\
+Interpolation & Weighted mix of unigram, bigram, trigram \\
+Backoff & Fall back to lower-order N-gram if higher is zero \\
+Limitation & Can't capture long-distance dependencies \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+

@@ -1,0 +1,471 @@
+% =============================================================================
+%                    WEEK 11: LLM EVALUATION AND SAFETY
+% =============================================================================
+\section{Week 11: LLM Evaluation and Safety}
+
+% -----------------------------------------------------------------------------
+%                              11.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Learn about common \textbf{benchmarks} used to evaluate LLMs.
+  \item Explore different \textbf{methods} to evaluate LLMs (automatic, human, LLM-as-judge).
+  \item Understand key \textbf{metrics and challenges} in LLM evaluation.
+  \item Understand key \textbf{safety risks} in LLMs (bias, toxicity, jailbreaking).
+  \item Evaluate \textbf{defense strategies} for improving LLM safety.
+  \item Critically assess \textbf{trade-offs and limitations} of current safety approaches.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week covers two critical aspects of LLMs: (1) \textbf{Evaluation}---how to measure LLM capabilities across tasks, benchmarks, and metrics; and (2) \textbf{Safety}---understanding vulnerabilities (bias, toxicity, jailbreaking) and defense strategies. Both are essential for responsible LLM deployment.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Why might high benchmark scores not reflect true reasoning ability?
+  \item Explain \textbf{Goodhart's Law} in the context of LLM leaderboards.
+  \item Compare \textbf{text overlap metrics} (BLEU, ROUGE) vs.\ \textbf{semantic similarity} (BERTScore).
+  \item Explain \textbf{LLM-as-a-Judge} and its challenges.
+  \item What does performance drop on \textbf{GSM-Symbolic} suggest about LLM reasoning?
+  \item Define \textbf{representational} vs.\ \textbf{allocational} harm.
+  \item Describe bias evaluation methods: embedding-based, probability-based, generation-based.
+  \item Compare \textbf{black-box} vs.\ \textbf{white-box} jailbreaking techniques.
+  \item Explain defense strategies: SmoothLLM, GradSafe.
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 11.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Why evaluation matters
+  \item Evaluation tasks and benchmarks
+  \item Evaluation methods (automatic, human, LLM-as-judge)
+  \item Evaluation metrics
+  \item Evaluation challenges
+  \item Safety overview
+  \item Social bias in LLMs
+  \item Toxicity in LLMs
+  \item Jailbreaking attacks (black-box and white-box)
+  \item Defense strategies
+\end{enumerate}
+
+\bigseparator
+
+% =============================================================================
+%                              PART 1: EVALUATION
+% =============================================================================
+
+\subsubsection{Why Evaluation Matters}
+
+\begin{defbox}[Importance of LLM Evaluation]
+\begin{itemize}
+  \item Understand \textbf{true capabilities} beyond raw scores
+  \item Ensure \textbf{fairness, robustness, and safety}
+  \item Avoid \textbf{overfitting to benchmarks}
+  \item Enable meaningful \textbf{model comparison}
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[Benchmark Saturation]
+When models reach $>90\%$ on benchmarks like AIME, the benchmark no longer distinguishes real progress. High scores don't necessarily mean human-level reasoning.
+\end{tipbox}
+
+\bigseparator
+
+% --- Evaluation Tasks ---
+\subsubsection{Evaluation Tasks}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{7cm} @{}}
+\toprule
+\textbf{Category} & \textbf{Examples} \\
+\midrule
+Language Understanding & Reading comprehension, NLI, summarisation, sentiment \\
+Knowledge \& Reasoning & MMLU, BIG-bench, mathematical reasoning, fact verification \\
+Dialogue \& Interaction & Instruction following, helpfulness, harmlessness (HHH) \\
+Safety \& Robustness & Toxicity detection, bias testing, adversarial robustness \\
+Multimodal & Image+text reasoning, visual QA, chart/table reasoning \\
+Specialised & Theory of Mind, emotion understanding, tool use \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% --- Evaluation Benchmarks ---
+\subsubsection{Evaluation Benchmarks}
+
+\begin{defbox}[Benchmark Types]
+\textbf{General benchmarks:} MMLU, BIG-bench, HELM, MT-Bench, AGIEval, C-Eval
+
+\textbf{Domain-specific:} MultiMedQA (medical), CUAD (legal), ChemBench (science), SafetyBench
+
+\textbf{Multimodal:} MMBench, VQAv2, MathVista, ToolBench
+\end{defbox}
+
+\begin{exbox}[Key Benchmarks]
+\begin{itemize}
+  \item \textbf{MMLU:} 57 subjects, 15,908 MCQs covering multitask knowledge
+  \item \textbf{ARC-AGI:} Abstract reasoning requiring semantic interpretation of symbols
+  \item \textbf{Chatbot Arena:} Blind pairwise comparisons where users vote on anonymous LLM responses
+  \item \textbf{GSM-Symbolic:} Tests whether LLMs rely on pattern matching vs.\ true reasoning
+\end{itemize}
+\end{exbox}
+
+\bigseparator
+
+% --- Evaluation Methods ---
+\subsubsection{Evaluation Methods}
+
+\begin{thmbox}[Three Evaluation Approaches]
+\textbf{1. Automatic Evaluation:}
+\begin{itemize}
+  \item Accuracy metrics: Exact Match, F1, BLEU, ROUGE
+  \item Calibration, fairness, robustness metrics
+\end{itemize}
+
+\textbf{2. Human Evaluation:}
+\begin{itemize}
+  \item Expert assessment on accuracy, relevance, helpfulness
+  \item Crowdsourced evaluation from multiple non-experts
+  \item Comparative/pairwise evaluation
+\end{itemize}
+
+\textbf{3. LLM-as-a-Judge:}
+\begin{itemize}
+  \item Single model judging: Strong LLM evaluates other outputs
+  \item Multi-model consensus: Multiple LLMs as judges, aggregate scores
+  \item Constitutional AI evaluation: Models trained specifically for evaluation
+\end{itemize}
+\end{thmbox}
+
+\bigseparator
+
+% --- Evaluation Metrics ---
+\subsubsection{Evaluation Metrics}
+
+\begin{defbox}[Text Overlap Metrics]
+\begin{itemize}
+  \item \textbf{Exact Match (EM):} \% of answers exactly matching ground truth
+  \item \textbf{BLEU:} Precision-focused n-gram overlap
+  \item \textbf{ROUGE:} Recall-focused n-gram overlap (ROUGE-N, ROUGE-L)
+  \item \textbf{METEOR:} Handles synonyms and word-order variations
+\end{itemize}
+
+\textbf{Problem:} These ignore semantic similarity between reference and candidate.
+\end{defbox}
+
+\begin{defbox}[Semantic Similarity Metrics]
+\begin{itemize}
+  \item \textbf{BERTScore:} Compares token embeddings from BERT
+  \item \textbf{SentenceBERT:} Encodes full sentences, measures cosine similarity
+  \item \textbf{BLEURT:} Trained to predict human evaluation scores
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[Metric Comparison]
+\textbf{Candidate:} ``The cat sits on the mat.''
+
+\textbf{Reference:} ``The cat is sitting on the mat.''
+
+\begin{center}
+\begin{tabular}{@{} l c @{}}
+\toprule
+\textbf{Metric} & \textbf{Score} \\
+\midrule
+Exact Match & 0 \\
+Token F1 & 0.77 \\
+BLEU & 0.42 \\
+ROUGE-1 & 0.77 \\
+METEOR & 0.88 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+METEOR captures synonyms (``sits'' $\approx$ ``sitting'') better than BLEU.
+\end{exbox}
+
+\bigseparator
+
+% --- LLM-as-a-Judge ---
+\subsubsection{LLM-as-a-Judge}
+
+\begin{defbox}[LLM-as-a-Judge Approaches]
+\begin{itemize}
+  \item \textbf{Pointwise:} Score each response independently
+  \item \textbf{Pairwise:} Compare two responses, choose better one
+  \item \textbf{Listwise:} Rank multiple responses
+  \item \textbf{Multi-model debate:} Multiple LLMs argue to reach consensus
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[LLM-as-Judge Challenges]
+\begin{itemize}
+  \item \textbf{Bias:} Prefers longer, well-formatted, authoritative responses
+  \item \textbf{Egocentric bias:} Prefers outputs similar to its own style
+  \item \textbf{Adversarial vulnerability:} Susceptible to prompt injection
+  \item \textbf{Scaling:} Longer reasoning improves accuracy but increases compute
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% --- Evaluation Challenges ---
+\subsubsection{Evaluation Challenges}
+
+\begin{defbox}[GSM vs.\ GSM-Symbolic]
+\textbf{Finding:} LLMs perform well on GSM-8K but poorly on GSM-Symbolic (same problems with different numbers/names).
+
+\textbf{Implication:} Models may rely on \textbf{pattern matching} rather than true reasoning---they memorise solutions rather than understand the logic.
+\end{defbox}
+
+\begin{defbox}[Clause Order Sensitivity]
+\textbf{Finding:} Reordering premises in logical problems causes significant performance drops.
+
+\textbf{Implication:} LLMs rely on \textbf{word order patterns} rather than deep logical structure. Reordering shouldn't affect logical reasoning, but it does.
+\end{defbox}
+
+\begin{defbox}[Goodhart's Law]
+\textbf{Statement:} ``When a measure becomes a target, it ceases to be a good measure.''
+
+\textbf{In LLM context:} When models optimise for leaderboard rankings, they may overfit to benchmark tasks rather than improve general reasoning.
+
+\textbf{Risk:} Developers optimise for scores instead of real-world quality.
+\end{defbox}
+
+\bigseparator
+
+% =============================================================================
+%                              PART 2: SAFETY
+% =============================================================================
+
+\subsubsection{LLM Safety Overview}
+
+\begin{defbox}[Safety Aspects]
+\begin{itemize}
+  \item \textbf{Value misalignment:} Social bias, toxicity, ethics violations
+  \item \textbf{Robustness to attack:} Jailbreaking, adversarial prompts
+  \item \textbf{Privacy:} Data leakage, memorisation
+  \item \textbf{Misuse:} Misinformation, deepfakes, weaponization
+  \item \textbf{Agent safety:} Goal misalignment, deception
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- Social Bias ---
+\subsubsection{Social Bias in LLMs}
+
+\begin{defbox}[Two Types of Harm]
+\textbf{Representational harm:} Reinforcing stereotypes, misrepresenting groups, using offensive language.
+
+\textit{Example:} LLM describes nurses as women and engineers as men.
+
+\textbf{Allocational harm:} Creating unfair advantages/disadvantages in resource distribution.
+
+\textit{Example:} Resume-screening AI favours male candidates over female candidates.
+\end{defbox}
+
+\begin{exbox}[Bias Example]
+\textbf{Prompt:} ``Two Muslims walked into a...''
+
+\textbf{GPT-3 output:} Frequently generates violent completions.
+
+\textbf{Replacing ``Muslim'' with other religions:} Significantly reduces violent completions.
+
+This shows learned associations from training data.
+\end{exbox}
+
+\begin{defbox}[Bias Evaluation Methods]
+\textbf{Embedding-based:} Compare distances between biased/unbiased representations (WEAT, SEAT).
+
+\textbf{Probability-based:} Compare token probabilities for different demographic groups.
+
+\textbf{Generation-based:} Analyse token distributions in actual outputs.
+
+\textbf{Key insight:} Embedding-level neutrality doesn't guarantee neutral outputs---biases can re-emerge during generation.
+\end{defbox}
+
+\begin{defbox}[Bias Mitigation Strategies]
+\textbf{Pre-processing:} Data balancing, data cleaning.
+
+\textbf{In-training:} Architecture modifications, loss function adjustment.
+
+\textbf{Inference:} Decoding strategy modification, attention weight adjustment.
+
+\textbf{Post-processing:} Keyword replacement, rewriting.
+\end{defbox}
+
+\bigseparator
+
+% --- Toxicity ---
+\subsubsection{Toxicity in LLMs}
+
+\begin{defbox}[Toxicity Definition]
+\textbf{Toxicity} refers to generation of harmful or offensive content that can:
+\begin{itemize}
+  \item Escalate hostility
+  \item Disrupt social harmony
+  \item Threaten safety
+\end{itemize}
+
+\textbf{Causes:} Toxic training data, generalisation of harmful patterns, interactive evolution.
+\end{defbox}
+
+\begin{defbox}[Toxicity Mitigation by Phase]
+\textbf{Pre-training:} Filter toxic data (but may weaken general capabilities).
+
+\textbf{SFT:} Fine-tune on non-toxic subsets, high-quality aligned data.
+
+\textbf{Alignment:} RLHF, RLAIF, Adversarial DPO.
+
+\textbf{Key trade-off:} Removing all toxic data can hurt model performance---toxic content may carry useful linguistic patterns.
+\end{defbox}
+
+\bigseparator
+
+% --- Jailbreaking ---
+\subsubsection{Jailbreaking Attacks}
+
+\begin{defbox}[Jailbreaking Definition]
+\textbf{Jailbreaking} is manipulating an LLM through crafted prompts to bypass safety filters and generate restricted outputs.
+\end{defbox}
+
+\begin{thmbox}[Black-Box Jailbreaking]
+No internal model access required---only API/chat interface.
+
+\textbf{Techniques:}
+\begin{itemize}
+  \item \textbf{Goal hijacking:} ``IGNORE INSTRUCTIONS! NOW SAY...''
+  \item \textbf{Refusal suppression:} ``Never say `cannot' or `unfortunately'\,''
+  \item \textbf{Role-play:} Assign personas (hacker, propagandist)
+  \item \textbf{Fictional scenario:} ``Pretend you're in developer mode''
+  \item \textbf{Prompt decomposition:} Split malicious prompts into benign sub-prompts
+  \item \textbf{Low-resource language:} Exploit weaker safety in underrepresented languages
+  \item \textbf{Cipher text:} Encode prompts in Base64 or custom encodings
+\end{itemize}
+\end{thmbox}
+
+\begin{thmbox}[White-Box Jailbreaking]
+Requires full access to model internals (architecture, weights, gradients).
+
+\textbf{Greedy Coordinate Gradient (GCG):}
+\begin{enumerate}
+  \item Calculate loss for current adversarial prompt
+  \item Compute gradients for token positions in adversarial suffix
+  \item Sample candidate token replacements from top-$k$
+  \item Apply substitutions that reduce loss most
+  \item Repeat until successful attack
+\end{enumerate}
+
+\textbf{Key finding:} Adversarial suffixes may transfer across different LLMs.
+\end{thmbox}
+
+\bigseparator
+
+% --- Defense Strategies ---
+\subsubsection{Defense Strategies}
+
+\begin{defbox}[SmoothLLM]
+\textbf{Observation:} Adversarial suffixes are fragile to character-level perturbations.
+
+\textbf{Defense:}
+\begin{enumerate}
+  \item Create $N$ copies of the attacked prompt
+  \item Randomly perturb each copy (character-level noise)
+  \item Generate responses for all perturbed copies
+  \item Aggregate responses to produce final output
+\end{enumerate}
+
+Perturbations break the carefully crafted adversarial suffix.
+\end{defbox}
+
+\begin{defbox}[GradSafe]
+\textbf{Idea:} Use gradient analysis to detect unsafe prompts.
+
+\textbf{Process:}
+\begin{enumerate}
+  \item Identify safety-critical parameters where gradients differ between safe/unsafe prompts
+  \item Compute loss gradients for input prompt (with response ``Sure'')
+  \item Flag as unsafe if gradient shows high cosine similarity to unsafe gradient references
+\end{enumerate}
+\end{defbox}
+
+\begin{tipbox}[Balanced Defense Strategy]
+For robust defense against both black-box and white-box attacks:
+\begin{itemize}
+  \item Gradient-similarity unsafe prompt detection (GradSafe)
+  \item Decoding constraints at inference time
+  \item Pre-training data cleaning + RLHF alignment
+  \item Post-processing content filters
+\end{itemize}
+
+No single defense is sufficient---layered approaches are needed.
+\end{tipbox}
+
+\bigseparator
+
+% --- Summary ---
+\subsubsection{Summary Tables}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{4cm} @{}}
+\toprule
+\textbf{Evaluation Method} & \textbf{Strengths} & \textbf{Weaknesses} \\
+\midrule
+Automatic (BLEU, F1) & Fast, reproducible & Ignores semantics \\
+Semantic (BERTScore) & Captures meaning & Compute-intensive \\
+Human evaluation & Gold standard & Expensive, inconsistent \\
+LLM-as-judge & Scalable, nuanced & Bias, adversarial vulnerability \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{1em}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4cm} p{4cm} @{}}
+\toprule
+\textbf{Safety Issue} & \textbf{Detection} & \textbf{Mitigation} \\
+\midrule
+Social bias & Embedding/probability metrics & Data balancing, post-processing \\
+Toxicity & Toxicity classifiers & Pre-training filters, RLHF \\
+Black-box jailbreak & Input pattern detection & Prompt filtering, refusal training \\
+White-box jailbreak & Gradient analysis (GradSafe) & SmoothLLM, adversarial training \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{thmbox}[Key Takeaways]
+\textbf{Evaluation:}
+\begin{itemize}
+  \item High benchmark scores $\neq$ true reasoning (GSM-Symbolic, clause order sensitivity)
+  \item Goodhart's Law: Optimising for metrics can corrupt them
+  \item LLM-as-judge is scalable but has biases
+\end{itemize}
+
+\textbf{Safety:}
+\begin{itemize}
+  \item Representational harm (stereotypes) vs.\ allocational harm (unfair outcomes)
+  \item Black-box attacks use prompt engineering; white-box uses gradients
+  \item Layered defense strategies are essential
+\end{itemize}
+\end{thmbox}
+

@@ -1,0 +1,349 @@
+\section{Week 1: Introduction to Interaction Design}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item \textbf{HAI1}: Identify key human-AI interaction concepts and discuss how these relate to human agency and initiative within the resulting system.
+  \item \textbf{HAI2}: Describe the human-AI interaction design process and its distinction from conventional human-centred design.
+\end{itemize}
+\end{keybox}
+
+\begin{keybox}[Big Picture]
+This week introduces the foundations of interaction design: what it means to design for people using technology, and the theoretical concepts of \term{affordances} and \term{signifiers} that underpin good design. It also introduces \term{user-centred design} processes and how generative AI is changing the ``design rules'' we knew.
+
+The key insight: \textbf{you are already a designer}---you naturally think about how objects should work. This course teaches you to apply that intuition systematically.
+\end{keybox}
+
+\begin{keybox}[What Examiners Like to Ask]
+\begin{itemize}
+  \item Define interaction design and its goals; apply to a given screenshot/system.
+  \item Distinguish affordances from signifiers with examples.
+  \item Identify false/hidden affordances in a design and suggest fixes.
+  \item Explain the Double Diamond model and when you diverge/converge.
+  \item Describe how AI differs as a ``design material'' from traditional technologies.
+  \item Given a context, propose interview questions to understand user needs.
+\end{itemize}
+\end{keybox}
+
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{What is Interaction Design?}
+
+\begin{defbox}[Interaction Design]
+``The design of interactive products to support the way people communicate and interact in their everyday and working lives.'' (Textbook definition)
+\end{defbox}
+
+\paragraph*{Scope of Interaction Design}
+Interaction design is \textbf{anything involving technology and people}:
+\begin{itemize}
+  \item Websites, mobile apps, voice assistants, touchless interfaces, AR, full-body interaction
+  \item Also: data visualization, architecture, industrial design, car dashboards, border control flows
+  \item All subsumed by \term{user experience} (UX)---designing interactions is part of the broader UX
+\end{itemize}
+
+\paragraph*{Three Eras of Interaction Design}
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Era} & \textbf{Characteristics} \\
+\midrule
+Traditional ID & Deterministic systems; clear rules; 10--15 year history \\
+Deep Learning AI & Designer selects data, trains models; bias/fairness/trust critical \\
+Generative AI & Foundation models outside your control; fine-tuning only; rules still emerging \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Interaction Design Goals}
+\begin{enumerate}
+  \item \textbf{Easy to learn}: Users can start using it without extensive training.
+  \item \textbf{Effective to use}: Accomplishes the intended task efficiently.
+  \item \textbf{Enjoyable user experience}: Or at least not dreadful!
+\end{enumerate}
+
+\begin{exbox}[Good vs Bad Design: Parking Signs]
+\textbf{Bad}: A sign listing parking restrictions in complex text (``No parking Mon--Fri 7am--9am except...''). Hard to parse while driving.
+
+\textbf{Good}: Visual representation showing time blocks when parking is allowed/forbidden. Easy to scan at a glance.
+
+Both communicate the same information, but the good design is \textit{easy to learn}, \textit{effective}, and less frustrating.
+\end{exbox}
+
+\paragraph*{Five Characteristics of Design}
+\begin{enumerate}
+  \item \textbf{Changing situations}: Design involves shaping/deploying artifacts to change a situation.
+  \item \textbf{Exploring possible futures}: Imagining better alternatives to current problems.
+  \item \textbf{Framing problem + solution in parallel}: Understanding what's wrong while proposing fixes.
+  \item \textbf{Thinking through sketching}: Using tangible representations (prototypes, sketches).
+  \item \textbf{Addressing multiple aspects}: Instrumental, technical, aesthetical, and \textbf{ethical} throughout.
+\end{enumerate}
+
+\begin{tipbox}[The Uncomfortables]
+Visit \texttt{theuncomfortable.com}---objects that look functional but fail in use (wellies with sandal straps, fork with unusable handle). These illustrate how our brains \textbf{automatically simulate interactions} and detect design failures.
+\end{tipbox}
+
+\subsubsection*{Affordances}
+
+\begin{defbox}[Affordance]
+``The perceived and actual properties of the thing, primarily those fundamental properties that determine just how the thing could possibly be used.'' (Norman, 1988)
+
+Affordances describe the \textbf{relationship between object and user}---what actions are possible.
+\end{defbox}
+
+\paragraph*{Key Insight}
+Affordances are about \textbf{functionality enabled by the object}:
+\begin{itemize}
+  \item Button $\to$ affords pushing
+  \item Lever $\to$ affords moving up/down
+  \item Knob $\to$ affords rotating
+  \item Handle $\to$ affords pulling/gripping
+\end{itemize}
+
+\paragraph*{Affordance Matrix}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l | c c @{}}
+\toprule
+& \textbf{Affordance Present} & \textbf{Affordance Absent} \\
+\midrule
+\textbf{Perceptible} & \textcolor{ThmGreen}{Good} (can do, can see) & \textcolor{ThmGreen}{Good} (can't do, can see) \\
+\textbf{Not Perceptible} & \textcolor{TipRed}{Hidden affordance} & \textcolor{ThmGreen}{Good} (can't do, don't see) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item \textbf{Perceptible affordance}: Good---user knows what's possible.
+  \item \textbf{Hidden affordance}: Bad---action is possible but user doesn't know.
+  \item \textbf{False affordance}: Bad---user thinks action is possible but it isn't.
+\end{itemize}
+
+\begin{exbox}[The Door Problem]
+A door with a handle on both sides:
+\begin{itemize}
+  \item From pull side: handle $\to$ ``pull'' (correct affordance).
+  \item From push side: same handle $\to$ user tries to pull, but door only pushes.
+\end{itemize}
+\textbf{Solution}: Push side should have flat plate (no handle), pull side has handle. The affordance matches the action.
+\end{exbox}
+
+\paragraph*{Affordances in Digital Systems}
+Physical affordances are often visible (you see a handle). Digital affordances are \textbf{hidden}---you have pixels, but which are clickable?
+\begin{itemize}
+  \item Text box $\to$ affords typing
+  \item Button $\to$ affords clicking
+  \item Dropdown $\to$ affords selecting
+\end{itemize}
+Digital systems rely heavily on \term{signifiers} to make affordances visible.
+
+\subsubsection*{Signifiers}
+
+\begin{defbox}[Signifier]
+``Signifiers specify how people discover those possibilities: signifiers are signs, perceptible signals of what can be done.'' (Norman)
+
+The perceivable part of an affordance is a signifier. If deliberately placed by a designer, it's a \term{social signifier}.
+\end{defbox}
+
+\paragraph*{Affordance vs Signifier}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+& \textbf{Affordance} & \textbf{Signifier} \\
+\midrule
+Definition & What actions are possible & How users discover those actions \\
+Example (button) & Can tap (touch target exists) & Visual button shape, label, icon \\
+Example (door) & Can push/pull & Handle (pull) or plate (push) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{exbox}[ChatGPT Interface]
+\begin{itemize}
+  \item \textbf{Affordance}: Can type text (text box), can send (button), can select suggestions (clickable items).
+  \item \textbf{Signifiers}: Text box outline, arrow icon on send button, hover highlighting on suggestions.
+\end{itemize}
+\end{exbox}
+
+\begin{tipbox}[Norman's Design Principle]
+``When simple things need pictures, labels, or instructions, the design has failed.''
+
+Complex things may need explanation, but simple things (doors!) should be self-evident through good affordances and signifiers.
+\end{tipbox}
+
+\paragraph*{The Remote Control Example}
+A grandmother's remote was ``simplified'' by covering unused buttons with tape, leaving only the essential ones visible. This is a \textbf{signifier intervention}---reducing cognitive load by hiding irrelevant affordances.
+
+\subsubsection*{User-Centred Design (UCD)}
+
+\begin{defbox}[User-Centred Design]
+``An approach to systems design and development that aims to make interactive systems more usable by focusing on the use of the system and applying human factors/ergonomics and usability knowledge and techniques.'' (ISO 9241-210:2019)
+
+Key: Design teams involve users throughout the process via research and design techniques.
+\end{defbox}
+
+\paragraph*{The Double Diamond Model}
+
+\begin{center}
+\textbf{Diamond 1: Doing the Right Thing} $\to$ \textbf{Diamond 2: Doing Things Right}
+\end{center}
+
+\begin{enumerate}
+  \item \textbf{Discover} (diverge): Explore the problem space, understand context/users.
+  \item \textbf{Define} (converge): Synthesize insights into a \term{design brief}.
+  \item \textbf{Develop} (diverge): Ideate solutions, prototype multiple options.
+  \item \textbf{Deliver} (converge): Refine, test, implement the final solution.
+\end{enumerate}
+
+\begin{tipbox}[Key Insight]
+You may spend 60--70\% of time just figuring out \textbf{what} to build (Diamond 1). The design brief---understanding the real problem---is itself a critical contribution.
+\end{tipbox}
+
+\paragraph*{Iteration is Expected}
+\begin{itemize}
+  \item Not waterfall: you rarely have all information upfront.
+  \item Arrows go back: prototyping may reveal you misunderstood the problem.
+  \item Similar to Agile: iterate, test assumptions, learn by doing.
+\end{itemize}
+
+\paragraph*{Stanford d.school / IDEO 5 Stages}
+\begin{enumerate}
+  \item \textbf{Empathize}: Understand users and their needs.
+  \item \textbf{Define}: Frame the problem clearly.
+  \item \textbf{Ideate}: Generate many possible solutions.
+  \item \textbf{Prototype}: Build quick, testable versions.
+  \item \textbf{Test}: Get feedback, iterate.
+\end{enumerate}
+
+\paragraph*{The ``Faster Horse'' Tension}
+\begin{quote}
+``If I had asked people what they wanted, they would have said a faster horse.'' (attributed to Henry Ford)
+\end{quote}
+\textbf{Users know their needs but not the solutions.} Ford noticed people wanted ``a faster horse that doesn't get tired''---understanding the \textit{need} (speed, endurance) led to the car \textit{solution}.
+
+This is the core UCD tension: extract needs from users, but don't expect them to design the solution.
+
+\subsubsection*{AI as Design Material}
+
+\begin{keybox}[AI Changes the Rules]
+Generative AI brings the first new UI paradigm in 60 years. Traditional HCI rules may not fully apply.
+\end{keybox}
+
+\paragraph*{Material Friction}
+From the blog ``AI as Design Material'' (Haiyan Zhang, Microsoft):
+\begin{quote}
+``Each medium has a life of its own and resists what you want to do. Clay resists, wood splinters... and AI \textbf{misinterprets}.''
+\end{quote}
+
+\textbf{Good design happens in understanding and working with material friction}---the quirks, resistance, and unexpected behaviors of your medium.
+
+\paragraph*{The Design Squiggle for AI}
+\begin{itemize}
+  \item Traditional design: Messy at start $\to$ converges to clarity $\to$ execution.
+  \item AI design: The squiggle may \textbf{never fully converge}---systems change underneath you.
+\end{itemize}
+
+\begin{exbox}[Case Study: Micro-Narratives]
+\textbf{Problem}: Researchers needed young people to share difficult social media experiences at scale, but open-text surveys yield poor responses.
+
+\textbf{Design Brief}: Create a remote narrative elicitation method that is:
+\begin{itemize}
+  \item Open-ended (not a survey)
+  \item Consistent across participants
+  \item Low cognitive burden
+\end{itemize}
+
+\textbf{Solution}: Three sequential LLM calls:
+\begin{enumerate}
+  \item \textbf{Scaffold questions}: Ask structured questions (What happened? Context? Feelings? Worst part?).
+  \item \textbf{Extract answers}: Pull key phrases from responses.
+  \item \textbf{Craft story}: Combine extractions into coherent vignette.
+\end{enumerate}
+
+\textbf{Result}: In a study (N=254), micro-narratives were:
+\begin{itemize}
+  \item 4.5$\times$ more likely to be ``easier to capture experience''
+  \item 6.0$\times$ more likely to be ``helpful for making sense of experience''
+  \item Statistically significantly less difficult, more accurate
+\end{itemize}
+
+\textbf{Key design choices}:
+\begin{itemize}
+  \item Show 3 story variations (different emotional tones) so user doesn't just accept first output.
+  \item Let user adapt/edit the final story.
+  \item Template-based: change questions $\to$ adapt to any domain.
+\end{itemize}
+\end{exbox}
+
+\subsubsection*{Worked Examples}
+
+\begin{exbox}[Identify Affordances and Signifiers]
+\textbf{Scenario}: A coffee mug with a sliding lock mechanism.
+
+\textbf{Analysis}:
+\begin{itemize}
+  \item \textbf{Affordances}: Button (can press), sliding lock (can slide).
+  \item \textbf{Signifiers}: Icons showing locked/unlocked states, button sized for thumb.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Redesign a Bad Affordance]
+\textbf{Scenario}: Glass door with identical handles on both sides (push/pull unclear).
+
+\textbf{Problem}: False affordance---handle suggests pull, but one side requires push.
+
+\textbf{Redesign}:
+\begin{itemize}
+  \item Push side: Flat plate (affords pushing, not gripping).
+  \item Pull side: Handle (affords gripping and pulling).
+  \item No labels needed if affordances are correct.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Apply Double Diamond]
+\textbf{Context}: You're asked to design an app for NHS vaccination passports.
+
+\textbf{Diamond 1 (What to build)}:
+\begin{itemize}
+  \item Discover: Interview event organizers, NHS staff, travelers. What are their pain points?
+  \item Define: Design brief---e.g., ``A mobile app that lets event staff verify vaccination status in <10 seconds without internet.''
+\end{itemize}
+
+\textbf{Diamond 2 (How to build it)}:
+\begin{itemize}
+  \item Develop: Sketch multiple solutions (QR code, NFC, biometric).
+  \item Deliver: Prototype top 2, test with users, iterate to final design.
+\end{itemize}
+\end{exbox}
+
+\subsubsection*{Key Definitions Summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Term} & \textbf{Definition} \\
+\midrule
+Interaction Design & Designing interactive products to support communication/interaction in daily life \\
+Affordance & Perceived/actual properties determining how something could be used \\
+Signifier & Perceptible signal of what actions are possible \\
+User-Centred Design & Iterative design focusing on users and their needs throughout \\
+Double Diamond & Diverge/converge twice: discover$\to$define, develop$\to$deliver \\
+Design Brief & Document defining what problem to solve and constraints \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Recommended Reading}
+\begin{itemize}
+  \item \textbf{Textbook}: Sections 1.3--1.5 (Introduction to Interaction Design)
+  \item \textbf{Blog}: ``AI as Design Material'' (Haiyan Zhang)---treats AI as a medium with resistance
+  \item \textbf{Article}: ``Signifiers, Not Affordances'' (Don Norman)---clarifies the distinction
+  \item \textbf{TED Talk}: Tim Brown on design thinking
+\end{itemize}
+
+

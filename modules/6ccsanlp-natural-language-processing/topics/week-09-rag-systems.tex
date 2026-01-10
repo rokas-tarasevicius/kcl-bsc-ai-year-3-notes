@@ -1,0 +1,510 @@
+% =============================================================================
+%                    WEEK 9: RETRIEVAL-AUGMENTED GENERATION (RAG)
+% =============================================================================
+\section{Week 9: Retrieval-Augmented Generation (RAG)}
+
+% -----------------------------------------------------------------------------
+%                              9.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Understand the core concepts of \textbf{Retrieval-Augmented Generation (RAG)} and how it differs from standard LLM approaches.
+  \item Build and configure a basic \textbf{RAG pipeline} using embeddings, retrievers, and generators.
+  \item Evaluate and optimise RAG performance through effective \textbf{data preparation}, \textbf{chunking}, and \textbf{retrieval strategies}.
+  \item Explain \textbf{similarity metrics} (cosine, Jaccard, BM25) and \textbf{indexing} methods.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+RAG combines retrieval from external knowledge bases with LLM generation. Instead of relying solely on parametric knowledge (what the model memorised during training), RAG retrieves relevant documents and uses them as context. This addresses knowledge cutoffs, reduces hallucinations, and enables domain-specific applications without retraining.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Define RAG and explain its advantages over fine-tuning.
+  \item List scenarios where RAG is applicable (long-tail data, frequent updates, privacy, etc.).
+  \item Explain \textbf{discrete representations}: binary, TF, TF-IDF.
+  \item Explain \textbf{continuous representations}: Dense Passage Retrieval, ReContriever.
+  \item Calculate \textbf{cosine similarity} and \textbf{Jaccard similarity} for given vectors.
+  \item Describe \textbf{BM25} and its components.
+  \item Explain indexing methods for discrete (inverted index) and continuous (FAISS) representations.
+  \item Describe the \textbf{Na\"ive RAG} pipeline vs.\ \textbf{Advanced RAG} enhancements.
+  \item List query optimisation and chunk optimisation strategies.
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+%                 9.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item What is RAG and why use it?
+  \item RAG vs.\ fine-tuning
+  \item RAG application scenarios
+  \item Information Retrieval foundations: embeddings, similarity, indexing
+  \item IR evaluation metrics
+  \item Na\"ive RAG pipeline
+  \item Advanced RAG enhancements
+  \item Key technologies and optimisation
+\end{enumerate}
+
+\bigseparator
+
+% --- 9.2.1 RAG Overview ---
+\subsubsection{What is RAG?}
+
+\begin{defbox}[Retrieval-Augmented Generation]
+\textbf{RAG} is a framework that:
+\begin{enumerate}
+  \item \textbf{Retrieves} relevant documents from an external knowledge base
+  \item \textbf{Augments} the LLM prompt with retrieved context
+  \item \textbf{Generates} answers based on both the query and retrieved information
+\end{enumerate}
+
+\textbf{Key benefit:} No need to retrain the LLM for domain updates---just update the knowledge base.
+\end{defbox}
+
+\begin{tipbox}[RAG vs.\ Parametric Knowledge]
+\textbf{Parametric knowledge:} What the model memorised during training (frozen at training time).
+
+\textbf{Symbolic knowledge:} External documents retrieved at inference time (can be updated).
+
+RAG combines both: the LLM's language capabilities + up-to-date external knowledge.
+\end{tipbox}
+
+\bigseparator
+
+% --- 9.2.2 RAG vs Fine-tuning ---
+\subsubsection{RAG vs.\ Fine-tuning}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+\textbf{Aspect} & \textbf{RAG} & \textbf{Fine-tuning} \\
+\midrule
+Knowledge updates & Update knowledge base (easy) & Retrain model (expensive) \\
+Hallucinations & Reduced (grounded in retrieved docs) & Can still hallucinate \\
+Domain adaptation & Add domain documents & Need domain training data \\
+Traceability & Can cite sources & No source attribution \\
+Compute cost & Retrieval overhead at inference & Training cost upfront \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% --- 9.2.3 RAG Applications ---
+\subsubsection{RAG Application Scenarios}
+
+\begin{defbox}[When to Use RAG]
+RAG is especially suitable for:
+\begin{itemize}
+  \item \textbf{Long-tail data distribution:} Rare but important queries (low frequency $\neq$ low importance)
+  \item \textbf{Frequent knowledge updates:} News, stock prices, policies
+  \item \textbf{Verification and traceability:} Fact-checking with sources
+  \item \textbf{Specialised domain knowledge:} Medical, legal, technical domains
+  \item \textbf{Data privacy preservation:} Query knowledge base without training on private data
+\end{itemize}
+\end{defbox}
+
+\textbf{Example applications:} Question answering, fact checking, dialogue systems, summarisation, code generation, commonsense reasoning.
+
+\bigseparator
+
+% --- 9.2.4 Information Retrieval Foundations ---
+\subsubsection{Information Retrieval Foundations}
+
+\begin{defbox}[Three Questions in IR]
+\begin{enumerate}
+  \item \textbf{Embedding:} How to map text into features (vectors)?
+  \item \textbf{IR Modelling:} How to measure similarity between features?
+  \item \textbf{Indexing:} How to do it efficiently?
+\end{enumerate}
+\end{defbox}
+
+\bigseparator
+
+% --- 9.2.4.1 Discrete Representations ---
+\subsubsection{Discrete Text Representations}
+
+\begin{defbox}[Discrete Representations]
+Represent text as sparse vectors based on vocabulary.
+
+\textbf{Binary representation:} $1$ if word present, $0$ otherwise.
+
+\textbf{Term Frequency (TF):} Count how many times each word appears.
+
+\textbf{TF-IDF:} Weight by term frequency and inverse document frequency:
+\[
+\text{TF-IDF}(t, d) = \text{TF}(t, d) \times \log\left(\frac{N}{\text{DF}(t)}\right)
+\]
+where $N$ = total documents, $\text{DF}(t)$ = documents containing term $t$.
+\end{defbox}
+
+\begin{exbox}[TF-IDF Example]
+\textbf{Documents:}
+\begin{itemize}
+  \item D1 = ``shipment'', ``gold'', ``damage'', ``fire''
+  \item D2 = ``delivery'', ``silver'', ``arrive'', ``truck''
+  \item D3 = ``shipment'', ``gold'', ``arrive'', ``truck''
+\end{itemize}
+
+\textbf{Binary representation:}
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c c c c c c c c @{}}
+\toprule
+& ship & gold & dam & fire & del & silv & arr & truck \\
+\midrule
+D1 & 1 & 1 & 1 & 1 & 0 & 0 & 0 & 0 \\
+D2 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+D3 & 1 & 1 & 0 & 0 & 0 & 0 & 1 & 1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{IDF for ``damage'':} $\log(3/1) = 0.477$ (appears in 1 doc $\to$ high IDF)
+
+\textbf{IDF for ``shipment'':} $\log(3/2) = 0.176$ (appears in 2 docs $\to$ lower IDF)
+\end{exbox}
+
+\bigseparator
+
+% --- 9.2.4.2 Continuous Representations ---
+\subsubsection{Continuous Text Representations (Dense Embeddings)}
+
+\begin{defbox}[Dense Passage Retrieval (DPR)]
+Train encoders to map questions and passages into continuous vector space.
+
+\textbf{Training:}
+\begin{itemize}
+  \item \textbf{Positive pairs:} Matched question-passage pairs $\to$ similar embeddings
+  \item \textbf{Negative pairs:} Unmatched pairs $\to$ dissimilar embeddings
+  \item \textbf{In-batch negatives:} Use other passages in the same batch as negatives (efficient)
+\end{itemize}
+
+\textbf{Architecture:} Two-tower encoder (separate encoders for queries and documents).
+\end{defbox}
+
+\begin{defbox}[ReContriever: Self-Supervised Retrieval]
+\textbf{Problem:} What if we don't have labelled question-passage pairs?
+
+\textbf{Solution:} Create pseudo-positive pairs via augmentation:
+\begin{itemize}
+  \item Word masking
+  \item Span deletion
+  \item Back-translation
+  \item Adding noise/perturbations
+\end{itemize}
+
+For passage $p$, create augmented version $p'$. Treat $(p, p')$ as a positive pair.
+\end{defbox}
+
+\bigseparator
+
+% --- 9.2.5 Similarity Metrics ---
+\subsubsection{Similarity Metrics}
+
+\begin{defbox}[Cosine Similarity]
+\[
+\text{cos}(\vec{x}, \vec{y}) = \frac{\sum_{i=1}^{n} x_i y_i}{\sqrt{\sum_{i=1}^{n} x_i^2} \cdot \sqrt{\sum_{i=1}^{n} y_i^2}} = \frac{\vec{x} \cdot \vec{y}}{|\vec{x}| \cdot |\vec{y}|}
+\]
+
+Works for both discrete and continuous representations.
+\end{defbox}
+
+\begin{exbox}[Cosine Similarity Calculation]
+\textbf{Given:}
+\begin{itemize}
+  \item D1 $= [1, 1, 1, 1, 0, 0, 0, 0]$
+  \item D3 $= [1, 1, 0, 0, 0, 0, 1, 1]$
+\end{itemize}
+
+\textbf{Dot product:} $1 \cdot 1 + 1 \cdot 1 + 0 + 0 + 0 + 0 + 0 + 0 = 2$
+
+\textbf{Magnitudes:} $|D1| = \sqrt{4} = 2$, \quad $|D3| = \sqrt{4} = 2$
+
+\textbf{Cosine:} $\dfrac{2}{2 \cdot 2} = \boxed{0.5}$
+\end{exbox}
+
+\begin{defbox}[Jaccard Similarity]
+For binary/set representations (ignores magnitudes):
+\[
+\text{Jaccard}(X, Y) = \frac{|X \cap Y|}{|X \cup Y|}
+\]
+
+Only considers overlap (present/absent), not counts.
+\end{defbox}
+
+\begin{exbox}[Jaccard Similarity Calculation]
+\textbf{Given:} $R_x = [2, 0, 3, 3]$, $R_y = [1, 1, 0, 5]$
+
+\textbf{Binary conversion:} $R_x \to [1, 0, 1, 1]$, $R_y \to [1, 1, 0, 1]$
+
+\textbf{Intersection:} Indices $\{0, 3\}$ $\to$ size = 2
+
+\textbf{Union:} Indices $\{0, 1, 2, 3\}$ $\to$ size = 4
+
+\textbf{Jaccard:} $\dfrac{2}{4} = \boxed{0.5}$
+\end{exbox}
+
+\begin{defbox}[BM25]
+Lexicon-based ranking function:
+\[
+\text{score}(D, Q) = \sum_{i=1}^{n} \text{IDF}(q_i) \cdot \frac{f(q_i, D) \cdot (k_1 + 1)}{f(q_i, D) + k_1 \left(1 - b + b \cdot \frac{|D|}{\text{avgdl}}\right)}
+\]
+
+\textbf{Components:}
+\begin{itemize}
+  \item $\text{IDF}(q_i)$: How important is word $q_i$?
+  \item $f(q_i, D)$: Term frequency in document $D$
+  \item $|D| / \text{avgdl}$: Document length normalisation
+  \item $k_1, b$: Hyperparameters
+\end{itemize}
+
+\textbf{Intuition:} BM25 = IDF weighting $\times$ percentage of query words in document.
+\end{defbox}
+
+\bigseparator
+
+% --- 9.2.6 Indexing ---
+\subsubsection{Indexing for Efficient Retrieval}
+
+\begin{defbox}[Inverted Index (Discrete)]
+For sparse discrete representations:
+\begin{itemize}
+  \item Build a linked list for each word mapping to documents containing it
+  \item Query complexity depends only on unique words in query (typically few)
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[FAISS Indexing (Continuous)]
+For dense continuous representations:
+\begin{itemize}
+  \item \textbf{Vector compression:} Reduce vector dimensionality
+  \item \textbf{Hierarchical clustering:} Cluster documents; search only nearest cluster centroids
+\end{itemize}
+
+\textbf{Trade-off:} FAISS is approximate---may miss the true nearest neighbour if it's in a different cluster.
+\end{defbox}
+
+\bigseparator
+
+% --- 9.2.7 IR Evaluation ---
+\subsubsection{IR Evaluation Metrics}
+
+\begin{defbox}[Precision and Recall at $k$]
+\textbf{Precision@$k$:} $\dfrac{\text{\# relevant in top } k}{k}$
+
+\textbf{Recall@$k$:} $\dfrac{\text{\# relevant in top } k}{\text{total relevant documents}}$
+\end{defbox}
+
+\begin{exbox}[Precision/Recall Example]
+\textbf{5 documents ranked by predicted scores:}
+\begin{center}
+\begin{tabular}{@{} l c c c c c @{}}
+\toprule
+Rank & 1 & 2 & 3 & 4 & 5 \\
+Relevant? & Y & N & N & Y & N \\
+\midrule
+Precision@$k$ & 1/1=1.0 & 1/2=0.5 & 1/3=0.33 & 2/4=0.5 & 2/5=0.4 \\
+Recall@$k$ (2 total) & 1/2=0.5 & 1/2=0.5 & 1/2=0.5 & 2/2=1.0 & 2/2=1.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{exbox}
+
+\bigseparator
+
+% --- 9.2.8 Naïve RAG Pipeline ---
+\subsubsection{Na\"ive RAG Pipeline}
+
+\begin{thmbox}[Na\"ive RAG: Three Steps]
+\begin{enumerate}
+  \item \textbf{Indexing:}
+  \begin{itemize}
+    \item Divide documents into chunks
+    \item Generate embeddings for each chunk
+    \item Store in vector database
+  \end{itemize}
+  
+  \item \textbf{Retrieval:}
+  \begin{itemize}
+    \item Embed the query
+    \item Find top-$k$ most similar chunks using vector similarity
+  \end{itemize}
+  
+  \item \textbf{Generation:}
+  \begin{itemize}
+    \item Combine query + retrieved chunks into a prompt
+    \item Feed to LLM to generate answer
+  \end{itemize}
+\end{enumerate}
+\end{thmbox}
+
+\begin{tipbox}[Prompt Formatting]
+Order matters! LLMs are sensitive to input order. Common formats:
+\begin{itemize}
+  \item Chunk1, Chunk2, Chunk3, Question
+  \item Question, Chunk1, Chunk2, Chunk3
+\end{itemize}
+
+Earlier chunks may receive higher attention.
+\end{tipbox}
+
+\bigseparator
+
+% --- 9.2.9 Advanced RAG ---
+\subsubsection{Advanced RAG Enhancements}
+
+\begin{thmbox}[Index Optimisation]
+\begin{itemize}
+  \item \textbf{Sliding windows:} Overlapping chunks to preserve context across boundaries
+  \item \textbf{Fine-grained segmentation:} Hierarchical structure (document $\to$ section $\to$ paragraph)
+  \item \textbf{Metadata addition:} Add title, date, parent node for filtering and context
+\end{itemize}
+\end{thmbox}
+
+\begin{thmbox}[Pre-Retrieval Optimisation]
+\begin{itemize}
+  \item \textbf{Query rewriting:} Make queries more explicit, keyword-rich, or structured
+  \item \textbf{Query clarification:} Disambiguate vague queries
+  \item \textbf{Multiple sub-queries:} Generate diverse queries for broader retrieval
+  \item \textbf{Summarisation-based search:} Search over document summaries first, then drill down
+  \item \textbf{Retrieve routes:} Multiple retrieval paths (e.g., search docs first, then chunks within)
+\end{itemize}
+\end{thmbox}
+
+\begin{thmbox}[Post-Retrieval Optimisation]
+\begin{itemize}
+  \item \textbf{Re-ordering:} Arrange chunks by importance for generation
+  \item \textbf{Filtering:} Remove irrelevant chunks to reduce hallucination
+  \item \textbf{Confidence checking:} Verify retrieval quality before generation
+\end{itemize}
+\end{thmbox}
+
+\bigseparator
+
+% --- 9.2.10 When and How to Retrieve ---
+\subsubsection{When and How to Retrieve}
+
+\begin{defbox}[Retrieval Strategies]
+\textbf{When to retrieve:}
+\begin{itemize}
+  \item \textbf{Once:} Single retrieval at the start (efficient, but may miss relevant info)
+  \item \textbf{Adaptive:} Retrieve when model is uncertain
+  \item \textbf{Every $N$ tokens:} Periodic retrieval during generation (thorough, but inefficient)
+\end{itemize}
+
+\textbf{What level to retrieve:}
+\begin{itemize}
+  \item \textbf{Token/phrase level:} Broad recall, high redundancy
+  \item \textbf{Chunk level:} Balanced
+  \item \textbf{Entity/knowledge level:} Structured, but depends on KG quality
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- 9.2.11 Key Technologies ---
+\subsubsection{Key Technologies for RAG Optimisation}
+
+\begin{defbox}[Chunk Optimisation Strategies]
+\begin{itemize}
+  \item \textbf{Small-to-big:} Embed at sentence level, expand window during generation
+  \item \textbf{Sliding window:} Overlapping chunks to avoid boundary issues
+  \item \textbf{Two-stage:} Search summaries first (coarse), then chunks within matched docs (fine)
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Knowledge Graph as Retrieval Source]
+Instead of flat document retrieval:
+\begin{enumerate}
+  \item Extract entities from query
+  \item Retrieve subgraph (e.g., 2 hops from entities)
+  \item Use subgraph as context for LLM
+\end{enumerate}
+
+\textbf{Benefit:} Richer structured information for domain-specific tasks.
+\end{defbox}
+
+\begin{defbox}[Embedding Optimisation]
+\begin{itemize}
+  \item Select appropriate embedding method for the domain
+  \item Fine-tune embeddings on query-document pairs
+  \item Use in-context learning to generate pseudo training data
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Fine-tuning RAG Components]
+\textbf{Retriever fine-tuning:}
+\begin{itemize}
+  \item Use LLM attention scores to identify preferred documents
+  \item Contrastive loss on positive/negative pairs
+\end{itemize}
+
+\textbf{Generator fine-tuning:}
+\begin{itemize}
+  \item Add entity prediction loss
+  \item Multi-task learning with retrieval-augmented objectives
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- Summary Table ---
+\subsubsection{Summary: RAG Pipeline Comparison}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Component} & \textbf{Options} \\
+\midrule
+Embedding & Binary, TF, TF-IDF (discrete); DPR, ReContriever (dense) \\
+Similarity & Cosine, Jaccard, BM25 \\
+Indexing & Inverted index (discrete); FAISS clustering (dense) \\
+Chunking & Fixed, sliding window, hierarchical \\
+Pre-retrieval & Query rewriting, clarification, sub-queries \\
+Post-retrieval & Re-ordering, filtering, confidence check \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+\subsubsection{Key Formulas Summary}
+
+\begin{thmbox}[Essential RAG Formulas]
+\textbf{TF-IDF:}
+\[
+\text{TF-IDF}(t, d) = \text{TF}(t, d) \times \log\left(\frac{N}{\text{DF}(t)}\right)
+\]
+
+\textbf{Cosine similarity:}
+\[
+\text{cos}(\vec{x}, \vec{y}) = \frac{\vec{x} \cdot \vec{y}}{|\vec{x}| \cdot |\vec{y}|}
+\]
+
+\textbf{Jaccard similarity:}
+\[
+\text{Jaccard}(X, Y) = \frac{|X \cap Y|}{|X \cup Y|}
+\]
+
+\textbf{Precision@$k$:} $\dfrac{\text{\# relevant in top } k}{k}$
+
+\textbf{Recall@$k$:} $\dfrac{\text{\# relevant in top } k}{\text{total relevant}}$
+\end{thmbox}
+

@@ -1,0 +1,370 @@
+\section{Week 4: Understanding Requirements in Human-AI Systems}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item \textbf{HAI1}: Identify key human-AI interaction concepts and discuss how these relate to human agency and initiative within the resulting system.
+  \item \textbf{HAI2}: Describe the human-AI interaction design process and its distinction from conventional human-centred design.
+\end{itemize}
+\end{keybox}
+
+\begin{keybox}[Big Picture]
+This week begins the ``HAI as Process'' section---designing \textbf{with} humans, not just \textbf{for} them.
+
+We cover:
+\begin{enumerate}
+  \item \textbf{Human-Centered Design}: What it is and lifecycle models.
+  \item \textbf{Stakeholder Involvement}: Why, when, and how to involve users.
+  \item \textbf{Needs vs.\ Requirements}: The translation from user problems to system properties.
+  \item \textbf{Methods for Understanding Needs}: Interviews, observation, ethnography.
+  \item \textbf{AI-Specific Considerations}: People-first vs.\ technology-first; participation in foundation models.
+\end{enumerate}
+\end{keybox}
+
+\begin{keybox}[What Examiners Like to Ask]
+\begin{itemize}
+  \item Describe the Double Diamond model and its four phases.
+  \item Distinguish between user \textit{needs} and system \textit{requirements}.
+  \item Given a scenario, create interview questions to elicit user needs.
+  \item Explain the ``faster horses'' problem and how to avoid it.
+  \item Compare people-first vs.\ technology-first approaches in AI design.
+  \item Describe methods for involving stakeholders in AI development (RLHF, red teaming, etc.).
+  \item Apply the ``define'' phase: given observations, articulate the real problem.
+\end{itemize}
+\end{keybox}
+
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{What is Human-Centered Design?}
+
+\begin{defbox}[Human-Centered Design (HCD)]
+A design process that:
+\begin{itemize}
+  \item Focuses on discovering requirements, designing to fulfill them, prototyping, and evaluating.
+  \item Centers on users and their goals (though AI is evolving this).
+  \item Involves trade-offs between conflicting needs and requirements.
+\end{itemize}
+\end{defbox}
+
+\paragraph*{Why HCD Matters for AI}
+AI systems are often built by a small group of experts, but affect a much larger population. The people \textbf{working on AI} $\neq$ the people \textbf{impacted by AI}. HCD bridges this gap.
+
+\subsubsection*{Lifecycle Models}
+
+Several models describe the HCD process. All share common patterns: diverge (explore) $\to$ converge (focus).
+
+\paragraph*{1. Double Diamond (British Design Council)}
+
+\begin{center}
+\textbf{Diamond 1: Do the Right Thing} $\to$ \textbf{Diamond 2: Do Things Right}
+\end{center}
+
+\begin{enumerate}
+  \item \textbf{Discover} (diverge): Explore problem space, understand users.
+  \item \textbf{Define} (converge): Synthesize insights into problem statement.
+  \item \textbf{Develop} (diverge): Generate many solution ideas.
+  \item \textbf{Deliver} (converge): Refine, test, implement.
+\end{enumerate}
+
+\paragraph*{2. Stanford d.school (Design Thinking)}
+
+\begin{enumerate}
+  \item \textbf{Empathize}: Interviews, shadowing, non-judgmental observation.
+  \item \textbf{Define}: Personas, pain points, problem framing.
+  \item \textbf{Ideate}: Brainstorm many solutions.
+  \item \textbf{Prototype}: Build quick mockups, storyboards (``fail fast'').
+  \item \textbf{Test}: Validate with users, iterate.
+\end{enumerate}
+
+\paragraph*{3. Google Design Sprints}
+Six phases in three diamonds: Understand $\to$ Define | Sketch $\to$ Decide | Prototype $\to$ Validate.
+
+\paragraph*{This Week's Focus}
+We focus on the first two phases: \textbf{Empathize/Discover} and \textbf{Define}.
+
+\subsubsection*{Why Involve Stakeholders?}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Reason} & \textbf{Benefit} \\
+\midrule
+Expectation management & Realistic expectations; no surprises; timely training \\
+Ownership & Users become active stakeholders; more forgiving of problems \\
+Better outcomes & Designs that actually solve real problems \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{exbox}[The Rocket vs.\ Bicycle]
+\textbf{What we dreamed at kickoff}: Fancy rocket with titanium fins, custom artwork, one-way mirror viewport.
+
+\textbf{What we settled for at launch}: Basic rocket with antenna.
+
+\textbf{What the user actually needed}: A bicycle to get over the ramp.
+
+\textbf{Lesson}: Without understanding user needs, you may over-engineer a solution to the wrong problem.
+\end{exbox}
+
+\paragraph*{Degrees of Stakeholder Involvement}
+
+\begin{enumerate}
+  \item \textbf{Design team member}: Deeply embedded throughout.
+  \item \textbf{Small group activities}: Interviews, focus groups.
+  \item \textbf{Online contributions}: Crowdsourcing, feedback systems, beta testing.
+  \item \textbf{Participatory design}: Regular checkpoints with users.
+  \item \textbf{Post-release}: A/B testing, customer reviews.
+\end{enumerate}
+
+These are not mutually exclusive---use multiple methods.
+
+\subsubsection*{Needs vs.\ Requirements}
+
+\begin{defbox}[User Need]
+The \textbf{user's perspective} of the problem to be solved. Describes constraints, goals, hopes, activities. Often contextual, embedded, social.
+\end{defbox}
+
+\begin{defbox}[System Requirement]
+A statement about \textbf{properties of the system} to solve the problem. Specifies what operations the system affords, its characteristics, how it operates. Commits (at least partially) to a solution approach.
+\end{defbox}
+
+\paragraph*{The Translation Process}
+\begin{center}
+\textbf{User Need} $\xrightarrow{\text{focusing \& selection}}$ \textbf{Requirement} $\xrightarrow{\text{commitment to approach}}$ \textbf{Design}
+\end{center}
+
+One need can lead to many different requirements (different approaches to the same problem).
+
+\begin{exbox}[King Midas]
+\textbf{Need}: ``I want everything around me to be gold.''
+
+\textbf{Requirement}: ``Turn everything Midas touches into gold.''
+
+\textbf{Problem}: This literally kills him (food, loved ones turn to gold).
+
+\textbf{Lesson}: Failure in understanding the \textit{real} need (wanting wealth/beauty, not literal gold) led to catastrophic requirements.
+\end{exbox}
+
+\subsubsection*{The ``Faster Horses'' Problem}
+
+\begin{quote}
+``If I had asked people what they wanted, they would have said faster horses.'' (attributed to Henry Ford)
+\end{quote}
+
+\textbf{Problem}: Users can't always articulate what they need; they describe solutions within their current mental model.
+
+\textbf{Solution}: Focus on the \textit{adjective} (faster), not the \textit{noun} (horses). The real need is speed/reliability, not horses.
+
+\begin{tipbox}[Don't Take Needs Literally]
+Your job as a designer is to \textbf{infer the underlying need} from what users say and do. They tell you symptoms; you diagnose the cause.
+\end{tipbox}
+
+\subsubsection*{Methods for Understanding User Needs}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Method} & \textbf{Description} \\
+\midrule
+Observation & Watch users in their natural context (direct or indirect). \\
+Interviews & One-on-one conversations to explore needs, mental models. \\
+Questionnaires & Scalable data collection; less depth than interviews. \\
+Ethnography & Embed yourself in the user's context over time. \\
+Technology probes & Give users a prototype to see how they react/use it. \\
+Field studies & Observe as a participant observer. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{Interviewing Strategies (Harvard Project Zero)}
+
+\begin{enumerate}
+  \item \textbf{Getting ready}: What do you want to find out, and why?
+  \item \textbf{Framing questions}: Separate what you want to learn from what you'll ask.
+  \begin{itemize}
+    \item Avoid leading questions.
+    \item Ask about experiences (``Tell me about...''), not memories.
+    \item Use hypotheticals or third-person framing.
+    \item Get them to tell stories.
+  \end{itemize}
+  \item \textbf{Conducting}: Listen more, talk less.
+  \begin{itemize}
+    \item Ask clarifying questions; follow up on interesting phrases.
+    \item Don't interrupt; tolerate silence.
+    \item Avoid sharing your own opinions.
+  \end{itemize}
+  \item \textbf{Interpreting}: What did you learn? What was surprising? What would you change?
+\end{enumerate}
+
+\subsubsection*{The Define Phase}
+
+Moving from individual observations $\to$ generalized insights $\to$ the ``right'' problem.
+
+\begin{exbox}[What Does This Child Need?]
+\textbf{Observation}: A child stands on tiptoes reaching for a book on a high shelf.
+
+\textbf{Surface-level needs}: Chair, ladder, footstool, shorter bookcase.
+
+\textbf{Real need}: \textbf{Easier access to information}.
+
+\textbf{Implication}: If you define the problem as ``needs a chair,'' your solution space is chair designs. If you define it as ``needs easier access to information,'' your solution space includes apps, voice assistants, different library layouts, etc.
+\end{exbox}
+
+\paragraph*{Point-of-View (POV) Technique}
+Template: ``[User] needs [need] because [insight].''
+
+This forces you to articulate the user, their core need, and \textit{why} they have it.
+
+\paragraph*{Empathy Maps}
+A visual tool to synthesize observations:
+\begin{itemize}
+  \item What does the user \textbf{say}?
+  \item What does the user \textbf{do}?
+  \item What does the user \textbf{think}?
+  \item What does the user \textbf{feel}?
+\end{itemize}
+
+\subsubsection*{AI-Specific Considerations}
+
+\paragraph*{People-First vs.\ Technology-First}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+& \textbf{People-First} & \textbf{Technology-First} \\
+\midrule
+Start with & Real problems people need help with & Capabilities/limitations of AI \\
+Validate by & Testing assumptions with real people & Identifying problems AI can solve \\
+Example & Users struggle with X $\to$ can AI help? & AI can do Y $\to$ who needs this? \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+For human-centered AI, \textbf{balance both approaches}.
+
+\paragraph*{When AI is Probably Better}
+\begin{itemize}
+  \item Recommending different content to different users (personalization).
+  \item Prediction of future events.
+  \item Natural language understanding.
+  \item Recognition of entire classes of entities.
+  \item Detection of low-occurrence events that change over time.
+  \item Agent/bot for a specific domain.
+\end{itemize}
+
+\paragraph*{When AI is Probably NOT Better}
+\begin{itemize}
+  \item Maintaining predictability (home/cancel buttons should stay put).
+  \item Providing static or limited information.
+  \item Minimizing costly errors (cost of error $>$ benefit of small accuracy gain).
+  \item Complete transparency required.
+  \item Optimizing for high speed and low cost.
+\end{itemize}
+
+\subsubsection*{Stakeholder Involvement in AI Development}
+
+\paragraph*{At Different Stages}
+
+\begin{enumerate}
+  \item \textbf{Early (Business Case)}: Is AI needed? Does it add unique value?
+  \item \textbf{Data Preparation}: Users help collect, clean, label data; tools like What-If Tool to check fairness.
+  \item \textbf{Model Building}: Explanatory debugging---users see explanations, provide corrections.
+  \item \textbf{Evaluation}: Co-design sessions to imagine effects before deployment.
+\end{enumerate}
+
+\paragraph*{Participation in Foundation Models}
+
+Traditional participatory ML connects communities to specific tasks. Foundation models break this---downstream tasks and stakeholders are unknown during development.
+
+\textbf{Four Methods for Participation} (from ``Participation in the Age of Foundation Models''):
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Method} & \textbf{Description} \\
+\midrule
+RLHF & Crowd workers rate pairs of outputs; feedback becomes reward signal. \\
+Rule sets / Policies & Public polling to determine ``constitution'' (e.g., Anthropic CCAI). \\
+Red teaming & Domain experts adversarially test for weaknesses. \\
+Domain-oriented & Work closely with specific communities (e.g., disability, maternal health). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph*{The Participatory Ceiling}
+It's easy to \textbf{consult} participants (quick feedback). It's harder to \textbf{include} them (deeper involvement). It's very hard to let them \textbf{own/control} the system. Current methods cluster at ``consult'' level.
+
+\subsubsection*{Worked Examples}
+
+\begin{exbox}[Designing Interview Questions]
+\textbf{Context}: You're designing an AI study assistant. You want to understand how students currently prepare for exams.
+
+\textbf{What you want to find out}: What are their biggest challenges? When do they study? What resources do they use?
+
+\textbf{Questions you might ask}:
+\begin{itemize}
+  \item ``Tell me about the last time you prepared for a difficult exam.''
+  \item ``Walk me through a typical study session.''
+  \item ``What's the most frustrating part of exam prep?''
+  \item ``If you could change one thing about how you study, what would it be?''
+\end{itemize}
+
+\textbf{Avoid}: ``Do you think an AI assistant would help?'' (leading question).
+\end{exbox}
+
+\begin{exbox}[From Need to Requirement]
+\textbf{User says}: ``I always forget what topics will be on the exam.''
+
+\textbf{Surface need}: A list of exam topics.
+
+\textbf{Deeper need}: Reduced anxiety about exam preparation; confidence that they're studying the right things.
+
+\textbf{Possible requirements}:
+\begin{itemize}
+  \item System identifies key concepts from lecture materials.
+  \item System highlights frequently-tested topics.
+  \item System provides personalized study plan based on weak areas.
+\end{itemize}
+
+Different requirements address the same underlying need.
+\end{exbox}
+
+\subsubsection*{Key Definitions Summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Term} & \textbf{Definition} \\
+\midrule
+Human-Centered Design & Process focused on users' needs throughout design lifecycle \\
+Double Diamond & Discover $\to$ Define $\to$ Develop $\to$ Deliver \\
+User Need & User's perspective of problem (goals, constraints, context) \\
+Requirement & System property that addresses a need \\
+Empathize & Understand users through observation, interviews, immersion \\
+Define & Synthesize observations into the ``right'' problem statement \\
+POV Statement & ``[User] needs [need] because [insight]'' \\
+Empathy Map & Visual tool: Say, Do, Think, Feel \\
+RLHF & Reinforcement Learning from Human Feedback \\
+Red Teaming & Adversarial testing by domain experts \\
+Participatory Ceiling & Barrier limiting depth of stakeholder involvement \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Recommended Reading}
+\begin{itemize}
+  \item \textbf{Textbook}: Chapter 7 (Methods for understanding user needs)
+  \item \textbf{Google PAIR Guidebook}: \texttt{pair.withgoogle.com/guidebook/}
+  \item \textbf{Paper}: ``Lay User Involvement in Developing Human-centric Responsible AI Systems''
+  \item \textbf{Paper}: ``Participation in the Age of Foundation Models'' (Suresh et al., 2024)
+  \item \textbf{Harvard}: Interviewing Strategies (Project Zero)
+\end{itemize}
+
+
