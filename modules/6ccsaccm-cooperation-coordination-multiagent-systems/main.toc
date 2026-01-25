@@ -1,0 +1,19 @@
+\contentsline {section}{Module Overview}{3}{section*.2}%
+\contentsline {section}{\numberline {1}Week 1: Non-Cooperative Games (Part I)}{5}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Topic Summary}{5}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Overview + Core Concepts + Extended Theory}{6}{subsection.1.2}%
+\contentsline {subsubsection}{\numberline {1.2.1}Multi-Agent Systems}{6}{subsubsection.1.2.1}%
+\contentsline {subsubsection}{\numberline {1.2.2}Normal Form Games}{6}{subsubsection.1.2.2}%
+\contentsline {subsubsection}{\numberline {1.2.3}The Prisoner's Dilemma}{7}{subsubsection.1.2.3}%
+\contentsline {subsubsection}{\numberline {1.2.4}Dominance}{8}{subsubsection.1.2.4}%
+\contentsline {subsubsection}{\numberline {1.2.5}Iterated Elimination of Dominated Strategies (IEDS)}{8}{subsubsection.1.2.5}%
+\contentsline {subsubsection}{\numberline {1.2.6}Nash Equilibrium (Pure Strategies)}{9}{subsubsection.1.2.6}%
+\contentsline {subsubsection}{\numberline {1.2.7}Coordination Games}{10}{subsubsection.1.2.7}%
+\contentsline {subsubsection}{\numberline {1.2.8}Mixed Strategies}{10}{subsubsection.1.2.8}%
+\contentsline {subsubsection}{\numberline {1.2.9}Computing Mixed Strategy Nash Equilibria}{11}{subsubsection.1.2.9}%
+\contentsline {subsubsection}{\numberline {1.2.10}Maximin and Minimax Strategies}{12}{subsubsection.1.2.10}%
+\contentsline {subsubsection}{\numberline {1.2.11}Zero-Sum Games and the Minimax Theorem}{13}{subsubsection.1.2.11}%
+\contentsline {subsubsection}{\numberline {1.2.12}Other Solution Concepts}{14}{subsubsection.1.2.12}%
+\contentsline {subsubsection}{\numberline {1.2.13}Summary: Classic Games}{14}{subsubsection.1.2.13}%
+\contentsline {subsubsection}{\numberline {1.2.14}Worked Examples from Exercises}{15}{subsubsection.1.2.14}%
+\contentsline {subsubsection}{\numberline {1.2.15}Other Game Types (Preview)}{15}{subsubsection.1.2.15}%

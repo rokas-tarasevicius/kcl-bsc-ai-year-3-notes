@@ -1,0 +1,751 @@
+% =============================================================================
+%                    WEEK 1: NON-COOPERATIVE GAMES (PART I)
+% =============================================================================
+\section{Week 1: Non-Cooperative Games (Part I)}
+
+% -----------------------------------------------------------------------------
+%                              1.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Define the core concepts of non-cooperative game theory, including \textbf{strategy profiles}, \textbf{payoff functions}, and the distinction between cooperative and non-cooperative games.
+  \item Formulate real-world scenarios as \textbf{strategic-form (normal-form)} or extensive-form games involving rational, self-interested agents.
+  \item Identify and classify various types of strategies: \textbf{pure}, \textbf{mixed}, \textbf{dominant}, and \textbf{best response} strategies.
+  \item Analyse game-theoretic models to determine the existence and properties of \textbf{Nash equilibria} (in pure and mixed strategies).
+  \item Explain and interpret equilibrium behaviour in classical games: \textbf{Prisoner's Dilemma}, \textbf{Matching Pennies}, \textbf{Battle of the Sexes}, \textbf{Stag Hunt}, and coordination games.
+  \item Evaluate the potential for and limitations of non-cooperative solutions, including issues of \textbf{uniqueness}, \textbf{multiplicity}, and \textbf{inefficiency} of equilibria.
+  \item Demonstrate competency in using mathematical notation and reasoning to represent and solve strategic games.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week introduces \textbf{non-cooperative game theory}---the mathematical framework for analysing strategic interactions between rational decision-makers. The module sits at the intersection of two fields:
+
+\begin{itemize}
+  \item \textbf{Algorithmic Game Theory (AGT):} Studies algorithms in strategic environments where inputs come from self-interested agents. Combines theoretical CS and economics to analyse equilibria and design efficient, fair mechanisms.
+  \item \textbf{Computational Social Choice (COMSOC):} Studies collective decision-making and preference aggregation, asking how individual preferences can be combined into collective decisions.
+\end{itemize}
+
+The central question: \textit{``What is a stable outcome when multiple self-interested agents interact?''}
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Define a game in \textbf{normal form}; write the formal tuple $\Gamma = (N, (S_i), (U_i))$.
+  \item Given a payoff matrix, identify \textbf{dominated strategies} and solve by iterated elimination.
+  \item Find all \textbf{pure strategy Nash equilibria} using best-response analysis.
+  \item Compute \textbf{mixed strategy Nash equilibria} using the indifference principle.
+  \item Compare \textbf{maximin} vs \textbf{minimax} strategies; apply the Minimax theorem to zero-sum games.
+  \item Explain why Prisoner's Dilemma has a unique NE that is Pareto-inefficient.
+  \item Distinguish \textbf{Nash equilibrium} from \textbf{strong equilibrium}.
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+%                 1.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Multi-agent systems and game types
+  \item Normal form games: formal definition
+  \item Dominance and iterated elimination
+  \item Nash equilibrium in pure strategies
+  \item Mixed strategies and expected payoffs
+  \item Nash equilibrium in mixed strategies
+  \item Computing mixed NE (indifference principle)
+  \item Maximin and minimax strategies
+  \item Zero-sum games and the Minimax theorem
+  \item Other solution concepts (strong equilibrium, correlated equilibrium)
+\end{enumerate}
+
+\bigseparator
+
+% --- Multi-Agent Systems ---
+\subsubsection{Multi-Agent Systems}
+
+\begin{defbox}[Multi-Agent System (MAS)]
+A \textbf{multi-agent system} consists of multiple autonomous entities (agents) with:
+\begin{itemize}
+  \item Distributed information
+  \item Computational capabilities
+  \item Potentially conflicting objectives
+\end{itemize}
+
+\textbf{Types:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Type} & \textbf{Examples} \\
+\midrule
+Cooperative & Sensor networks, robot teams in warehouses \\
+Competitive & Electronic marketplaces, resource allocation \\
+Mixed & Wikipedia, Stack Overflow \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{defbox}
+
+\separator
+
+% --- Normal Form Games ---
+\subsubsection{Normal Form Games}
+
+\begin{defbox}[Non-Cooperative Game]
+In a \textbf{non-cooperative} (or competitive) game:
+\begin{itemize}
+  \item Players take actions and enjoy outcomes \textit{individually}
+  \item There are \textbf{no binding contracts} among players
+  \item Each player strategically optimises their own utility function
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Normal Form Game (Formal Definition)]
+A game in \textbf{strategic (normal) form} is a tuple:
+\[
+\Gamma = (N, (S_i)_{i \in N}, (U_i)_{i \in N})
+\]
+
+where:
+\begin{itemize}
+  \item $N$ is a finite set of \textbf{players}
+  \item $S_i$ is the set of \textbf{strategies} for player $i \in N$
+  \item $U_i : S \to \mathbb{R}$ is the \textbf{utility function} for player $i$, where $S = \times_{i \in N} S_i$ is the set of all strategy profiles
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Strategy Profile Notation]
+A \textbf{profile} $s$ is a vector of strategies $(s_1, \ldots, s_n)$ where $s_i \in S_i$.
+
+\textbf{Key notation:}
+\begin{itemize}
+  \item $s_{-i} = (s_1, \ldots, s_{i-1}, s_{i+1}, \ldots, s_n)$ --- profile without player $i$'s strategy
+  \item $s = (s_i, s_{-i})$ --- decomposition of profile
+  \item $s_C$ --- strategies of coalition $C \subseteq N$
+  \item $s_{-C}$ --- strategies of players not in $C$
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[Exam Tip: Writing Game Definitions]
+When asked to ``formulate as a game'', always specify:
+\begin{enumerate}
+  \item The set of players $N$
+  \item The strategy set $S_i$ for each player
+  \item The utility function $U_i$ (or payoff matrix for finite games)
+\end{enumerate}
+\end{tipbox}
+
+\separator
+
+% --- Prisoner's Dilemma ---
+\subsubsection{The Prisoner's Dilemma}
+
+\begin{exbox}[Prisoner's Dilemma]
+\textbf{Setup:} Two suspects are interrogated in separate rooms. Each can:
+\begin{itemize}
+  \item \textbf{Cooperate (C):} Deny the crime
+  \item \textbf{Defect (D):} Confess (rat out the other)
+\end{itemize}
+
+\textbf{Payoff matrix:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} c | c c @{}}
+ & C & D \\
+\midrule
+C & $-1, -1$ & $-10, 0$ \\
+D & $0, -10$ & $-5, -5$ \\
+\end{tabular}
+\end{center}
+
+\textbf{Reading the matrix:} First number = row player's payoff; second = column player's.
+
+\textbf{Key insight:} The only stable outcome is $(D, D)$, even though $(C, C)$ gives both players a better payoff!
+\end{exbox}
+
+\begin{defbox}[Prisoner's Dilemma: General Form]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} c | c c @{}}
+ & C & D \\
+\midrule
+C & $R, R$ & $S, T$ \\
+D & $T, S$ & $P, P$ \\
+\end{tabular}
+\end{center}
+
+\textbf{Condition:} $T > R > P > S$
+
+\begin{itemize}
+  \item $T$ = Temptation (defect while other cooperates)
+  \item $R$ = Reward (mutual cooperation)
+  \item $P$ = Punishment (mutual defection)
+  \item $S$ = Sucker's payoff (cooperate while other defects)
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- Dominance ---
+\subsubsection{Dominance}
+
+\begin{defbox}[Strict and Weak Dominance]
+For player $i$ and strategies $s, t \in S_i$:
+
+\textbf{Strict dominance:} $s$ \term{strictly dominates} $t$ if:
+\[
+\forall s_{-i} \in S_{-i}: \quad U_i(s, s_{-i}) > U_i(t, s_{-i})
+\]
+
+\textbf{Weak dominance:} $s$ \term{weakly dominates} $t$ if:
+\[
+\forall s_{-i} \in S_{-i}: U_i(s, s_{-i}) \geq U_i(t, s_{-i}) \quad \text{and} \quad \exists s'_{-i}: U_i(s, s'_{-i}) > U_i(t, s'_{-i})
+\]
+\end{defbox}
+
+\begin{defbox}[Dominant and Dominated Strategies]
+\begin{itemize}
+  \item Strategy $s$ is \textbf{dominant} if it dominates \textit{all} other strategies
+  \item Strategy $t$ is \textbf{dominated} if \textit{some} other strategy dominates it
+\end{itemize}
+
+\textbf{Key principle:} Rational players never choose strictly dominated strategies.
+\end{defbox}
+
+\begin{tipbox}[Exam Tip: Dominance is Rare but Powerful]
+Dominant strategy is a very strong solution concept---no assumptions needed about other players. However, it rarely exists. In Prisoner's Dilemma, Defect is dominant for both players.
+\end{tipbox}
+
+\separator
+
+% --- Iterated Elimination ---
+\subsubsection{Iterated Elimination of Dominated Strategies (IEDS)}
+
+\begin{thmbox}[IEDS Algorithm]
+\textbf{Procedure:}
+\begin{enumerate}
+  \item Find a strictly dominated strategy for any player
+  \item Eliminate it from the game
+  \item Repeat until no dominated strategies remain
+\end{enumerate}
+
+\textbf{Properties:}
+\begin{itemize}
+  \item \textbf{Strict dominance:} Order-independent (same final result)
+  \item \textbf{Weak dominance:} Order-dependent (different elimination orders may give different results)
+  \item Surviving strategies need not be dominant
+  \item May end with multiple strategies per player
+\end{itemize}
+\end{thmbox}
+
+\begin{exbox}[Example: IEDS on a $3 \times 3$ Game]
+\textbf{Original game:}
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} c | c c c @{}}
+ & L & C & R \\
+\midrule
+T & $73, 25$ & $57, 42$ & $66, 32$ \\
+M & $80, 26$ & $35, 12$ & $32, 54$ \\
+B & $28, 27$ & $63, 31$ & $54, 29$ \\
+\end{tabular}
+\end{center}
+
+\textbf{Step 1:} For column player, R dominates L (compare: $32 > 25$, $54 > 26$, $29 > 27$). Eliminate L.
+
+\textbf{Step 2:} For row player, T and B both dominate M. Eliminate M.
+
+\textbf{Step 3:} For column player, C dominates R. Eliminate R.
+
+\textbf{Step 4:} For row player, B dominates T ($63 > 57$). Eliminate T.
+
+\textbf{Solution:} $(B, C)$ with payoffs $(63, 31)$.
+
+\textbf{Verify NE:} Row player: $63 > 54$ (B vs T against C). Column player: $31 > 29$ (C vs R against B). \checkmark
+\end{exbox}
+
+\bigseparator
+
+% --- Nash Equilibrium ---
+\subsubsection{Nash Equilibrium (Pure Strategies)}
+
+\begin{defbox}[Nash Equilibrium]
+A strategy profile $s^* = (s^*_1, \ldots, s^*_n)$ is a \textbf{(pure strategy) Nash equilibrium} if no player has a \textbf{unilateral improving move}:
+\[
+\forall i \in N, \forall s'_i \in S_i: \quad U_i(s^*_i, s^*_{-i}) \geq U_i(s'_i, s^*_{-i})
+\]
+
+Equivalently: each player plays a \textbf{best response} to the others' strategies.
+\end{defbox}
+
+\begin{defbox}[Best Response]
+Strategy $s_i$ is a \textbf{best response} to $s_{-i}$ if:
+\[
+s_i \in \arg\max_{s'_i \in S_i} U_i(s'_i, s_{-i})
+\]
+\end{defbox}
+
+\begin{tipbox}[Exam Tip: Finding Pure Strategy NE]
+\textbf{Method 1 (Best Response):}
+\begin{enumerate}
+  \item For each opponent strategy, find player's best response (underline/mark it)
+  \item NE = cells where \textit{all} players are playing best responses
+\end{enumerate}
+
+\textbf{Method 2 (Check deviations):}
+\begin{enumerate}
+  \item For each cell, check if any player wants to deviate unilaterally
+  \item NE = cells with no profitable deviations
+\end{enumerate}
+\end{tipbox}
+
+\begin{exbox}[Example: Best Response Analysis]
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} c | c c c @{}}
+ & L & C & R \\
+\midrule
+T & $2, 2$ & $1^*, 3^*$ & $0^*, 1$ \\
+M & $3^*, 1^*$ & $0, 0$ & $0^*, 0$ \\
+B & $1, 0^*$ & $0, 0^*$ & $0^*, 0^*$ \\
+\end{tabular}
+\end{center}
+
+\textbf{Reading:} $^*$ marks best responses. NE = cells where both payoffs are marked.
+
+\textbf{Nash equilibria:} None! No cell has both payoffs marked.
+\end{exbox}
+
+\separator
+
+% --- Coordination Games ---
+\subsubsection{Coordination Games}
+
+\begin{defbox}[Coordination Game]
+A game where players benefit from \textbf{choosing corresponding strategies}:
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} c | c c @{}}
+ & Left & Right \\
+\midrule
+Up & $1, 1$ & $0, 0$ \\
+Down & $0, 0$ & $1, 1$ \\
+\end{tabular}
+\end{center}
+
+\textbf{Properties:}
+\begin{itemize}
+  \item \textbf{Two pure strategy NE:} (Up, Left) and (Down, Right)
+  \item No dominant or dominated strategies
+  \item Both NE are also \textbf{strong equilibria}
+\end{itemize}
+\end{defbox}
+
+\begin{exbox}[Battle of the Sexes]
+Players want to coordinate but have \textbf{different preferences}:
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} c | c c @{}}
+ & Theater & Football \\
+\midrule
+Theater & $2, 1$ & $0, 0$ \\
+Football & $0, 0$ & $1, 2$ \\
+\end{tabular}
+\end{center}
+
+\textbf{Pure NE:} (Theater, Theater) and (Football, Football)
+\end{exbox}
+
+\begin{exbox}[Stag Hunt]
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} c | c c @{}}
+ & Stag & Hare \\
+\midrule
+Stag & $4, 4$ & $1, 3$ \\
+Hare & $3, 1$ & $3, 3$ \\
+\end{tabular}
+\end{center}
+
+\textbf{Story:} Two hunters can cooperate for a stag (high reward) or safely catch a hare alone.
+
+\textbf{Pure NE:} (Stag, Stag) and (Hare, Hare)---plus mixed equilibria (see below).
+\end{exbox}
+
+\bigseparator
+
+% --- Mixed Strategies ---
+\subsubsection{Mixed Strategies}
+
+\begin{defbox}[Mixed Strategy]
+A \textbf{mixed strategy} is a probability distribution over pure strategies.
+
+\begin{itemize}
+  \item $\Delta_i = \Delta(S_i)$ = set of probability distributions over $S_i$
+  \item A pure strategy is a mixed strategy with probability 1 on one action
+  \item Even with finite $S_i$, there are infinitely many mixed strategies
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Expected Utility]
+When mixed strategy profile $\tilde{s} \in \Delta$ is played:
+\[
+U_i(\tilde{s}) = \sum_{s \in S} U_i(s) \cdot \Pr(s | \tilde{s})
+\]
+
+where:
+\[
+\Pr(s | \tilde{s}) = \prod_{j \in N} \tilde{s}_j(s_j)
+\]
+(product of individual probabilities, assuming independence)
+\end{defbox}
+
+\begin{thmbox}[Nash's Existence Theorem (1951)]
+Every finite game (finite players, finite action sets) has at least one \textbf{mixed strategy Nash equilibrium}.
+\end{thmbox}
+
+\separator
+
+% --- Computing Mixed NE ---
+\subsubsection{Computing Mixed Strategy Nash Equilibria}
+
+\begin{thmbox}[Indifference Principle]
+In a mixed strategy NE where player $i$ randomises over actions $A \subseteq S_i$:
+
+\textbf{Player $i$ must be indifferent among all actions in $A$:}
+\[
+\forall a, a' \in A: \quad U_i(a, \tilde{s}_{-i}) = U_i(a', \tilde{s}_{-i})
+\]
+
+\textbf{Key insight:} The \textit{other} player's mixing probabilities make you indifferent!
+\end{thmbox}
+
+\begin{exbox}[Example: Matching Pennies]
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} c | c c @{}}
+ & H & T \\
+\midrule
+H & $1, -1$ & $-1, 1$ \\
+T & $-1, 1$ & $1, -1$ \\
+\end{tabular}
+\end{center}
+
+\textbf{No pure strategy NE} (verify: every cell has a profitable deviation).
+
+\textbf{Mixed NE:} Let Player 1 play H with probability $p$, Player 2 play H with probability $q$.
+
+\textbf{Player 2's indifference:}
+\[
+U_2(\text{H}) = U_2(\text{T}) \implies -p + (1-p) = p - (1-p) \implies p = \frac{1}{2}
+\]
+
+\textbf{By symmetry:} $q = \frac{1}{2}$
+
+\textbf{Mixed NE:} $\left(\frac{1}{2}, \frac{1}{2}\right), \left(\frac{1}{2}, \frac{1}{2}\right)$ with expected utility $0$ for both.
+\end{exbox}
+
+\begin{exbox}[Example: Stag Hunt Mixed NE]
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} c | c c @{}}
+ & Stag & Hare \\
+\midrule
+Stag & $4, 4$ & $1, 3$ \\
+Hare & $3, 1$ & $3, 3$ \\
+\end{tabular}
+\end{center}
+
+Let $p = \Pr(\text{Player 1 plays Stag})$, $q = \Pr(\text{Player 2 plays Stag})$.
+
+\textbf{Player 2's indifference:}
+\[
+U_2(\text{Stag}) = U_2(\text{Hare}) \implies 4p + 1(1-p) = 3p + 3(1-p)
+\]
+\[
+4p + 1 - p = 3p + 3 - 3p \implies 3p + 1 = 3 \implies p = \frac{2}{3}
+\]
+
+\textbf{By symmetry:} $q = \frac{2}{3}$
+
+\textbf{Three NE total:} Two pure + one mixed at $\left(\frac{2}{3}, \frac{2}{3}\right)$.
+\end{exbox}
+
+\begin{tipbox}[Exam Tip: Mixed NE Computation]
+\begin{enumerate}
+  \item Set up probability variables ($p$, $q$, etc.)
+  \item Write expected utility equations for each action
+  \item Set utilities equal (indifference condition)
+  \item Solve for the \textit{other} player's probability
+  \item Verify the solution makes sense (probabilities in $[0,1]$)
+\end{enumerate}
+
+\textbf{Common error:} Solving for your own probability instead of the opponent's!
+\end{tipbox}
+
+\bigseparator
+
+% --- Maximin and Minimax ---
+\subsubsection{Maximin and Minimax Strategies}
+
+\begin{defbox}[Maximin (Safety Level) Strategy]
+The \textbf{maximin strategy} for player $i$ maximises their worst-case payoff:
+\[
+s_i^{LS} \in \arg\max_{s_i} \min_{s_{-i}} U_i(s_i, s_{-i})
+\]
+
+The \textbf{maximin value} (safety level) is:
+\[
+U_i^{LS} = \max_{s_i} \min_{s_{-i}} U_i(s_i, s_{-i})
+\]
+
+\textbf{Intuition:} If opponents play to hurt you as much as possible, what's your best guarantee?
+\end{defbox}
+
+\begin{defbox}[Minimax Strategy (2-Player Games)]
+The \textbf{minimax strategy} for player $i$ against player $-i$ minimises $-i$'s maximum payoff:
+\[
+s_i^{MM} \in \arg\min_{s_i} \max_{s_{-i}} U_{-i}(s_i, s_{-i})
+\]
+
+\textbf{Intuition:} How can you punish the opponent most, ignoring your own payoff?
+\end{defbox}
+
+\begin{exbox}[Maximin in Prisoner's Dilemma]
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} c | c c @{}}
+ & C & D \\
+\midrule
+C & $-1, -1$ & $-10, 0$ \\
+D & $0, -10$ & $-5, -5$ \\
+\end{tabular}
+\end{center}
+
+\textbf{Row player's analysis:}
+\begin{itemize}
+  \item If commit to C: opponent plays D (minimises row), payoff = $-10$
+  \item If commit to D: opponent plays D (minimises row), payoff = $-5$
+\end{itemize}
+
+\textbf{Maximin:} Choose D (guarantees $-5 > -10$)
+
+\textbf{Defect is both the dominant strategy AND the maximin strategy.}
+\end{exbox}
+
+\separator
+
+% --- Zero-Sum Games ---
+\subsubsection{Zero-Sum Games and the Minimax Theorem}
+
+\begin{defbox}[Constant-Sum and Zero-Sum Games]
+A two-player game is \textbf{constant-sum} if $\exists c$ such that:
+\[
+\forall s \in S_1 \times S_2: \quad U_1(s) + U_2(s) = c
+\]
+
+For $c = 0$: \textbf{zero-sum game} (pure conflict---one player's gain is the other's loss).
+\end{defbox}
+
+\begin{thmbox}[Minimax Theorem (von Neumann, 1928)]
+For any finite, two-player, zero-sum game:
+\[
+\max_{s_1} \min_{s_2} U_1(s_1, s_2) = \min_{s_2} \max_{s_1} U_1(s_1, s_2)
+\]
+
+\textbf{Consequences:}
+\begin{enumerate}
+  \item Each player's \textbf{maximin value = minimax value}
+  \item The common value is called the \textbf{value of the game}
+  \item \textbf{Maximin strategies = minimax strategies = NE strategies}
+  \item All Nash equilibria have the \textbf{same payoff vector}
+\end{enumerate}
+\end{thmbox}
+
+\begin{exbox}[Matching Pennies: Minimax Analysis]
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} c | c c @{}}
+ & H & T \\
+\midrule
+H & $1, -1$ & $-1, 1$ \\
+T & $-1, 1$ & $1, -1$ \\
+\end{tabular}
+\end{center}
+
+\textbf{This is a zero-sum game} ($U_1 + U_2 = 0$ always).
+
+\textbf{Value of the game:} 0
+
+\textbf{By Minimax theorem:} The unique NE $\left(\frac{1}{2}, \frac{1}{2}\right)$ is also the maximin = minimax strategy for each player.
+\end{exbox}
+
+\begin{tipbox}[Computing Maximin/Minimax in General-Sum Games]
+For a general-sum 2-player game:
+\begin{enumerate}
+  \item Player $i$'s maximin depends \textit{only} on $i$'s utilities
+  \item Create a zero-sum game: keep $i$'s utilities, negate them for $-i$
+  \item Solve the zero-sum game for NE
+  \item NE strategies = maximin strategies
+\end{enumerate}
+\end{tipbox}
+
+\bigseparator
+
+% --- Other Solution Concepts ---
+\subsubsection{Other Solution Concepts}
+
+\begin{defbox}[Strong Equilibrium]
+A profile $s$ is a \textbf{strong equilibrium} if no coalition $C \subseteq N$ has a joint improving move:
+\[
+\nexists C \subseteq N, s'_C \in S_C: \quad \forall i \in C: U_i(s'_C, s_{-C}) > U_i(s)
+\]
+
+\textbf{Key facts:}
+\begin{itemize}
+  \item Every strong equilibrium is a Nash equilibrium (consider singleton coalitions)
+  \item Much more rare than NE
+  \item Prisoner's Dilemma has \textbf{no} strong equilibrium
+  \item Coordination game: both pure NE are strong equilibria
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Correlated Equilibrium]
+Players condition actions on a shared random signal from a trusted mediator.
+
+\begin{itemize}
+  \item Every mixed NE induces a correlated equilibrium
+  \item Set of correlated equilibria $\supseteq$ set of NE
+  \item \textbf{Computationally easier:} Can be found via linear programming
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[$\varepsilon$-Nash Equilibrium]
+A profile where no player can gain more than $\varepsilon > 0$ by deviating:
+\[
+\forall i, \forall s'_i: \quad U_i(s_i, s_{-i}) \geq U_i(s'_i, s_{-i}) - \varepsilon
+\]
+
+Standard NE is the special case $\varepsilon = 0$.
+\end{defbox}
+
+\begin{defbox}[Rationalizable Strategies]
+A strategy is \textbf{rationalizable} if it is a best response to some belief about opponents' strategies (consistent with common knowledge of rationality).
+
+\begin{itemize}
+  \item Equivalent to surviving iterated elimination of never-best-responses
+  \item Every NE strategy is rationalizable
+  \item Set of rationalizable strategies $\supseteq$ NE strategies
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- Classic Games Summary ---
+\subsubsection{Summary: Classic Games}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} l c c c p{4cm} @{}}
+\toprule
+\textbf{Game} & \textbf{Pure NE} & \textbf{Mixed NE} & \textbf{Strong NE} & \textbf{Key Feature} \\
+\midrule
+Prisoner's Dilemma & 1 (D,D) & Same & None & Dominant strategy, Pareto-inefficient \\
+Coordination & 2 & +1 & 2 & Multiple equilibria \\
+Matching Pennies & 0 & 1 & 0 & Zero-sum, no pure NE \\
+Battle of Sexes & 2 & +1 & 2 & Asymmetric preferences \\
+Stag Hunt & 2 & +1 & 2 & Risk vs reward trade-off \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% --- Worked Examples ---
+\subsubsection{Worked Examples from Exercises}
+
+\begin{exbox}[Exercise: Dividing Money]
+\textbf{Setup:} Two players divide £10. Each names $x_i \in \{0, 1, \ldots, 10\}$.
+\begin{itemize}
+  \item If $x_1 + x_2 \leq 10$: each gets their claim (remainder destroyed)
+  \item If $x_1 + x_2 > 10$ and $x_1 \neq x_2$: lower claimant gets $x_i$, other gets rest
+  \item If $x_1 + x_2 > 10$ and $x_1 = x_2$: each gets £5
+\end{itemize}
+
+\textbf{Best responses:}
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} c l @{}}
+\toprule
+\textbf{Other's claim} & \textbf{Best responses} \\
+\midrule
+0 & $\{10\}$ \\
+1 & $\{9, 10\}$ \\
+2 & $\{8, 9, 10\}$ \\
+$\vdots$ & $\vdots$ \\
+5 & $\{5, 6, 7, 8, 9, 10\}$ \\
+6 & $\{5, 6\}$ \\
+7 & $\{6\}$ \\
+8 & $\{7\}$ \\
+9 & $\{8\}$ \\
+10 & $\{9\}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Nash equilibria:} $(5,5)$, $(5,6)$, $(6,5)$, $(6,6)$ --- any pair where both are best responses to each other.
+\end{exbox}
+
+\begin{exbox}[Exercise: Modified Stag Hunt]
+\textbf{Modified payoffs:}
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} c | c c @{}}
+ & Stag & Hare \\
+\midrule
+Stag & $4, 4$ & $1, 3$ \\
+Hare & $3, 2$ & $3, 3$ \\
+\end{tabular}
+\end{center}
+
+\textbf{Whose mixing probability changes?}
+
+Player 2's utility changed ($1 \to 2$ in Hare-Stag cell).
+
+\textbf{Effect:} Player 2's utility is used to determine Player 1's indifference condition.
+
+Player 1's mixing probability changes: $p = \frac{1}{2}$ (was $\frac{2}{3}$).
+
+Player 2's mixing probability stays: $q = \frac{2}{3}$ (Player 1's utilities unchanged).
+\end{exbox}
+
+\bigseparator
+
+% --- Other Game Types ---
+\subsubsection{Other Game Types (Preview)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Game Type} & \textbf{Description} \\
+\midrule
+Extensive form & Game tree; players move in turns (sequential) \\
+Repeated games & Same game played multiple times; cumulative payoffs \\
+Cooperative (coalitional) & Players form coalitions; binding contracts; characteristic function over coalitions \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These will be covered in subsequent weeks.

@@ -1,0 +1,65 @@
+% =============================================================================
+%                        SHARED PREAMBLE – CCM REVISION NOTES
+% =============================================================================
+
+% --- Page geometry ---
+\usepackage[left=1.35in,right=1.0in,top=1.0in,bottom=1.0in,headheight=14pt]{geometry}
+
+% --- Math ---
+\usepackage{amsmath,amssymb,mathtools}
+
+% --- Graphics and tables ---
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+
+% --- Colors ---
+\usepackage[dvipsnames,svgnames,x11names]{xcolor}
+\definecolor{AccentBlue}{HTML}{2E5A88}
+\definecolor{RuleGray}{HTML}{CCCCCC}
+
+% --- Links ---
+\usepackage[colorlinks=true,linkcolor=AccentBlue,urlcolor=AccentBlue]{hyperref}
+
+% --- Headers and footers ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\nouppercase{\leftmark}}
+\fancyhead[R]{\small 6CCSACCM Revision Notes}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Paragraph formatting ---
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt plus 1pt minus 1pt}
+
+% --- Tighter default list spacing ---
+\makeatletter
+\def\@listi{\leftmargin\leftmargini \parsep 0pt \topsep 4pt \itemsep 2pt}
+\let\@listI\@listi
+\@listi
+\makeatother
+
+% =============================================================================
+%                              BOX ENVIRONMENTS
+% =============================================================================
+% Minimal: just bold title + content with spacing
+
+\newenvironment{defbox}[1][]{\par\medskip\noindent\ifx&#1&\else\textbf{#1}\par\smallskip\fi\ignorespaces}{\par\medskip}
+\newenvironment{thmbox}[1][]{\par\medskip\noindent\ifx&#1&\else\textbf{#1}\par\smallskip\fi\ignorespaces}{\par\medskip}
+\newenvironment{exbox}[1][]{\par\medskip\noindent\ifx&#1&\else\textbf{#1}\par\smallskip\fi\ignorespaces}{\par\medskip}
+\newenvironment{tipbox}[1][]{\par\medskip\noindent\ifx&#1&\else\textbf{#1}\par\smallskip\fi\ignorespaces}{\par\medskip}
+\newenvironment{keybox}[1][]{\par\medskip\noindent\ifx&#1&\else\textbf{#1}\par\smallskip\fi\ignorespaces}{\par\medskip}
+
+% =============================================================================
+%                            UTILITY COMMANDS
+% =============================================================================
+
+\newcommand{\topicpage}{\clearpage}
+\newcommand{\separator}{\par\vspace{6pt}{\color{RuleGray}\hrule height 0.5pt}\vspace{6pt}}
+\newcommand{\bigseparator}{\par\vspace{10pt}{\color{RuleGray}\hrule height 1pt}\vspace{10pt}}
+\newcommand{\TODO}{\textcolor{red}{\textbf{[TODO]}}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\term}[1]{\textbf{\textit{#1}}}
