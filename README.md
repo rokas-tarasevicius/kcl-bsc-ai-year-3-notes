@@ -1,4 +1,17 @@
-# LaTeX Revision Notes Creation Template
+# KCL BSc AI Year 3 Revision Notes 2025/26
+
+### Latest compiled PDFs (and coverage)
+
+| Module | PDF | Weeks covered | Latest week |
+|---|---|---:|---:|
+| **6CCSAACV — Advanced Computer Vision** | [main.pdf](modules/6ccsaacv-advanced-computer-vision/main.pdf) | 2 (W1–W2) | 2 |
+| **6CCSACCM — Cooperation, Coordination and Multi-Agent Systems** | [main.pdf](modules/6ccsaccm-cooperation-coordination-multiagent-systems/main.pdf) | 2 (W1–W2) | 2 |
+| **6CCSAHAI — Human-AI Interaction** | [HAI.pdf](modules/6ccsahai-human-ai-interaction/HAI.pdf) | 9 (W1–W5, W7–W10) | 10 |
+| **6CCSANLP — Natural Language Processing** | [NLP.pdf](modules/6ccsanlp-natural-language-processing/NLP.pdf) | 10 (W1–W5, W7–W11) | 11 |
+| **6CCSAPEA — Philosophy & Ethics of AI** | [Philosophy\_and\_ethics.pdf](modules/6ccsapea-philosophy-ethics-ai/Philosophy_and_ethics.pdf) | 9 (W1–W9) | 9 |
+| **6CCSAPRA — Principles of Robot Autonomy** | [main.pdf](modules/6ccsapra-principles-robot-autonomy/main.pdf) | 1 (W1) | 1 |
+
+Weeks covered are counted from `topics/week-*.tex` files in each module folder.
 
 This template helps you quickly create new modules and weekly content for your revision notes. The AI assistant uses the **NLP module** (`modules/6ccsanlp-natural-language-processing/`) as the gold standard for formatting and structure.
 

@@ -75,6 +75,15 @@ Do **not** split into many files.
 - `\input{topics/00-module-overview.tex}`
 - `\input{topics/week-01-...tex}`, `\input{topics/week-02-...tex}`, etc (in week order)
 
+## Root `README.md` (required): link the latest PDFs
+
+Maintain a **single, canonical list** of “Latest compiled PDFs” at the **top of the repo root** `README.md`.
+
+- When a **new module** folder is created under `modules/`, add a new bullet linking to its **current latest compiled PDF** (relative link).
+- When a module’s PDF filename/location changes (e.g. `main.pdf` vs `NLP.pdf`), update the existing link (don’t add duplicates).
+- Prefer compiling to `modules/<module-slug>/main.pdf` for consistency, but if a module already uses a different name, link to whatever is actually present.
+- Keep the list **one line per module** and **easy to scan** (module code + title).
+
 ## Preamble template (`preamble.tex`)
 
 The preamble should use `\IfFileExists` for optional packages to ensure portability:

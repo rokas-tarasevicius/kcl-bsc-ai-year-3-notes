@@ -1,5 +1,5 @@
 % =============================================================================
-%                        SHARED PREAMBLE – CCM REVISION NOTES
+%                   SHARED PREAMBLE – ROBOT AUTONOMY REVISION NOTES
 % =============================================================================
 
 % --- Page geometry ---
@@ -14,10 +14,6 @@
 \usepackage{array}
 \usepackage{tabularx}
 
-% --- TikZ for diagrams ---
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,calc}
-
 % --- Colors ---
 \usepackage[dvipsnames,svgnames,x11names]{xcolor}
 \definecolor{AccentBlue}{HTML}{2E5A88}
@@ -31,7 +27,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\small\nouppercase{\leftmark}}
-\fancyhead[R]{\small 6CCSACCM Revision Notes}
+\fancyhead[R]{\small 6CCSAPRA Revision Notes}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
@@ -67,4 +63,12 @@
 \newcommand{\TODO}{\textcolor{red}{\textbf{[TODO]}}}
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\term}[1]{\textbf{\textit{#1}}}
-\newcommand{\qed}{\hfill$\square$}
+
+% --- Robotics-specific notation (add as needed) ---
+\newcommand{\configspace}{\mathcal{C}}          % Configuration space
+\newcommand{\workspace}{\mathcal{W}}            % Workspace
+\newcommand{\obstacle}{\mathcal{O}}             % Obstacle region
+\newcommand{\freespace}{\mathcal{C}_{\text{free}}} % Free configuration space
+\newcommand{\state}{\mathbf{x}}                 % State vector
+\newcommand{\control}{\mathbf{u}}               % Control input
+\newcommand{\pose}{\mathbf{q}}                  % Robot configuration/pose

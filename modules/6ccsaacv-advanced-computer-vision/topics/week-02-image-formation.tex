@@ -1,0 +1,622 @@
+% =============================================================================
+%                         WEEK 2: IMAGE FORMATION
+% =============================================================================
+\section{Week 2: Image Formation}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Explain the end-to-end process of digital image capture.
+  \item Analyse the biological mechanisms of visual perception in the human eye.
+  \item Compare the different strategies used by digital cameras and the human retina to efficiently encode spatial and colour information.
+\end{itemize}
+\end{keybox}
+
+\textbf{Big Picture.}
+This week covers how images are formed---both in cameras and in the eye. We examine the \term{physics} (light, reflectance, optics), \term{geometry} (projection, camera models), \term{digitisation} (sampling, quantization), and \term{biological vision} (photoreceptors, ganglion cells). The key insight is that recovering surface properties from images is ill-posed because $L = f(E, R)$---we observe luminance but need to infer reflectance without knowing illumination.
+
+\separator
+
+\textbf{What Examiners Like to Ask:}
+\begin{itemize}
+  \item Explain the relationship $L(\lambda) = f(E(\lambda), R(\lambda))$ and why colour constancy is hard.
+  \item Derive the perspective projection equations and explain intrinsic/extrinsic parameters.
+  \item Compare pinhole cameras vs lensed cameras (trade-offs).
+  \item Explain demosaicing and different interpolation methods.
+  \item Describe centre-surround receptive fields and their functional benefits.
+  \item Compare foveal vs peripheral vision.
+\end{itemize}
+
+% =============================================================================
+\subsection{Core Concepts}
+
+\textbf{Roadmap:}
+\begin{enumerate}
+  \item Physics of image formation (light, reflectance, optics)
+  \item Geometry of image formation (camera models, projective geometry)
+  \item Digital images (digitisation, representation)
+  \item Camera sensors (CCD, demosaicing)
+  \item The eye (photoreceptors, ganglion cells)
+\end{enumerate}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Physics of Image Formation}
+
+\textbf{Overview of Image Formation:}
+
+Images are formed when a \textbf{sensor} registers \textbf{radiation} that has interacted with \textbf{physical objects}. Light from a source is reflected by surfaces, passes through optics, and is recorded by a sensor.
+
+\begin{center}
+Light Source $\rightarrow$ Surface (Reflectance) $\rightarrow$ Optics $\rightarrow$ Sensor
+\end{center}
+
+\separator
+
+\textbf{Two Sets of Parameters:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Parameter Type} & \textbf{What It Determines} \\
+\midrule
+Radiometric & Intensity/colour at each image location (illumination, surface reflectance, sensor sensitivity) \\
+Geometric & Where scene points appear in image (camera position/orientation, optics, projection geometry) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{Light and Colour:}
+
+\begin{defbox}[Visible Light]
+Electromagnetic radiation with wavelength $\lambda$ between 400--700nm. The sun's intensity peaks in this range, and human eyes evolved sensitivity to it.
+\end{defbox}
+
+\begin{itemize}
+  \item \textbf{Illuminance} $E(x,y,\lambda)$: amount of light striking a surface (varies by light source)
+  \item \textbf{Reflectance} $R(x,y,\lambda)$: fraction of light reflected at each wavelength (\term{albedo})
+  \item \textbf{Luminance} $L(x,y,\lambda)$: amount of light reaching the sensor
+\end{itemize}
+
+\begin{thmbox}[Fundamental Equation of Image Formation]
+\[
+L(x,y,\lambda) = f\bigl(E(x,y,\lambda), R(x,y,\lambda)\bigr)
+\]
+The luminance depends on both illuminance and reflectance. This is \textbf{ill-posed}: we observe $L$ but need to recover $R$ without knowing $E$.
+\end{thmbox}
+
+\separator
+
+\textbf{Colour Mixing:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Type} & \textbf{Process} & \textbf{Result} \\
+\midrule
+Additive (light) & R + G + B lights & White (broad spectrum) \\
+Subtractive (pigment) & R + G + B pigments & Black (absorbs all) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{exbox}[Why Objects Have Colour]
+An object looks \textbf{green} because it absorbs red and blue light, leaving more green in the reflected light. The colour we perceive depends on which wavelengths are \textit{not} absorbed.
+\end{exbox}
+
+\separator
+
+\textbf{Colour Constancy:}
+
+\begin{defbox}[Colour Constancy]
+The ability to perceive surface colour as constant despite changes in illumination. Humans do this well; computers struggle.
+\end{defbox}
+
+\textbf{Approaches to estimate illumination $E$:}
+\begin{itemize}
+  \item Assume average reflectance across scene is known (grey world)
+  \item Fix brightest patch to white
+  \item Gamut falls within known range
+  \item Known reference colour (colour chart, skin)
+  \item Specular reflections have illumination colour
+\end{itemize}
+
+None work reliably in all cases. Human vision discounts illumination effects through learned priors.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Optics: Pinhole and Lens Cameras}
+
+\begin{defbox}[Pinhole Camera]
+A camera that restricts light flow through a small hole so that only one ray from each scene point reaches the sensor. Everything is in focus regardless of depth.
+\end{defbox}
+
+\textbf{Pinhole Trade-off:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Aperture} & \textbf{Focus} & \textbf{Brightness} \\
+\midrule
+Small pinhole & Sharp & Dim (long exposure, blur from motion) \\
+Large pinhole & Blurred & Bright (short exposure) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A \textbf{lens} solves this by focusing rays from the same point onto a single image location, keeping the image sharp while gathering more light.
+
+\separator
+
+\textbf{Thin Lens Properties:}
+\begin{itemize}
+  \item Rays through optical centre $O$ are not refracted
+  \item Rays parallel to optical axis refract through focal point $F'$
+  \item Rays through $F$ become parallel to optical axis
+\end{itemize}
+
+\begin{thmbox}[Thin Lens Equation]
+\[
+\frac{1}{f} = \frac{1}{|z|} + \frac{1}{|z'|}
+\]
+where $f$ = focal length, $z$ = object distance, $z'$ = image distance.
+\end{thmbox}
+
+\textbf{Key implications:}
+\begin{itemize}
+  \item Object at infinity $\Rightarrow$ image at $F'$
+  \item Object at $F$ or closer $\Rightarrow$ no image formed
+  \item \textbf{Depth of focus}: range of object depths that appear acceptably sharp
+  \item Smaller aperture $\Rightarrow$ larger depth of focus (approaches pinhole behaviour)
+\end{itemize}
+
+\begin{tipbox}[Exam Tip: Lens vs Pinhole]
+Know the trade-offs: pinhole has infinite depth of focus but needs long exposure; lens is bright but only objects at specific depths are in focus.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Geometry of Image Formation}
+
+\begin{defbox}[Perspective (Pinhole) Camera Model]
+A mathematical model of geometric projection where a 3D point $P = (x,y,z)$ projects to image point $P' = (x',y',z')$. The image plane $\Pi'$ is at distance $f'$ from the pinhole along the optical axis.
+\end{defbox}
+
+\separator
+
+\textbf{Equation of Projection:}
+
+From similar triangles:
+\[
+\frac{x'}{x} = \frac{f'}{z} \quad\Rightarrow\quad x' = \frac{f'}{z} x
+\]
+\[
+\frac{y'}{y} = \frac{f'}{z} \quad\Rightarrow\quad y' = \frac{f'}{z} y
+\]
+
+Since $P'$ lies on the image plane: $z' = f'$.
+
+\textbf{In matrix form (homogeneous coordinates):}
+\[
+\begin{pmatrix} x' \\ y' \\ z' \end{pmatrix} = \frac{f'}{z} \begin{pmatrix} 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 1 & 0 \end{pmatrix} \begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix}
+\]
+
+\separator
+
+\textbf{Projective Geometry:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5cm} @{}}
+\toprule
+\textbf{Geometry} & \textbf{Describes} & \textbf{Preserves} \\
+\midrule
+Euclidean & Objects ``as they are'' (3D$\rightarrow$3D) & Lengths, angles, parallelism \\
+Projective & Objects ``as they appear'' (3D$\rightarrow$2D) & None of the above \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Projective distortions:}
+\begin{itemize}
+  \item Distant objects appear smaller
+  \item Parallel lines converge at \term{vanishing points}
+  \item Equal lengths become unequal
+  \item Right angles become non-right angles
+\end{itemize}
+
+\begin{defbox}[Vanishing Point]
+The projection of a point at infinity. All parallel lines in 3D share the same vanishing point in the 2D image.
+\end{defbox}
+
+\begin{exbox}[Railway Tracks Example]
+In the world: tracks parallel, ties equal length, perpendicular, evenly spaced.
+
+In the image: tracks converge at vanishing point, ties get shorter with distance, not perpendicular to tracks, get closer together.
+\end{exbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Intrinsic and Extrinsic Parameters}
+
+\textbf{Converting Camera Coordinates to Pixels:}
+
+\begin{defbox}[Intrinsic Parameters]
+Camera-dependent properties that map the image plane [mm] to pixel coordinates [pixel]:
+\begin{itemize}
+  \item $o_x, o_y$: principal point (image centre) in pixels
+  \item $\alpha = -f'/s_x$, $\beta = -f'/s_y$: magnification factors
+  \item $s_x, s_y$: pixel size [mm/pixel]
+  \item Aspect ratio = $\alpha/\beta$
+\end{itemize}
+\end{defbox}
+
+\textbf{Pixel coordinates:}
+\[
+u = \alpha \frac{x}{z} + o_x, \qquad v = \beta \frac{y}{z} + o_y
+\]
+
+\textbf{In matrix form:}
+\[
+\begin{pmatrix} u \\ v \\ 1 \end{pmatrix} = \frac{1}{z} \begin{pmatrix} \alpha & 0 & o_x \\ 0 & \beta & o_y \\ 0 & 0 & 1 \end{pmatrix} \begin{pmatrix} 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 1 & 0 \end{pmatrix} \begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix}
+\]
+
+\separator
+
+\begin{defbox}[Extrinsic Parameters]
+Camera location-dependent properties that transform world coordinates to camera coordinates:
+\begin{itemize}
+  \item $\mathbf{R}$: 3$\times$3 rotation matrix
+  \item $\mathbf{t}$: 3$\times$1 translation vector
+\end{itemize}
+\end{defbox}
+
+\textbf{World to camera transformation:}
+\[
+\begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix} = \begin{pmatrix} \mathbf{R}^T & -\mathbf{R}^T\mathbf{t} \\ \mathbf{0}^T & 1 \end{pmatrix} \begin{pmatrix} X \\ Y \\ Z \\ 1 \end{pmatrix}
+\]
+
+\separator
+
+\begin{thmbox}[Complete Projection Pipeline]
+\[
+\begin{pmatrix} u \\ v \\ 1 \end{pmatrix} = \frac{1}{z} \underbrace{\begin{pmatrix} \alpha & 0 & o_x \\ 0 & \beta & o_y \\ 0 & 0 & 1 \end{pmatrix}}_{\text{Intrinsic (2D$\rightarrow$2D)}} \underbrace{\begin{pmatrix} 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 1 & 0 \end{pmatrix}}_{\text{Projection (3D$\rightarrow$2D)}} \underbrace{\begin{pmatrix} \mathbf{R}^T & -\mathbf{R}^T\mathbf{t} \\ \mathbf{0}^T & 1 \end{pmatrix}}_{\text{Extrinsic (3D$\rightarrow$3D)}} \begin{pmatrix} X \\ Y \\ Z \\ 1 \end{pmatrix}
+\]
+\end{thmbox}
+
+\begin{tipbox}[Exam Tip: Forward vs Inverse]
+3D $\rightarrow$ 2D projection is \textbf{well-posed} (unique). 2D $\rightarrow$ 3D recovery is \textbf{ill-posed} (depth lost). Need extra information: stereo vision or scene priors.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Digital Images}
+
+\begin{defbox}[Digital Image]
+A 2D array (matrix) of numbers $I(x,y)$ where each element represents the light intensity at a discrete location called a \term{pixel} (picture element).
+\end{defbox}
+
+\textbf{Two discretisation processes:}
+\begin{itemize}
+  \item \textbf{Pixelisation}: intensity values averaged within each grid location (spatial sampling)
+  \item \textbf{Quantization}: intensity represented using finite discrete values (intensity sampling)
+\end{itemize}
+
+\separator
+
+\textbf{Image Formats:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l l @{}}
+\toprule
+\textbf{Format} & \textbf{Values/Pixel} & \textbf{Bits} & \textbf{Range} \\
+\midrule
+Binary/Monochrome & 1 binary & 1 & $\{0, 1\}$ \\
+Greyscale & 1 real & 8 & $[0, 255]$ or $[0, 1]$ \\
+Colour (RGB) & 3 reals & 24 (8$\times$3) & 3 channels $\times$ 256 levels \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Convention:} 0 = black, 255 (or 1.0) = white. Origin at top-left corner.
+
+\separator
+
+\textbf{Format Conversions:}
+
+\textbf{RGB to Greyscale} (weighted average):
+\[
+I_{\text{grey}} = \frac{r \cdot I_R + g \cdot I_G + b \cdot I_B}{r + g + b}
+\]
+
+\textbf{Greyscale to Binary} (thresholding):
+\[
+I_{\text{bin}}(p) = \begin{cases} 1 & \text{if } I_{\text{grey}}(p) > t \\ 0 & \text{otherwise} \end{cases}
+\]
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Camera Sensors and Demosaicing}
+
+\begin{defbox}[Charge Coupled Device (CCD)]
+A semiconductor with a 2D matrix of photo-sensors. Each sensor accumulates charge proportional to incident light intensity and exposure time. Charge pattern corresponds to the image.
+\end{defbox}
+
+\textbf{Colour from CCDs:}
+
+Photo-sensors are not wavelength-selective. Colour is achieved via filters:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.5cm} p{4.5cm} @{}}
+\toprule
+\textbf{Solution} & \textbf{Pros} & \textbf{Cons} \\
+\midrule
+3 CCDs + prism & High quality, full sampling & Expensive, bulky \\
+1 CCD + colour mask & Cheap, compact & Coarser sampling, needs demosaicing \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\begin{defbox}[Bayer Mask]
+The most common colour filter array. Has 2$\times$ as many green filters as red/blue (matches human sensitivity). Results in subsampled colour channels that need interpolation.
+\end{defbox}
+
+\begin{defbox}[Demosaicing]
+The process of filling in missing colour values so each pixel has R, G, and B values. A form of interpolation.
+\end{defbox}
+
+\textbf{Interpolation Methods:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{4cm} @{}}
+\toprule
+\textbf{Method} & \textbf{Description} & \textbf{Trade-off} \\
+\midrule
+Nearest Neighbour & Copy adjacent pixel from same channel & Fast, inaccurate \\
+Bilinear & Average of 2 or 4 nearest same-channel pixels & Fast, blurs edges \\
+Smooth Hue Transition & Interpolate ratio (hue) R/G or B/G & Better colour accuracy \\
+Edge-Directed & Interpolate along axis with lowest gradient & Preserves edges \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{exbox}[Edge-Directed Interpolation for Green]
+To calculate $G_8$:
+\begin{enumerate}
+  \item Compute horizontal gradient: $\Delta_H = |G_7 - G_9|$
+  \item Compute vertical gradient: $\Delta_V = |G_3 - G_{13}|$
+  \item If $\Delta_H < \Delta_V$: $G_8 = (G_7 + G_9)/2$ (interpolate horizontally)
+  \item If $\Delta_H > \Delta_V$: $G_8 = (G_3 + G_{13})/2$ (interpolate vertically)
+  \item If equal: $G_8 = (G_3 + G_7 + G_9 + G_{13})/4$
+\end{enumerate}
+\end{exbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{The Eye}
+
+\textbf{Eye Anatomy:}
+\begin{itemize}
+  \item \textbf{Cornea}: bulk of refraction (fixed focus)
+  \item \textbf{Lens}: further refraction, can change shape to adjust focal length
+  \item \textbf{Iris}: regulates light amount (like camera aperture)
+  \item \textbf{Retina}: contains photoreceptors
+  \item \textbf{Optic nerve}: $\sim$1 million fibres transmit to brain
+\end{itemize}
+
+\separator
+
+\textbf{Photoreceptor Types:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l l @{}}
+\toprule
+\textbf{Type} & \textbf{Sensitivity} & \textbf{Colour} & \textbf{Location} \\
+\midrule
+Rods & High (dim light) & None (monochrome) & Periphery \\
+Cones (S) & Low (bright light) & Blue ($\sim$420nm) & Fovea \\
+Cones (M) & Low (bright light) & Green ($\sim$540nm) & Fovea \\
+Cones (L) & Low (bright light) & Red ($\sim$570nm) & Fovea \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Distribution:}
+\begin{itemize}
+  \item \textbf{Fovea}: no rods, high cone density. \#blue $\ll$ \#red $\leq$ \#green
+  \item \textbf{Periphery}: mostly rods, few cones
+  \item \textbf{Blind spot}: no photoreceptors (optic nerve exit)
+\end{itemize}
+
+\separator
+
+\textbf{Foveal vs Peripheral Vision:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Property} & \textbf{Fovea} & \textbf{Periphery} \\
+\midrule
+Resolution & High (dense receptors) & Low (sparse receptors) \\
+Colour & Yes (cones) & No (rods) \\
+Sensitivity & Low (cones) & High (rods) \\
+Brain resources & Disproportionately large & Smaller \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{Retinal Processing---Ganglion Cells:}
+
+\begin{defbox}[Receptive Field (RF)]
+The area of visual space from which a neuron receives input. More generally, the stimulus properties that produce a response.
+\end{defbox}
+
+\begin{itemize}
+  \item $\sim$1 million ganglion cells vs $\sim$100 million photoreceptors
+  \item Each ganglion cell collects from multiple photoreceptors
+  \item Large convergence in periphery, smaller in fovea (another reason for lower peripheral acuity)
+\end{itemize}
+
+\separator
+
+\begin{defbox}[Centre-Surround Receptive Fields]
+Ganglion cells have centre-surround RFs:
+\begin{itemize}
+  \item \textbf{On-centre, off-surround}: active if centre brighter than surround
+  \item \textbf{Off-centre, on-surround}: active if centre darker than surround
+\end{itemize}
+\end{defbox}
+
+\begin{thmbox}[Functional Benefits of Centre-Surround RFs]
+\begin{enumerate}
+  \item \textbf{Edge enhancement}: weak response on uniform regions, strong near edges
+  \item \textbf{Invariance to ambient light}: measures contrast, not absolute intensity
+  \item \textbf{Efficient coding}: only signals where intensity changes (``redundancy reduction'')
+\end{enumerate}
+\end{thmbox}
+
+\begin{exbox}[Centre-Surround Response]
+On a uniform surface: input to centre and surround cancels $\Rightarrow$ weak response.
+
+At an edge: input unequal $\Rightarrow$ strong response (increased or decreased depending on type).
+
+Under different lighting: if illumination doubles, both centre and surround double, so contrast unchanged $\Rightarrow$ response unchanged.
+\end{exbox}
+
+\separator
+
+\textbf{Colour Opponent Cells:}
+
+Ganglion cells combine cone inputs to create colour-opponent responses:
+\begin{itemize}
+  \item \textbf{Red-Green opponent}: Red ON / Green OFF (or vice versa)
+  \item \textbf{Blue-Yellow opponent}: Blue ON / Yellow OFF (yellow = average of R and G cones)
+\end{itemize}
+
+\separator
+
+\begin{defbox}[Difference of Gaussians (DoG)]
+The standard mathematical model for centre-surround RFs:
+\[
+\text{DoG}(x,y) = G_{\sigma_1}(x,y) - G_{\sigma_2}(x,y)
+\]
+where $G_\sigma$ is a Gaussian with standard deviation $\sigma$, and $\sigma_1 < \sigma_2$.
+\end{defbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Worked Examples}
+
+\begin{exbox}[Example 1: Colour Constancy Problem]
+\textbf{Q:} Why is recovering surface colour from an image an ill-posed problem?
+
+\textbf{A:} The luminance $L(\lambda)$ we observe depends on both illuminance $E(\lambda)$ and reflectance $R(\lambda)$: $L = f(E, R)$. We want to recover $R$ (surface colour) but only measure $L$ and don't know $E$ (light source). Different combinations of $E$ and $R$ can produce the same $L$, making the problem ill-posed.
+\end{exbox}
+
+\begin{exbox}[Example 2: Thin Lens Calculation]
+\textbf{Q:} A lens has focal length $f = 50$mm. An object is at distance $z = 200$mm. Where does the image form?
+
+\textbf{A:} Using the thin lens equation:
+\[
+\frac{1}{f} = \frac{1}{|z|} + \frac{1}{|z'|} \quad\Rightarrow\quad \frac{1}{50} = \frac{1}{200} + \frac{1}{|z'|}
+\]
+\[
+\frac{1}{|z'|} = \frac{1}{50} - \frac{1}{200} = \frac{4-1}{200} = \frac{3}{200}
+\]
+\[
+|z'| = \frac{200}{3} \approx 66.7\text{mm}
+\]
+\end{exbox}
+
+\begin{exbox}[Example 3: Perspective Projection]
+\textbf{Q:} A point $P = (30, 40, 100)$ in camera coordinates. Focal length $f' = 10$mm. Find image coordinates.
+
+\textbf{A:}
+\[
+x' = \frac{f'}{z} x = \frac{10}{100} \times 30 = 3\text{mm}
+\]
+\[
+y' = \frac{f'}{z} y = \frac{10}{100} \times 40 = 4\text{mm}
+\]
+Image point: $P' = (3, 4, 10)$ mm.
+\end{exbox}
+
+\begin{exbox}[Example 4: Intrinsic Parameters]
+\textbf{Q:} Convert camera coordinates $(x', y') = (3, 4)$mm to pixel coordinates. Given: $s_x = s_y = 0.01$mm/pixel, $f' = 10$mm, image centre $(o_x, o_y) = (320, 240)$.
+
+\textbf{A:}
+\[
+\alpha = -\frac{f'}{s_x} = -\frac{10}{0.01} = -1000, \quad \beta = -\frac{f'}{s_y} = -1000
+\]
+From projection: $x'/z' = 3/10 = 0.3$, $y'/z' = 4/10 = 0.4$
+
+Actually, using the formula directly with $x/z$:
+\[
+u = \alpha \frac{x}{z} + o_x = -1000 \times 0.3 + 320 = 20
+\]
+\[
+v = \beta \frac{y}{z} + o_y = -1000 \times 0.4 + 240 = -160
+\]
+(Negative $v$ indicates point projects above image boundary.)
+\end{exbox}
+
+\begin{exbox}[Example 5: Centre-Surround Benefits]
+\textbf{Q:} Explain why centre-surround RFs provide invariance to ambient lighting.
+
+\textbf{A:} Centre-surround cells measure \textbf{contrast}---the difference between centre and surround intensities. If ambient light doubles, both centre and surround receive twice the light, but their \textit{difference} (relative to their sum) remains constant. The response depends on $I_{\text{centre}} - I_{\text{surround}}$, which encodes local contrast, not absolute intensity.
+\end{exbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Summary}
+
+\begin{keybox}[Key Takeaways]
+\begin{enumerate}
+  \item \textbf{Image formation}: $L = f(E, R)$---luminance depends on illumination and reflectance; recovering $R$ is ill-posed.
+  \item \textbf{Optics}: Pinhole = sharp but dim; Lens = bright but limited depth of focus. Thin lens: $1/f = 1/|z| + 1/|z'|$.
+  \item \textbf{Projection}: $x' = (f'/z)x$, $y' = (f'/z)y$. Parallel lines $\rightarrow$ vanishing points.
+  \item \textbf{Camera parameters}: Intrinsic (focal length, pixel size, centre) + Extrinsic (rotation, translation).
+  \item \textbf{Digital images}: Pixelisation (spatial) + Quantization (intensity). Bayer mask needs demosaicing.
+  \item \textbf{Eye}: Fovea (high-res, colour, low-sensitivity) vs Periphery (low-res, mono, high-sensitivity).
+  \item \textbf{Ganglion cells}: Centre-surround RFs provide edge enhancement, lighting invariance, efficient coding.
+\end{enumerate}
+\end{keybox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Camera} & \textbf{Eye} \\
+\midrule
+Uniform pixel grid & Non-uniform (fovea vs periphery) \\
+Bayer mask for colour & 3 cone types for colour \\
+Demosaicing interpolates & Brain processes incomplete data \\
+Raw pixel output & Centre-surround preprocessing \\
+Fixed sensitivity & Rods (dim) vs Cones (bright) \\
+\bottomrule
+\end{tabular}
+\end{center}

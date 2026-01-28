@@ -1,0 +1,498 @@
+% =============================================================================
+%                    WEEK 1: INTRODUCTION, NAVIGATION & GEOMETRY
+% =============================================================================
+\section{Week 1: Introduction to Autonomous Robots, Simple Navigation \& Geometry Representation}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you should be able to:
+\begin{itemize}
+  \item Explain the core challenges in building autonomous robots (sense--plan--act cycle).
+  \item Describe and analyse Bug algorithms (Bug 0, Bug 1, Bug 2, Tangent Bug).
+  \item Prove completeness and derive path length bounds for Bug algorithms.
+  \item Represent workspace geometry using polygons, primitives, and point clouds.
+  \item Distinguish between convex and non-convex sets and their representations.
+\end{itemize}
+\end{keybox}
+
+\textbf{Big Picture.} This week provides the foundations for robot autonomy. We start with what makes robotics hard (uncertainty, limited sensing, computational cost), then introduce Bug algorithms---simple reactive navigation strategies with provable guarantees. Finally, we cover how to mathematically represent the robot's environment.
+
+\textbf{What Examiners Like to Ask:}
+\begin{itemize}
+  \item ``Trace Bug 1/Bug 2 on this environment and identify hit/leave points.''
+  \item ``Derive upper/lower bounds on path length for Bug 1 or Bug 2.''
+  \item ``Prove that Bug 1 is complete.''
+  \item ``Compare Bug 1 vs Bug 2---when does each perform better?''
+  \item ``Represent this shape using half-planes (primitives).''
+  \item ``Define convexity and give an example of a convex hull.''
+\end{itemize}
+
+\bigseparator
+
+\subsection{Core Concepts}
+
+\textbf{Roadmap:}
+\begin{enumerate}
+  \item What is a robot? The sense--plan--act cycle
+  \item Bug algorithms for point robot navigation
+  \item Geometry representation methods
+\end{enumerate}
+
+% -----------------------------------------------------------------------------
+\subsubsection{What is an Autonomous Robot?}
+
+\begin{defbox}[Robot]
+A \term{robot} is a physical system that \textbf{observes} the state of the world and \textbf{changes} the state of the world.
+\end{defbox}
+
+\begin{defbox}[Autonomous Robot]
+An \term{autonomous robot} performs tasks without continuous human intervention, using its own sensing, planning, and actuation.
+\end{defbox}
+
+\textbf{The Sense--Plan--Act Cycle:}
+\begin{center}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Component} & \textbf{Description} \\
+\midrule
+Sense & Perceive the world using sensors (cameras, LIDAR, tactile sensors). \\
+Plan & Decide what actions to take to achieve a goal. \\
+Act & Execute actions using actuators (motors, grippers). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Key Challenges in Robotics:}
+\begin{itemize}
+  \item \textbf{Limited knowledge:} Sensors are noisy, incomplete, and have finite range.
+  \item \textbf{Computational cost:} Planning can be exponentially hard.
+  \item \textbf{Hardware limitations:} Control is imperfect; actuators have uncertainty.
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Motion Planning: The Piano Mover's Problem}
+
+\begin{defbox}[Motion Planning Problem]
+Given a robot, a start configuration, a goal configuration, and a description of obstacles, find a \textbf{collision-free path} from start to goal (or report that none exists).
+\end{defbox}
+
+\begin{tipbox}[Exam Tip: Complexity]
+Motion planning is computationally hard in general:
+\begin{itemize}
+  \item Sofa Mover (3 DOF): $O(n^{2+\epsilon})$
+  \item Piano Mover (6 DOF): Polynomial but no practical algorithm known
+  \item $n$ Disks in Plane: NP-hard
+  \item Generalized Mover: PSPACE-complete
+\end{itemize}
+This motivates the use of heuristic and sampling-based algorithms.
+\end{tipbox}
+
+\bigseparator
+
+% =============================================================================
+%                              BUG ALGORITHMS
+% =============================================================================
+\subsection{Bug Algorithms}
+
+Bug algorithms are simple, reactive navigation strategies for a \textbf{point robot} with:
+\begin{itemize}
+  \item Known direction to goal (can measure distance $d(x, y)$ between any two points).
+  \item Local sensing only (tactile/contact sensor or finite-range sensor).
+  \item No global map of obstacles.
+\end{itemize}
+
+\begin{defbox}[Workspace Notation]
+\begin{itemize}
+  \item $\workspace \subseteq \mathbb{R}^2$: the \term{workspace} (environment).
+  \item $\mathcal{WO}_i$: obstacle $i$ in the workspace.
+  \item $\workspace_{\text{free}} = \workspace \setminus \bigcup_i \mathcal{WO}_i$: the \term{free workspace}.
+\end{itemize}
+\end{defbox}
+
+\textbf{Assumptions for Bug algorithms:}
+\begin{enumerate}
+  \item Perfect localization (robot knows its position at all times).
+  \item Contact sensor available.
+  \item Robot can measure distance to goal.
+  \item Finitely many obstacles; a line intersects each obstacle finitely many times.
+  \item Workspace is bounded: $\workspace \subset B_r(x)$ for some finite $r$.
+\end{enumerate}
+
+\separator
+
+% --- Bug 0 ---
+\subsubsection{Bug 0 Algorithm}
+
+\begin{thmbox}[Bug 0 Strategy]
+\begin{enumerate}
+  \item Head directly toward the goal.
+  \item If an obstacle is encountered, follow its boundary (fixed direction: left or right) until you can head toward the goal again.
+  \item Repeat.
+\end{enumerate}
+\end{thmbox}
+
+\begin{tipbox}[Bug 0 Failure Case]
+Bug 0 is \textbf{not complete}. It can get trapped in certain environments.
+
+\textbf{Example:} A left-turning robot facing a ``spiral'' obstacle that always redirects it away from the goal.
+\end{tipbox}
+
+\separator
+
+% --- Bug 1 ---
+\subsubsection{Bug 1 Algorithm}
+
+Bug 1 adds \textbf{memory} to avoid the traps that defeat Bug 0.
+
+\begin{thmbox}[Bug 1 Strategy]
+\begin{enumerate}
+  \item From current position, head toward $q_{\text{goal}}$.
+  \item If obstacle encountered at \term{hit point} $q_H^i$:
+  \begin{enumerate}
+    \item \textbf{Circumnavigate} the entire obstacle boundary.
+    \item Record the point $q_L^i$ (\term{leave point}) closest to the goal.
+    \item Return to $q_L^i$ by wall-following.
+  \end{enumerate}
+  \item From $q_L^i$, head toward goal. If this moves into the obstacle, report \textbf{failure}.
+  \item Repeat until goal reached or failure.
+\end{enumerate}
+\end{thmbox}
+
+\begin{defbox}[Hit Point and Leave Point]
+\begin{itemize}
+  \item $q_H^i$: the \term{hit point}---where the robot first contacts obstacle $i$.
+  \item $q_L^i$: the \term{leave point}---the point on obstacle $i$'s boundary closest to the goal.
+\end{itemize}
+\end{defbox}
+
+\textbf{Bug 1 Path Length Bounds:}
+
+Let $D$ = straight-line distance from $q_{\text{start}}$ to $q_{\text{goal}}$, and $P_i$ = perimeter of obstacle $i$.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Bound} & \textbf{Expression} \\
+\midrule
+Lower bound & $D$ \\
+Upper bound & $D + \dfrac{3}{2} \sum_i P_i$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Why $\frac{3}{2}$?} In the worst case, the robot circumnavigates the full obstacle ($P_i$), then backtracks up to half the perimeter to reach the leave point ($\frac{1}{2}P_i$).
+
+\begin{thmbox}[Bug 1 Completeness]
+\textbf{Theorem:} Bug 1 is \term{complete}---it will find a path in finite time if one exists, or correctly report failure.
+\end{thmbox}
+
+\begin{exbox}[Proof Sketch: Bug 1 Completeness]
+Suppose Bug 1 is incomplete. Then either:
+\begin{enumerate}
+  \item \textbf{Never terminates:} But each leave point is strictly closer to the goal than its corresponding hit point. Since there are finitely many obstacles, there are finitely many hit/leave pairs. Eventually, the robot reaches the goal.
+  \item \textbf{Terminates incorrectly:} The leave point $q_L^i$ is the closest point on the boundary to the goal. If moving toward the goal from $q_L^i$ re-enters the obstacle, then by the \textbf{Jordan Curve Theorem}, the line to the goal must cross the boundary an even number of times, implying another boundary point is closer---contradicting the definition of $q_L^i$.
+\end{enumerate}
+\end{exbox}
+
+\separator
+
+% --- Bug 2 ---
+\subsubsection{Bug 2 Algorithm}
+
+Bug 2 is a \textbf{greedy} algorithm that uses the \term{m-line} (the line from $q_{\text{start}}$ to $q_{\text{goal}}$).
+
+\begin{thmbox}[Bug 2 Strategy]
+\begin{enumerate}
+  \item Head toward goal along the \term{m-line}.
+  \item If obstacle encountered at hit point $q_H^i$:
+  \begin{enumerate}
+    \item Follow the obstacle boundary.
+    \item Leave when you re-encounter the m-line at a point \textbf{closer to the goal} than $q_H^i$ (and the path to goal is unimpeded).
+  \end{enumerate}
+  \item If you return to $q_H^i$ without finding such a point, report \textbf{failure}.
+  \item Repeat until goal reached.
+\end{enumerate}
+\end{thmbox}
+
+\begin{defbox}[M-Line]
+The \term{m-line} is the straight line segment connecting $q_{\text{start}}$ to $q_{\text{goal}}$.
+\end{defbox}
+
+\textbf{Bug 2 Path Length Bounds:}
+
+Let $n_i$ = number of times the m-line intersects obstacle $i$.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Bound} & \textbf{Expression} \\
+\midrule
+Lower bound & $D$ \\
+Upper bound & $D + \dfrac{1}{2} \sum_i n_i P_i$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Bug 1 vs Bug 2 Comparison]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5.5cm} p{5.5cm} @{}}
+\toprule
+& \textbf{Bug 1} & \textbf{Bug 2} \\
+\midrule
+Strategy & Exhaustive (explore all before deciding) & Greedy (take first improvement) \\
+Upper bound & $D + \frac{3}{2}\sum P_i$ & $D + \frac{1}{2}\sum n_i P_i$ \\
+Performance & More predictable & Often better, but can be worse \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Bug 2 beats Bug 1:} When obstacles have few m-line crossings.
+
+\textbf{Bug 1 beats Bug 2:} When obstacles have many m-line crossings (e.g., spiral shapes).
+\end{tipbox}
+
+\separator
+
+% --- Tangent Bug ---
+\subsubsection{Tangent Bug Algorithm}
+
+Tangent Bug extends Bug 2 to robots with \textbf{finite-range sensors} (not just contact).
+
+\begin{defbox}[Raw Distance Function]
+The \term{raw distance function} $\rho: \mathbb{R}^2 \times S^1 \to \mathbb{R}$ gives the distance to the closest obstacle along a ray from position $x$ at angle $\theta$:
+\[
+\rho(x, \theta) = \min_{\lambda \in (0,\infty)} d\left(x, x + \lambda(\cos\theta, \sin\theta)^T\right)
+\]
+such that $x + \lambda(\cos\theta, \sin\theta)^T \in \bigcup_i \mathcal{WO}_i$.
+
+The \term{saturated} version $\rho_R(x,\theta)$ clips at sensor range $R$:
+\[
+\rho_R(x,\theta) = \begin{cases} \rho(x,\theta) & \text{if } \rho(x,\theta) < R \\ \infty & \text{otherwise} \end{cases}
+\]
+\end{defbox}
+
+\begin{thmbox}[Tangent Bug Strategy]
+\textbf{Motion-to-goal:}
+\begin{itemize}
+  \item Move toward goal if path is clear.
+  \item If obstacles visible, choose discontinuity point $O_i$ that minimizes heuristic: $d(x, O_i) + d(O_i, q_{\text{goal}})$.
+  \item Switch to boundary-following if heuristic distance starts increasing.
+\end{itemize}
+
+\textbf{Boundary-following:}
+\begin{itemize}
+  \item Maintain $d_{\text{followed}}$: shortest distance from sensed boundary to goal.
+  \item Maintain $d_{\text{reach}}$: shortest distance from blocking obstacle to goal.
+  \item Switch back to motion-to-goal when $d_{\text{reach}} < d_{\text{followed}}$.
+\end{itemize}
+\end{thmbox}
+
+\begin{tipbox}[Tangent Bug: Effect of Sensor Range]
+\begin{itemize}
+  \item \textbf{Zero range} ($R = 0$): Degenerates to Bug 2 behavior.
+  \item \textbf{Finite range}: Can ``look ahead'' and make smarter decisions.
+  \item \textbf{Infinite range}: Optimal path planning (full visibility).
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+% =============================================================================
+%                         GEOMETRY REPRESENTATION
+% =============================================================================
+\subsection{Geometry Representation}
+
+To plan motion, we need to represent:
+\begin{itemize}
+  \item The \textbf{robot}: set of controllable rigid bodies.
+  \item The \textbf{obstacles}: fixed rigid bodies the robot cannot collide with.
+\end{itemize}
+
+\separator
+
+\subsubsection{Polygons and Polyhedra}
+
+\begin{defbox}[Polygon / Polyhedron]
+\begin{itemize}
+  \item \term{Polygon} (2D): described by ordered sequence of vertices or line segments.
+  \item \term{Polyhedron} (3D): described by vertices, edges, and faces.
+\end{itemize}
+Types: triangles, convex polygons, simple polygons, general polygons.
+\end{defbox}
+
+\separator
+
+\subsubsection{Convexity}
+
+\begin{defbox}[Convex Set]
+A subset $X \subseteq \mathbb{R}^n$ is \term{convex} iff for any two points $x_1, x_2 \in X$, the entire line segment between them lies in $X$:
+\[
+\lambda x_1 + (1-\lambda) x_2 \in X \quad \forall x_1, x_2 \in X, \; \forall \lambda \in [0,1]
+\]
+A set that is not convex is called \term{non-convex}.
+\end{defbox}
+
+\begin{defbox}[Convex Hull]
+The \term{convex hull} of a set of points $\{v_1, \ldots, v_m\}$ is the smallest convex set containing all points:
+\[
+X = \text{ConvH}(v_1, v_2, \ldots, v_m)
+\]
+For a polytope in $\mathbb{R}^n$, we need $m \geq n+1$ vertices.
+\end{defbox}
+
+\begin{tipbox}[Representing Non-Convex Sets]
+Non-convex polygons can be represented as a \textbf{union of convex polygons}:
+\[
+X = X_1 \cup X_2 \cup \cdots \cup X_n
+\]
+\textbf{Note:} Decomposing a non-convex set into convex pieces is NP-hard in general!
+\end{tipbox}
+
+\separator
+
+\subsubsection{Primitives and Half-Spaces}
+
+\begin{defbox}[Primitive]
+A \term{primitive} $H$ is defined by an implicit function $f: \mathbb{R}^n \to \mathbb{R}$:
+\[
+H = \{x \in \mathbb{R}^n \mid f(x) \leq 0\}
+\]
+\begin{itemize}
+  \item \textbf{Linear primitive} (half-plane/half-space): $f(x) = ax + by + c$ (2D).
+  \item \textbf{Algebraic primitive}: $f$ is a polynomial (e.g., $f(x,y) = x^2 + y^2 - r^2$).
+\end{itemize}
+\end{defbox}
+
+\begin{thmbox}[Convex Polytopes via Half-Spaces]
+A convex polygon (polyhedron) can be described as the \textbf{intersection} of half-planes (half-spaces):
+\[
+X = H_1 \cap H_2 \cap \cdots \cap H_m
+\]
+For a polytope in $\mathbb{R}^n$, we need $m \geq n+1$ half-spaces.
+\end{thmbox}
+
+\begin{exbox}[Worked Example: Hexagon via Half-Planes]
+To define a regular hexagon centered at origin, use 6 half-planes:
+\[
+H_i: a_i x + b_i y + c_i \leq 0, \quad i = 1, \ldots, 6
+\]
+where each $(a_i, b_i)$ is the outward normal to edge $i$.
+\end{exbox}
+
+\separator
+
+\subsubsection{Semi-Algebraic Sets}
+
+\begin{defbox}[Semi-Algebraic Set]
+A \term{semi-algebraic set} is constructed using finite unions and intersections of algebraic primitives (sets defined by polynomial inequalities).
+\end{defbox}
+
+\begin{exbox}[Example: Smiley Face]
+Define a smiley using:
+\begin{align*}
+H_{\text{head}}&: x^2 + y^2 - r_1^2 \leq 0 \quad \text{(head circle)} \\
+H_{\text{Leye}}&: -(x-x_2)^2 - (y-y_2)^2 + r_2^2 \leq 0 \quad \text{(left eye hole)} \\
+H_{\text{Reye}}&: -(x-x_3)^2 - (y-y_3)^2 + r_3^2 \leq 0 \quad \text{(right eye hole)} \\
+H_{\text{mouth}}&: -\frac{x^2}{a^2} - \frac{(y-y_4)^2}{b^2} + 1 \leq 0 \quad \text{(mouth ellipse)}
+\end{align*}
+The smiley is: $X = H_{\text{head}} \cap H_{\text{Leye}} \cap H_{\text{Reye}} \cap H_{\text{mouth}}$
+\end{exbox}
+
+\separator
+
+\subsubsection{Point Clouds and Octomaps}
+
+\begin{defbox}[Point Cloud]
+A \term{point cloud} is a set of 3D points, typically acquired from sensors (LIDAR, depth cameras). Each point represents a surface sample.
+\end{defbox}
+
+\begin{defbox}[Voxel]
+A \term{voxel} (volumetric pixel) is a 3D grid cell used in occupancy grids.
+\end{defbox}
+
+\begin{defbox}[Octomap]
+An \term{Octomap} is a probabilistic 3D occupancy map based on \term{octrees}:
+\begin{itemize}
+  \item Efficiently represents free, occupied, and \textbf{unknown} space.
+  \item Supports multi-resolution representation.
+  \item Can fuse multiple sensor readings probabilistically.
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[Why Octomaps?]
+\begin{itemize}
+  \item \textbf{Memory efficient:} Hierarchical structure; empty/uniform regions use little memory.
+  \item \textbf{Handles uncertainty:} Probabilistic occupancy values.
+  \item \textbf{Updatable:} New sensor data can be fused incrementally.
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+\subsection{Summary Table: Geometry Representations}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4cm} p{4cm} p{3cm} @{}}
+\toprule
+\textbf{Representation} & \textbf{Description} & \textbf{Pros} & \textbf{Cons} \\
+\midrule
+Boundary points & Vertices defining polygon & Simple, exact & Limited to polygons \\
+Convex hull & Smallest convex set containing points & Easy intersection tests & Only convex shapes \\
+Half-spaces & Intersection of linear inequalities & Exact, good for collision & Only convex polytopes \\
+Meshes & Triangulated surfaces & Flexible, standard format & No volume info \\
+Algebraic sets & Polynomial inequalities & Smooth curves/surfaces & Complex computations \\
+Point clouds & Raw sensor samples & Direct from sensors & Unstructured, noisy \\
+Octomaps & Hierarchical voxel grid & Efficient, probabilistic & Discrete resolution \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+\subsection{Worked Examples}
+
+\begin{exbox}[Example 1: Bug 1 Path Analysis]
+\textbf{Problem:} A point robot uses Bug 1 to navigate from $q_{\text{start}}$ to $q_{\text{goal}}$ with straight-line distance $D = 10$ units. There are two obstacles with perimeters $P_1 = 6$ and $P_2 = 8$. What are the path length bounds?
+
+\textbf{Solution:}
+\begin{itemize}
+  \item Lower bound: $D = 10$ (direct path if no obstacles block).
+  \item Upper bound: $D + \frac{3}{2}(P_1 + P_2) = 10 + \frac{3}{2}(6 + 8) = 10 + 21 = 31$ units.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 2: Bug 2 vs Bug 1]
+\textbf{Problem:} An obstacle has perimeter $P = 20$ and is crossed by the m-line $n = 8$ times. Compare worst-case path contribution for Bug 1 vs Bug 2.
+
+\textbf{Solution:}
+\begin{itemize}
+  \item Bug 1 contribution: $\frac{3}{2} \times 20 = 30$ units.
+  \item Bug 2 contribution: $\frac{1}{2} \times 8 \times 20 = 80$ units.
+\end{itemize}
+Bug 1 performs better here because the obstacle has many m-line crossings.
+\end{exbox}
+
+\begin{exbox}[Example 3: Convexity Check]
+\textbf{Problem:} Is the set $X = \{(x,y) : x^2 + y^2 \leq 1\}$ convex?
+
+\textbf{Solution:} Yes. For any two points $p_1, p_2$ on or inside the unit circle, the line segment between them lies entirely within the circle. This follows from the triangle inequality.
+\end{exbox}
+
+\begin{exbox}[Example 4: Triangle via Half-Planes]
+\textbf{Problem:} Represent the triangle with vertices $(0,0)$, $(4,0)$, $(2,3)$ using half-planes.
+
+\textbf{Solution:} Find the three edge equations:
+\begin{itemize}
+  \item Edge 1 ($(0,0)$ to $(4,0)$): $y \geq 0 \Rightarrow -y \leq 0$
+  \item Edge 2 ($(4,0)$ to $(2,3)$): $3x + 2y \leq 12$
+  \item Edge 3 ($(2,3)$ to $(0,0)$): $3x - 2y \geq 0 \Rightarrow -3x + 2y \leq 0$
+\end{itemize}
+Triangle: $H_1 \cap H_2 \cap H_3$.
+\end{exbox}

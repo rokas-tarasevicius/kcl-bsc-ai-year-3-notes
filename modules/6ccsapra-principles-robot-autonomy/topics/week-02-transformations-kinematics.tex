@@ -1,0 +1,605 @@
+% =============================================================================
+%                    WEEK 2: TRANSFORMATIONS & KINEMATICS
+% =============================================================================
+\section{Week 2: Representations, Transformations \& Kinematics}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you should be able to:
+\begin{itemize}
+  \item Apply 2D and 3D rigid body transformations (translation, rotation).
+  \item Construct and multiply homogeneous transformation matrices.
+  \item Explain Euler angles, gimbal lock, and quaternions for 3D rotations.
+  \item Compute forward kinematics for kinematic chains.
+  \item Set up and solve inverse kinematics problems analytically.
+  \item Explain the role of the Jacobian in numerical inverse kinematics.
+\end{itemize}
+\end{keybox}
+
+\textbf{Big Picture.} To plan robot motion, we need to mathematically describe \emph{where} things are. This week covers rigid body transformations---the mathematical tools for specifying position and orientation in 2D and 3D. We then extend to kinematic chains (robot arms) and the fundamental problems of forward and inverse kinematics.
+
+\textbf{What Examiners Like to Ask:}
+\begin{itemize}
+  \item ``Compute the homogeneous transformation matrix for rotation $\theta$ then translation $t$.''
+  \item ``Apply a sequence of transformations to find the final pose.''
+  \item ``Explain gimbal lock and how quaternions avoid it.''
+  \item ``Derive forward kinematics for a 2-link planar arm.''
+  \item ``Solve inverse kinematics for a 2-link arm given end-effector position.''
+  \item ``What is the Jacobian and how is it used in IK?''
+\end{itemize}
+
+\bigseparator
+
+\subsection{Core Concepts}
+
+\textbf{Roadmap:}
+\begin{enumerate}
+  \item Rigid body transformations in 2D
+  \item Homogeneous coordinates and transformation matrices
+  \item 3D rotations: Euler angles, axis-angle, quaternions
+  \item Kinematic chains and forward kinematics
+  \item Inverse kinematics
+\end{enumerate}
+
+% =============================================================================
+%                         2D TRANSFORMATIONS
+% =============================================================================
+\subsubsection{Rigid Body Transformations}
+
+\begin{defbox}[Rigid Body Transformation]
+A \term{rigid body transformation} $h: A \to W$ maps every point of body $A$ into workspace $W$ while:
+\begin{enumerate}
+  \item Preserving distances between all pairs of points.
+  \item Preserving orientation (no mirror images).
+\end{enumerate}
+\end{defbox}
+
+A rigid body in 2D is fully described by:
+\begin{itemize}
+  \item \textbf{Position:} $(x, y) \in \mathbb{R}^2$
+  \item \textbf{Orientation:} angle $\theta \in [0, 2\pi)$
+\end{itemize}
+
+\separator
+
+\subsubsection{2D Translation}
+
+\begin{defbox}[Translation in 2D]
+Translation by $(x_t, y_t)$:
+\[
+h(x, y) = (x + x_t, y + y_t)
+\]
+For primitives $H_i = \{(x,y) : f(x,y) \leq 0\}$:
+\[
+h(H_i) = \{(x,y) \in W : f(x - x_t, y - y_t) \leq 0\}
+\]
+\end{defbox}
+
+\separator
+
+\subsubsection{2D Rotation}
+
+\begin{defbox}[Rotation Matrix in 2D]
+Rotation about the origin by angle $\theta$ (counter-clockwise):
+\[
+R(\theta) = \begin{pmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{pmatrix}
+\]
+A point $v = (x, y)^T$ transforms to:
+\[
+v' = R(\theta) \cdot v
+\]
+\end{defbox}
+
+\begin{thmbox}[Properties of 2D Rotation Matrices]
+\begin{itemize}
+  \item \textbf{Orthogonal:} $R^T R = R R^T = I$
+  \item \textbf{Determinant:} $\det(R) = 1$
+  \item \textbf{Inverse:} $R(\theta)^{-1} = R(-\theta) = R(\theta)^T$
+  \item \textbf{Composition:} $R(\theta_2) R(\theta_1) = R(\theta_1 + \theta_2)$
+  \item \textbf{2D rotations commute:} $R(\theta_1) R(\theta_2) = R(\theta_2) R(\theta_1)$
+\end{itemize}
+\end{thmbox}
+
+\begin{tipbox}[Right-Hand Rule]
+Positive rotation is \textbf{counter-clockwise} (direction fingers curl when thumb points along rotation axis). In 2D, rotations are about the $z$-axis extending ``out of the page.''
+\end{tipbox}
+
+\separator
+
+\subsubsection{Complex Numbers for 2D Rotations}
+
+\begin{defbox}[Rotation via Complex Multiplication]
+Complex numbers with unit norm can represent 2D rotations:
+\[
+z = \cos\theta + i\sin\theta = e^{i\theta}
+\]
+Rotating point $(x, y)$ by $\theta$: multiply complex number $x + iy$ by $e^{i\theta}$.
+\end{defbox}
+
+\separator
+
+\subsubsection{Homogeneous Coordinates}
+
+\begin{defbox}[Homogeneous Coordinates]
+A 2D point $(x, y)$ is represented in \term{homogeneous coordinates} as $(x, y, 1)^T$.
+
+More generally, $(x, y, w)$ represents the Cartesian point $(x/w, y/w)$ for $w \neq 0$.
+
+Points at infinity: $(x, y, 0)$ represents infinity in direction $(x, y)$.
+\end{defbox}
+
+\textbf{Why homogeneous coordinates?}
+\begin{itemize}
+  \item Combine rotation and translation into a single matrix multiplication.
+  \item Represent points at infinity with finite coordinates.
+  \item Simplify composition of multiple transformations.
+\end{itemize}
+
+\separator
+
+\subsubsection{Homogeneous Transformation Matrices (2D)}
+
+\begin{defbox}[2D Homogeneous Transformation]
+A rigid body transformation (rotation $\theta$ followed by translation $t = (x_t, y_t)^T$):
+\[
+T = \begin{pmatrix} R(\theta) & t \\ 0 & 1 \end{pmatrix} = \begin{pmatrix} \cos\theta & -\sin\theta & x_t \\ \sin\theta & \cos\theta & y_t \\ 0 & 0 & 1 \end{pmatrix}
+\]
+Applied to point $v$:
+\[
+\begin{pmatrix} v' \\ 1 \end{pmatrix} = T \begin{pmatrix} v \\ 1 \end{pmatrix} = \begin{pmatrix} R(\theta) v + t \\ 1 \end{pmatrix}
+\]
+\end{defbox}
+
+\begin{thmbox}[Structure of Homogeneous Transform]
+\[
+T = \begin{pmatrix} \text{Rotation} & \text{Translation} \\ \text{Perspective} & \text{Scale} \end{pmatrix} = \begin{pmatrix} R & t \\ 0 & 1 \end{pmatrix}
+\]
+For rigid body transforms: perspective $= 0$, scale $= 1$.
+\end{thmbox}
+
+\begin{exbox}[Successive Transformations]
+\textbf{Sequence:} Rotate by $\theta_1 \to$ Translate by $t_1 \to$ Rotate by $\theta_2 \to$ Translate by $t_2$
+
+\textbf{Combined matrix:}
+\[
+T_{1,2} = \begin{pmatrix} R(\theta_2) & t_2 \\ 0 & 1 \end{pmatrix} \begin{pmatrix} R(\theta_1) & t_1 \\ 0 & 1 \end{pmatrix} = \begin{pmatrix} R(\theta_2)R(\theta_1) & R(\theta_2)t_1 + t_2 \\ 0 & 1 \end{pmatrix}
+\]
+
+\textbf{Key insight:} Transformations are applied right-to-left (matrix on the right acts first).
+\end{exbox}
+
+\separator
+
+\subsubsection{Rotation About an Arbitrary Point (2D)}
+
+\begin{thmbox}[Rotation About Point $p$]
+To rotate about point $p$ (not the origin):
+\begin{enumerate}
+  \item Translate by $-p$ (move $p$ to origin)
+  \item Rotate by $\theta$
+  \item Translate by $+p$ (move back)
+\end{enumerate}
+\[
+T = \begin{pmatrix} I & p \\ 0 & 1 \end{pmatrix} \begin{pmatrix} R(\theta) & 0 \\ 0 & 1 \end{pmatrix} \begin{pmatrix} I & -p \\ 0 & 1 \end{pmatrix}
+\]
+\end{thmbox}
+
+\bigseparator
+
+% =============================================================================
+%                         3D TRANSFORMATIONS
+% =============================================================================
+\subsection{3D Transformations}
+
+A rigid body in 3D requires:
+\begin{itemize}
+  \item \textbf{Position:} $(x, y, z) \in \mathbb{R}^3$ (3 parameters)
+  \item \textbf{Orientation:} 3 parameters (various representations)
+\end{itemize}
+
+\subsubsection{3D Rotation Matrices}
+
+\begin{defbox}[Elementary Rotation Matrices]
+Rotations about the coordinate axes (right-hand rule, counter-clockwise):
+
+\textbf{Roll} (about $x$-axis):
+\[
+R_x(\gamma) = \begin{pmatrix} 1 & 0 & 0 \\ 0 & \cos\gamma & -\sin\gamma \\ 0 & \sin\gamma & \cos\gamma \end{pmatrix}
+\]
+
+\textbf{Pitch} (about $y$-axis):
+\[
+R_y(\beta) = \begin{pmatrix} \cos\beta & 0 & \sin\beta \\ 0 & 1 & 0 \\ -\sin\beta & 0 & \cos\beta \end{pmatrix}
+\]
+
+\textbf{Yaw} (about $z$-axis):
+\[
+R_z(\alpha) = \begin{pmatrix} \cos\alpha & -\sin\alpha & 0 \\ \sin\alpha & \cos\alpha & 0 \\ 0 & 0 & 1 \end{pmatrix}
+\]
+\end{defbox}
+
+\begin{tipbox}[Exam Tip: Memory Aid]
+Each rotation matrix has 1 on the diagonal for the axis of rotation (that coordinate is unchanged). The $2\times 2$ block in the other positions is the standard 2D rotation matrix.
+\end{tipbox}
+
+\separator
+
+\subsubsection{Euler Angles}
+
+\begin{defbox}[Euler Angles]
+Any 3D orientation can be achieved by \textbf{three successive rotations} about coordinate axes, where no two successive rotations are about the same axis.
+
+\textbf{Common convention (ZYX / yaw-pitch-roll):}
+\[
+R(\alpha, \beta, \gamma) = R_z(\alpha) R_y(\beta) R_x(\gamma)
+\]
+Read right-to-left: roll $\gamma$ about $x$, then pitch $\beta$ about $y$, then yaw $\alpha$ about $z$.
+\end{defbox}
+
+\textbf{Valid Euler angle sequences:}
+\begin{itemize}
+  \item Proper Euler: $XYX, XZX, YXY, YZY, ZXZ, ZYZ$
+  \item Tait-Bryan: $XYZ, XZY, YXZ, YZX, ZXY, ZYX$ (includes yaw-pitch-roll)
+\end{itemize}
+
+\begin{tipbox}[3D Rotations Do NOT Commute]
+Unlike 2D, 3D rotations do not commute:
+\[
+R_z\left(\frac{\pi}{2}\right) R_y\left(\frac{\pi}{2}\right) \neq R_y\left(\frac{\pi}{2}\right) R_z\left(\frac{\pi}{2}\right)
+\]
+Order matters!
+\end{tipbox}
+
+\separator
+
+\subsubsection{Properties of 3D Rotation Matrices}
+
+\begin{thmbox}[Special Orthogonal Group $SO(3)$]
+3D rotation matrices belong to $SO(3)$:
+\[
+SO(3) = \{R \in \mathbb{R}^{3\times 3} : R R^T = I \text{ and } \det(R) = 1\}
+\]
+\begin{itemize}
+  \item Columns are mutually orthonormal: $r_i^T r_j = \delta_{ij}$
+  \item Inverse: $R^{-1} = R^T$
+  \item $\det(R) = +1$ (not $-1$, which would be a reflection)
+\end{itemize}
+\end{thmbox}
+
+\separator
+
+\subsubsection{Axis-Angle Representation}
+
+\begin{defbox}[Rotation About Arbitrary Axis]
+Any 3D rotation can be described by:
+\begin{itemize}
+  \item Unit vector $\mathbf{k} = (k_x, k_y, k_z)$ along the rotation axis
+  \item Angle $\theta$ of rotation about that axis
+\end{itemize}
+The rotation matrix is computed by transforming to align with a coordinate axis:
+\[
+R_{\mathbf{k}}(\theta) = R_z(\alpha) R_y(\beta) R_z(\theta) R_y(-\beta) R_z(-\alpha)
+\]
+where $\alpha, \beta$ align $\mathbf{k}$ with the $z$-axis.
+\end{defbox}
+
+\separator
+
+\subsubsection{Gimbal Lock}
+
+\begin{defbox}[Gimbal Lock]
+\term{Gimbal lock} occurs when two rotation axes become aligned, causing \textbf{loss of one degree of freedom}.
+
+\textbf{Example:} When pitch $\beta = \pm 90^\circ$, yaw and roll rotations produce the same effect.
+\end{defbox}
+
+\begin{tipbox}[Gimbal Lock Problem]
+\begin{itemize}
+  \item Occurs with \emph{all} Euler angle representations (just at different configurations).
+  \item Historical example: Apollo missions had to avoid certain orientations.
+  \item Solution: Use quaternions!
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+\subsubsection{Quaternions}
+
+\begin{defbox}[Quaternion]
+A \term{quaternion} is a 4-dimensional extension of complex numbers:
+\[
+q = a + b\mathbf{i} + c\mathbf{j} + d\mathbf{k} = (a, \mathbf{v}) \quad \text{where } \mathbf{v} = (b, c, d)
+\]
+With multiplication rules:
+\[
+\mathbf{i}^2 = \mathbf{j}^2 = \mathbf{k}^2 = -1, \quad \mathbf{ij} = \mathbf{k}, \quad \mathbf{jk} = \mathbf{i}, \quad \mathbf{ki} = \mathbf{j}
+\]
+\end{defbox}
+
+\begin{defbox}[Unit Quaternion for Rotation]
+A \term{unit quaternion} ($\|q\| = 1$) represents rotation by angle $\theta$ about unit axis $\mathbf{n}$:
+\[
+q = \cos\frac{\theta}{2} + \sin\frac{\theta}{2}(n_x\mathbf{i} + n_y\mathbf{j} + n_z\mathbf{k}) = e^{\frac{\theta}{2}\mathbf{n}}
+\]
+\end{defbox}
+
+\begin{thmbox}[Rotating a Point with Quaternions]
+To rotate point $(x, y, z)$ by quaternion $q$:
+\begin{enumerate}
+  \item Represent point as pure quaternion: $v = x\mathbf{i} + y\mathbf{j} + z\mathbf{k}$
+  \item Compute: $v' = q \cdot v \cdot q^*$ \quad (quaternion ``sandwich'')
+  \item Extract rotated point from $v' = x'\mathbf{i} + y'\mathbf{j} + z'\mathbf{k}$
+\end{enumerate}
+where $q^* = a - b\mathbf{i} - c\mathbf{j} - d\mathbf{k}$ is the conjugate.
+\end{thmbox}
+
+\begin{keybox}[Advantages of Quaternions]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Property} & \textbf{Benefit} \\
+\midrule
+Compact & 4 parameters vs.\ 9 for rotation matrix \\
+No gimbal lock & Avoids singularities entirely \\
+Easy renormalization & Just normalize to unit length \\
+Stable interpolation & SLERP gives smooth rotation interpolation \\
+Numerically stable & Avoids accumulating errors from matrix multiplication \\
+\bottomrule
+\end{tabular}
+\end{center}
+\textbf{Disadvantage:} Not intuitive; must convert to matrix to visualize.
+\end{keybox}
+
+\begin{defbox}[SLERP: Spherical Linear Interpolation]
+Interpolate between quaternions $q_1$ and $q_2$:
+\[
+\text{SLERP}(q_1, q_2, t) = \frac{\sin((1-t)\phi)}{\sin\phi} q_1 + \frac{\sin(t\phi)}{\sin\phi} q_2
+\]
+where $\phi$ is the angle between $q_1$ and $q_2$. Always produces a unit quaternion.
+\end{defbox}
+
+\separator
+
+\subsubsection{3D Homogeneous Transformations}
+
+\begin{defbox}[3D Homogeneous Transformation Matrix]
+Rotation $R$ followed by translation $t = (x_t, y_t, z_t)^T$:
+\[
+T = \begin{pmatrix} R & t \\ 0 & 1 \end{pmatrix} \in \mathbb{R}^{4\times 4}
+\]
+Applied to point $v$:
+\[
+\begin{pmatrix} v' \\ 1 \end{pmatrix} = T \begin{pmatrix} v \\ 1 \end{pmatrix}
+\]
+\end{defbox}
+
+\bigseparator
+
+% =============================================================================
+%                              KINEMATICS
+% =============================================================================
+\subsection{Kinematics}
+
+\begin{defbox}[Kinematics]
+\term{Kinematics} is the study of motion and configurations of a system---the ``geometry of the system''---without considering forces.
+
+Key concepts:
+\begin{itemize}
+  \item \term{Link}: A rigid body in a chain of rigid bodies.
+  \item \term{Joint}: Connects two links and constrains their relative motion.
+  \item \term{End-effector}: The ``hand'' or tool at the end of the kinematic chain.
+\end{itemize}
+\end{defbox}
+
+\separator
+
+\subsubsection{Forward Kinematics}
+
+\begin{defbox}[Forward Kinematics (FK)]
+Given joint angles/positions $\mathbf{q} = (q_1, \ldots, q_n)$, compute the position and orientation of the end-effector in the world frame:
+\[
+\mathbf{x} = FK(\mathbf{q})
+\]
+\end{defbox}
+
+\begin{thmbox}[FK via Transformation Matrices]
+For a chain of $n$ links, each with transformation $T_i$ from link $i$ to link $i-1$:
+\[
+T_{\text{total}} = T_1 T_2 \cdots T_n T_{\text{ee}}
+\]
+where $T_{\text{ee}}$ is the end-effector offset from the last joint.
+
+The end-effector position in the world frame:
+\[
+\begin{pmatrix} x \\ y \\ 1 \end{pmatrix} = T_{\text{total}} \begin{pmatrix} 0 \\ 0 \\ 1 \end{pmatrix}
+\]
+\end{thmbox}
+
+\begin{exbox}[2D 3-Link Planar Arm]
+For a 3-link arm with link lengths $a_1, a_2, a_3$ and joint angles $\theta_1, \theta_2, \theta_3$:
+
+\textbf{Transformation matrices:}
+\[
+T_i = \begin{pmatrix} \cos\theta_i & -\sin\theta_i & a_{i-1} \\ \sin\theta_i & \cos\theta_i & 0 \\ 0 & 0 & 1 \end{pmatrix}
+\]
+
+\textbf{End-effector position:}
+\begin{align*}
+x &= a_1\cos\theta_1 + a_2\cos(\theta_1+\theta_2) + a_3\cos(\theta_1+\theta_2+\theta_3) \\
+y &= a_1\sin\theta_1 + a_2\sin(\theta_1+\theta_2) + a_3\sin(\theta_1+\theta_2+\theta_3)
+\end{align*}
+\end{exbox}
+
+\separator
+
+\subsubsection{Inverse Kinematics}
+
+\begin{defbox}[Inverse Kinematics (IK)]
+Given a desired end-effector position/orientation $\mathbf{x}_{\text{target}}$, find joint angles $\mathbf{q}$ such that:
+\[
+FK(\mathbf{q}) = \mathbf{x}_{\text{target}}
+\]
+\end{defbox}
+
+\begin{tipbox}[IK Solution Cases]
+Let $n$ = number of joint DOFs, $m$ = number of task DOFs.
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} c l @{}}
+\toprule
+\textbf{Condition} & \textbf{Solutions} \\
+\midrule
+$n < m$ & No solution (overconstrained) \\
+$n = m$ & Finite number of solutions (if reachable) \\
+$n > m$ & Infinite solutions (robot is \term{redundant}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{tipbox}
+
+\begin{exbox}[Analytic IK for 2-Link Planar Arm]
+\textbf{Given:} Target $(x, y)$, link lengths $a_1, a_2$.
+
+\textbf{Forward kinematics:}
+\begin{align*}
+x &= a_1\cos\theta_1 + a_2\cos(\theta_1 + \theta_2) \\
+y &= a_1\sin\theta_1 + a_2\sin(\theta_1 + \theta_2)
+\end{align*}
+
+\textbf{Solution for $\theta_2$:} Square and add the FK equations:
+\[
+x^2 + y^2 = a_1^2 + a_2^2 + 2a_1 a_2 \cos\theta_2
+\]
+\[
+\cos\theta_2 = \frac{x^2 + y^2 - a_1^2 - a_2^2}{2a_1 a_2}
+\]
+\[
+\sin\theta_2 = \pm\sqrt{1 - \cos^2\theta_2}
+\]
+
+\textbf{Solution for $\theta_1$:} Substitute back:
+\[
+\cos\theta_1 = \frac{1}{x^2+y^2}\left[x(a_1 + a_2\cos\theta_2) \pm y \cdot a_2\sin\theta_2\right]
+\]
+\[
+\sin\theta_1 = \frac{1}{x^2+y^2}\left[y(a_1 + a_2\cos\theta_2) \mp x \cdot a_2\sin\theta_2\right]
+\]
+
+\textbf{Two solutions:} ``Elbow up'' and ``elbow down'' configurations.
+\end{exbox}
+
+\begin{defbox}[Singularity]
+A \term{singularity} occurs when the robot loses one or more degrees of freedom---only one IK solution exists instead of two (or the Jacobian loses rank).
+
+\textbf{Examples:}
+\begin{itemize}
+  \item Arm fully extended: $\theta_2 = 0$
+  \item Arm fully folded: $\theta_2 = \pi$
+\end{itemize}
+\end{defbox}
+
+\separator
+
+\subsubsection{The Manipulator Jacobian}
+
+\begin{defbox}[Jacobian Matrix]
+The \term{Jacobian} $J$ relates joint velocities to end-effector velocities:
+\[
+\dot{\mathbf{x}} = J(\mathbf{q}) \cdot \dot{\mathbf{q}}
+\]
+where:
+\[
+J = \frac{\partial FK}{\partial \mathbf{q}} = \begin{pmatrix} \frac{\partial x}{\partial q_1} & \cdots & \frac{\partial x}{\partial q_n} \\ \frac{\partial y}{\partial q_1} & \cdots & \frac{\partial y}{\partial q_n} \\ \vdots & & \vdots \end{pmatrix}
+\]
+\end{defbox}
+
+\begin{thmbox}[Numerical IK via Jacobian]
+To solve IK iteratively:
+\[
+\Delta \mathbf{q} = J^{-1} \Delta \mathbf{x}
+\]
+where $\Delta \mathbf{x} = \mathbf{x}_{\text{target}} - FK(\mathbf{q})$.
+
+\textbf{Gradient descent approach:}
+\begin{enumerate}
+  \item Compute error: $\Delta \mathbf{x} = \mathbf{x}_{\text{target}} - FK(\mathbf{q})$
+  \item Compute Jacobian $J(\mathbf{q})$
+  \item Update: $\mathbf{q} \leftarrow \mathbf{q} + \alpha J^{-1} \Delta \mathbf{x}$
+  \item Repeat until $\|\Delta \mathbf{x}\| < \epsilon$
+\end{enumerate}
+
+For non-square $J$, use pseudoinverse $J^+$ or transpose $J^T$.
+\end{thmbox}
+
+\begin{tipbox}[Jacobian and Singularities]
+At a \textbf{singularity}, the Jacobian loses rank (rows become linearly dependent). This means:
+\begin{itemize}
+  \item Some end-effector velocities are impossible.
+  \item $J^{-1}$ is undefined or numerically unstable.
+  \item Use \textbf{damped least squares} to handle near-singularities.
+\end{itemize}
+\end{tipbox}
+
+\bigseparator
+
+\subsection{Summary Tables}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\textbf{Rotation Representation} & \textbf{Parameters} & \textbf{Gimbal Lock?} & \textbf{Interpolation} \\
+\midrule
+Rotation matrix & 9 (with 6 constraints) & No & Difficult \\
+Euler angles & 3 & Yes & Linear (discontinuous) \\
+Axis-angle & 4 (with 1 constraint) & At $\theta=0$ & Difficult \\
+Quaternion & 4 (with 1 constraint) & No & SLERP (smooth) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+\subsection{Worked Examples}
+
+\begin{exbox}[Example 1: 2D Transformation Sequence]
+\textbf{Problem:} A robot at origin is rotated by $90^\circ$ then translated by $(3, 2)$. Find the transformation matrix and the final position of point $(1, 0)$.
+
+\textbf{Solution:}
+\[
+T = \begin{pmatrix} \cos 90^\circ & -\sin 90^\circ & 3 \\ \sin 90^\circ & \cos 90^\circ & 2 \\ 0 & 0 & 1 \end{pmatrix} = \begin{pmatrix} 0 & -1 & 3 \\ 1 & 0 & 2 \\ 0 & 0 & 1 \end{pmatrix}
+\]
+\[
+\begin{pmatrix} x' \\ y' \\ 1 \end{pmatrix} = \begin{pmatrix} 0 & -1 & 3 \\ 1 & 0 & 2 \\ 0 & 0 & 1 \end{pmatrix} \begin{pmatrix} 1 \\ 0 \\ 1 \end{pmatrix} = \begin{pmatrix} 3 \\ 3 \\ 1 \end{pmatrix}
+\]
+Final position: $(3, 3)$.
+\end{exbox}
+
+\begin{exbox}[Example 2: 2-Link IK]
+\textbf{Problem:} A 2-link arm has $a_1 = a_2 = 1$. Find $\theta_1, \theta_2$ for end-effector at $(1, 1)$.
+
+\textbf{Solution:}
+\[
+\cos\theta_2 = \frac{1^2 + 1^2 - 1 - 1}{2(1)(1)} = \frac{0}{2} = 0 \implies \theta_2 = \pm 90^\circ
+\]
+
+For $\theta_2 = 90^\circ$: $\sin\theta_2 = 1$
+\[
+\cos\theta_1 = \frac{1(1+0) + 1(1)}{2} = 1, \quad \sin\theta_1 = \frac{1(1+0) - 1(1)}{2} = 0
+\]
+$\theta_1 = 0^\circ$
+
+Check: $x = \cos 0^\circ + \cos 90^\circ = 1$, $y = \sin 0^\circ + \sin 90^\circ = 1$. \checkmark
+\end{exbox}
+
+\begin{exbox}[Example 3: Quaternion Rotation]
+\textbf{Problem:} Express a $180^\circ$ rotation about the $z$-axis as a quaternion.
+
+\textbf{Solution:}
+\[
+q = \cos\frac{180^\circ}{2} + \sin\frac{180^\circ}{2}(0\mathbf{i} + 0\mathbf{j} + 1\mathbf{k}) = \cos 90^\circ + \sin 90^\circ \cdot \mathbf{k} = 0 + 1\mathbf{k} = \mathbf{k}
+\]
+Or in $(a, b, c, d)$ form: $q = (0, 0, 0, 1)$.
+\end{exbox}

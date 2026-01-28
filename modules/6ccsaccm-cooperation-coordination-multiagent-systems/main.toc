@@ -17,3 +17,18 @@
 \contentsline {subsubsection}{\numberline {1.2.13}Summary: Classic Games}{14}{subsubsection.1.2.13}%
 \contentsline {subsubsection}{\numberline {1.2.14}Worked Examples from Exercises}{15}{subsubsection.1.2.14}%
 \contentsline {subsubsection}{\numberline {1.2.15}Other Game Types (Preview)}{15}{subsubsection.1.2.15}%
+\contentsline {section}{\numberline {2}Week 2: Non-Cooperative Games (Part II)}{17}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Topic Summary}{17}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Overview + Core Concepts + Extended Theory}{18}{subsection.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.1}Large Games and Representation}{18}{subsubsection.2.2.1}%
+\contentsline {subsubsection}{\numberline {2.2.2}Congestion Games}{18}{subsubsection.2.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.3}Network Congestion (Routing) Games}{19}{subsubsection.2.2.3}%
+\contentsline {subsubsection}{\numberline {2.2.4}Applications of Congestion Games}{20}{subsubsection.2.2.4}%
+\contentsline {subsubsection}{\numberline {2.2.5}Best Response Dynamics}{21}{subsubsection.2.2.5}%
+\contentsline {subsubsection}{\numberline {2.2.6}Rosenthal's Potential Function}{22}{subsubsection.2.2.6}%
+\contentsline {subsubsection}{\numberline {2.2.7}Potential Games}{23}{subsubsection.2.2.7}%
+\contentsline {subsubsection}{\numberline {2.2.8}Price of Anarchy and Price of Stability}{23}{subsubsection.2.2.8}%
+\contentsline {subsubsection}{\numberline {2.2.9}Linear Congestion Games}{25}{subsubsection.2.2.9}%
+\contentsline {subsubsection}{\numberline {2.2.10}Relating Potential Function to Social Cost}{26}{subsubsection.2.2.10}%
+\contentsline {subsubsection}{\numberline {2.2.11}Worked Examples from Exercises}{27}{subsubsection.2.2.11}%
+\contentsline {subsubsection}{\numberline {2.2.12}Summary: Key Concepts}{29}{subsubsection.2.2.12}%

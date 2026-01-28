@@ -1,0 +1,417 @@
+% =============================================================================
+%                         WEEK 1: INTRODUCTION
+% =============================================================================
+\section{Week 1: Introduction}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Describe the goals and challenges of the Computer Vision field.
+  \item Recognise real-world scenarios where Computer Vision is used.
+  \item Identify and list various Computer Vision applications.
+\end{itemize}
+\end{keybox}
+
+\textbf{Big Picture.}
+This week introduces the field of Computer Vision: what it is, why it matters, why it's hard, and how we approach solving vision problems. Vision is our primary sense for experiencing the world, yet teaching machines to ``see'' remains one of the great challenges in AI. The key insight is that vision is an \term{ill-posed inverse problem}---many possible 3D scenes can produce the same 2D image. Solving this requires \term{priors} (constraints/expectations) that make some interpretations more likely than others.
+
+\separator
+
+\textbf{What Examiners Like to Ask:}
+\begin{itemize}
+  \item Define computer vision and distinguish it from related fields (image processing, computer graphics).
+  \item Explain why vision is an ``ill-posed inverse problem.''
+  \item Give examples of priors and how they constrain interpretations.
+  \item List and categorise CV applications by type of information extracted.
+  \item Explain why deep learning is not always the best solution.
+\end{itemize}
+
+% =============================================================================
+\subsection{Core Concepts}
+
+\textbf{Roadmap:}
+\begin{enumerate}
+  \item What is Computer Vision? (definitions, related fields)
+  \item Why study vision? (importance, applications)
+  \item Why is vision difficult? (ill-posed, exponentially large)
+  \item How do we tackle the problem? (priors, engineering approaches)
+\end{enumerate}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{What is Computer Vision?}
+
+\begin{defbox}[Computer Vision]
+Computer Vision is a field of study that focuses on creating methods capable of extracting information about the world from images and videos.
+\end{defbox}
+
+\textbf{Classic definitions:}
+\begin{itemize}
+  \item ``Computing properties of the 3D world from one or more digital images'' (Trucco \& Verri)
+  \item ``Making useful decisions about real physical objects and scenes based on sensed images'' (Stockman \& Shapiro)
+  \item ``Extracting descriptions of the world from pictures or sequences of pictures'' (Forsyth \& Ponce)
+\end{itemize}
+
+\textbf{Alternative names:} machine vision, image analysis, image understanding, computational vision.
+
+\separator
+
+\textbf{Related Disciplines and Their Transformations:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\textbf{Field} & \textbf{Input} & $\rightarrow$ & \textbf{Output} \\
+\midrule
+Image Processing & Image & $\rightarrow$ & Image \\
+Computer Vision & Image & $\rightarrow$ & Description \\
+Computer Graphics & Description & $\rightarrow$ & Image \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Exam Tip: Field Distinctions]
+A common question asks you to label arrows in a diagram showing transitions between ``Real World,'' ``Image,'' and ``Description.'' Remember:
+\begin{itemize}
+  \item Real World $\rightarrow$ Image: \textbf{Imaging/Photography}
+  \item Image $\rightarrow$ Description: \textbf{Computer Vision}
+  \item Description $\rightarrow$ Image: \textbf{Computer Graphics}
+  \item Image $\rightarrow$ Image: \textbf{Image Processing}
+\end{itemize}
+\end{tipbox}
+
+\textbf{Other related fields:}
+\begin{itemize}
+  \item \textbf{Pattern Recognition}: recognising and classifying stimuli in images and other datasets.
+  \item \textbf{Photogrammetry}: obtaining measurements from images.
+  \item \textbf{Biological Vision}: understanding visual perception in humans/animals (neuroscience, psychology, psychophysics).
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Why Study Computer Vision?}
+
+\textbf{Motivation:}
+\begin{itemize}
+  \item Vision is the main way we experience the world.
+  \item Want machines to interact with and understand the world (robotics, AI).
+  \item Digital images are everywhere---lots of information to extract.
+  \item Many practical applications with real-world impact.
+\end{itemize}
+
+\separator
+
+\textbf{Applications by Information Extracted:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} p{4.5cm} p{8cm} @{}}
+\toprule
+\textbf{Application} & \textbf{Information Extracted} \\
+\midrule
+OCR / Character Recognition & Category of each letter/digit \\
+Face Tracking (webcam) & Location of face in image \\
+Face Recognition / Biometrics & Identity of individual \\
+Content-Based Image Retrieval & Category of items, relationships between items \\
+Driver Assistance & Categorisation (pedestrians, road edge) + 3D location \\
+3D Modelling & 3D locations of all image points \\
+Object Detection & Location + class of objects \\
+Object Segmentation & Pixel-level object boundaries \\
+Action Recognition & Temporal classification of actions \\
+Visual SLAM & Camera pose + 3D map of environment \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{Application Categories:}
+\begin{itemize}
+  \item \textbf{Recognition}: OCR, face recognition, iris/fingerprint biometrics, landmark recognition
+  \item \textbf{Detection \& Tracking}: face detection, people tracking, object tracking (e.g., Hawk-Eye in sports)
+  \item \textbf{Retrieval}: content-based image retrieval, reverse image search
+  \item \textbf{3D Reconstruction}: 3D models from images, structure from motion
+  \item \textbf{Autonomous Systems}: driver assistance, self-driving cars, space exploration (Mars rovers)
+  \item \textbf{Medical}: analysis of MRI, CT, ultrasound; surgical robotics
+  \item \textbf{Entertainment}: AR/VR, TikTok filters, eye contact rectification
+  \item \textbf{Industrial}: quality control inspection, barcode/QR scanning
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Why is Computer Vision Difficult?}
+
+\begin{thmbox}[Two Major Challenges]
+\begin{enumerate}
+  \item \textbf{One image $\rightarrow$ many interpretations}: the problem is \term{ill-posed}.
+  \item \textbf{One object $\rightarrow$ many images}: the problem is \term{exponentially large}.
+\end{enumerate}
+\end{thmbox}
+
+\separator
+
+\textbf{Challenge 1: Vision is an Ill-Posed Inverse Problem}
+
+\begin{defbox}[Forward vs Inverse Problems]
+\begin{itemize}
+  \item \textbf{Forward problem}: know causes, predict outcomes (well-posed, unique solution).
+  \item \textbf{Inverse problem}: know outcomes, infer causes (often ill-posed, multiple solutions).
+\end{itemize}
+\end{defbox}
+
+\begin{itemize}
+  \item \textbf{Imaging} (forward): 3D world $\rightarrow$ 2D image is \textbf{unique} (well-posed).
+  \item \textbf{Vision} (inverse): 2D image $\rightarrow$ 3D world is \textbf{NOT unique} (ill-posed).
+\end{itemize}
+
+For any given image, many different 3D scenes could have generated it. Humans typically perceive only one interpretation because our brains apply \term{priors} that make some interpretations more likely.
+
+\begin{exbox}[Classic Ambiguous Figures]
+\begin{itemize}
+  \item \textbf{Necker Cube}: two equally valid 3D interpretations; perception flips spontaneously.
+  \item \textbf{Rubin's Vase}: face or vase? Two interpretations, never perceived simultaneously.
+  \item \textbf{Convex/Concave Craters}: prior expectation of light from above determines interpretation.
+\end{itemize}
+\end{exbox}
+
+\separator
+
+\textbf{Challenge 2: Vision Scales Exponentially}
+
+Consider recognising an object that can appear at:
+\begin{itemize}
+  \item $l$ locations in the image
+  \item $s$ different scales (sizes)
+  \item $o$ orientations
+  \item $c$ colours
+\end{itemize}
+
+This single object can generate $l \times s \times o \times c$ different images. The number of possible images grows \textbf{exponentially} with the number of parameters.
+
+\separator
+
+\textbf{Factors Affecting Appearance:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Factor} & \textbf{Effect} \\
+\midrule
+Viewpoint & Same object from different angles looks very different \\
+Illumination & Different lighting changes appearance drastically \\
+Non-rigid deformation & Object can bend, stretch (e.g., faces, animals) \\
+Within-category variation & Objects in same category look different (e.g., different chairs) \\
+Background clutter & Multiple objects in scene \\
+Occlusion & Objects partially hidden by other objects \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Exam Tip: Discrimination vs Recognition]
+``Objects that look very similar can be represented and recognized as different objects, whereas objects that look very different can be recognized as the same basic-level objects'' (Bar, 2004). This captures the dual challenge: distinguishing similar things while grouping dissimilar things.
+\end{tipbox}
+
+\separator
+
+\textbf{Why Current Systems Are Limited:}
+\begin{itemize}
+  \item Most CV systems work in \textbf{specific domains}: specific task + specific environment.
+  \item Solutions are \textbf{not robust} and \textbf{do not generalise} well.
+  \item Code that works for one task may fail for similar tasks or same task under different conditions.
+  \item The challenge: develop \textbf{general-purpose vision systems} that match human performance.
+\end{itemize}
+
+\begin{exbox}[Challenging Examples]
+\begin{itemize}
+  \item \textbf{Chihuahua or blueberry muffin?} Texture similarity fools classifiers.
+  \item \textbf{Sheepdog or mop?} Shape/texture confusion.
+  \item \textbf{How many cows?} Segmentation fails with unusual poses/occlusions.
+\end{itemize}
+These examples show that even state-of-the-art deep learning struggles with adversarial or unusual cases.
+\end{exbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{How Do We Tackle the Problem of Vision?}
+
+\begin{defbox}[Prior (Constraint)]
+A \term{prior} is additional information that helps reduce the number of possible solutions, making some interpretations more likely than others. Priors are essential for solving the ill-posed inverse problem of vision.
+\end{defbox}
+
+\textbf{Sources of Priors:}
+\begin{enumerate}
+  \item \textbf{Prior knowledge / familiarity}:
+  \begin{itemize}
+    \item Learned familiarity with certain objects
+    \item Knowledge of image formation process (e.g., perspective, shadows)
+  \end{itemize}
+  \item \textbf{Prior exposure / motion / priming}:
+  \begin{itemize}
+    \item Recent or preceding sensory input
+    \item Change blindness: disrupting temporal continuity hides changes
+  \end{itemize}
+  \item \textbf{Current context}:
+  \begin{itemize}
+    \item Surrounding visual scene
+    \item Concurrent input from other senses
+  \end{itemize}
+\end{enumerate}
+
+\separator
+
+\textbf{Effects of Priors on Human Perception:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Prior Type} & \textbf{Example Effect} \\
+\midrule
+Illumination & Checker shadow illusion: squares A and B appear different but are same intensity (shadow prior) \\
+Light direction & Craters appear convex/concave depending on assumed light source (from above) \\
+Perspective & Ames room: people appear to change size due to perspective expectations \\
+Prior knowledge & Dalmatian dog: invisible until you know what to look for \\
+Context & ``THE CAT''---middle letter is H in first word, A in second (same shape) \\
+Face detection & We see faces everywhere (Virgin Mary toast sold for \$28,000!) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{thmbox}[Illusions Reveal Assumptions]
+Illusions are not ``mistakes'' by the visual system. They reveal the \textbf{assumptions/priors} the visual system uses to solve the under-constrained problem of vision. These assumptions work well in typical situations because they reflect how the world usually is.
+\end{thmbox}
+
+\separator
+
+\textbf{Two Engineering Approaches:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Approach} & \textbf{Description} \\
+\midrule
+Forward Engineering & Determine requirements $\rightarrow$ design system $\rightarrow$ implement and refine. ``Top-down'': start with computational theory, fill in details. \\
+Reverse Engineering & Find a system that works (e.g., brain) $\rightarrow$ analyse how it works $\rightarrow$ implement using same mechanisms. ``Bottom-up'': start with mechanisms, build model. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This course considers \textbf{both} approaches:
+\begin{itemize}
+  \item \textbf{Computational (machine) vision}: How can we get computers to see?
+  \item \textbf{Biological (human) vision}: How do people see?
+\end{itemize}
+
+\begin{tipbox}[Exam Tip: Deep Learning Is Not Always the Answer]
+The lecture emphasises that traditional/classical CV methods sometimes outperform deep learning. Example: for endoscope content area segmentation, classical methods achieved better accuracy than DL approaches. Always consider the problem domain and data availability.
+\end{tipbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Worked Examples}
+
+\begin{exbox}[Example 1: Defining Computer Vision]
+\textbf{Q:} Give a definition of ``Computer Vision.''
+
+\textbf{A:} Computer Vision is a field of study that focuses on creating methods capable of extracting information about the world from images and videos.
+\end{exbox}
+
+\begin{exbox}[Example 2: Field Transitions Diagram]
+\textbf{Q:} Label each arrow with the field that deals with that transition:
+\begin{center}
+Real World $\leftrightarrow$ Image $\leftrightarrow$ Description
+\end{center}
+
+\textbf{A:}
+\begin{itemize}
+  \item Real World $\rightarrow$ Image: \textbf{Imaging/Photography}
+  \item Image $\rightarrow$ Real World: (Physical interaction, not a field)
+  \item Image $\rightarrow$ Description: \textbf{Computer Vision}
+  \item Description $\rightarrow$ Image: \textbf{Computer Graphics}
+  \item Image $\rightarrow$ Image: \textbf{Image Processing}
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 3: Information Extracted by Application]
+\textbf{Q:} What type of information is extracted in each application?
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{OCR}: category of each letter
+  \item \textbf{Face tracking webcam}: location of face in image
+  \item \textbf{Face recognition/biometrics}: identity of individual
+  \item \textbf{Content-based image retrieval}: category of items, relationships between items
+  \item \textbf{Driver assistance}: categorisation (pedestrians, road edge) + 3D location
+  \item \textbf{3D modelling}: 3D locations of all image points
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 4: Ill-Posed Inverse Problem]
+\textbf{Q:} Vision is often described as an ``ill-posed, inverse problem.'' Explain these terms and their opposites.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Forward problem}: Know the causes, predict the outcomes (e.g., know forces, calculate acceleration).
+  \item \textbf{Inverse problem}: Know the outcomes, infer the causes (e.g., know pixel intensities, infer 3D scene).
+  \item \textbf{Well-posed problem}: Has one unique solution.
+  \item \textbf{Ill-posed problem}: Has multiple solutions (or no solution).
+\end{itemize}
+Vision is an \textbf{inverse problem} because we know pixel intensities (outcomes) and want to infer the 3D scene (causes). It is \textbf{ill-posed} because multiple 3D scenes can produce the same 2D image.
+\end{exbox}
+
+\begin{exbox}[Example 5: Priors in Vision]
+\textbf{Q:} What is a ``prior'' and how does it help solve the ill-posed inverse problem of vision? Give examples.
+
+\textbf{A:} A prior is additional information that reduces the number of possible solutions, making some interpretations more likely. Examples include:
+\begin{itemize}
+  \item \textbf{Knowledge of the world}: objects are usually solid, light comes from above
+  \item \textbf{Image formation knowledge}: perspective geometry, how shadows work
+  \item \textbf{Prior exposure}: recently seen objects are more easily recognised
+  \item \textbf{Context}: surrounding scene constrains possible object identities
+\end{itemize}
+\end{exbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Summary}
+
+\begin{keybox}[Key Takeaways]
+\begin{enumerate}
+  \item \textbf{Computer Vision} extracts descriptions/information from images (Image $\rightarrow$ Description).
+  \item Vision is \textbf{difficult} because it is:
+  \begin{itemize}
+    \item \textbf{Ill-posed}: one image can have many 3D interpretations
+    \item \textbf{Exponentially large}: one object can generate many images
+  \end{itemize}
+  \item \textbf{Priors/constraints} are essential for narrowing down interpretations.
+  \item Human vision uses priors extensively---illusions reveal these assumptions.
+  \item We tackle CV using both \textbf{forward engineering} (design systems) and \textbf{reverse engineering} (study biological vision).
+  \item Deep learning is powerful but \textbf{not always the best solution}---classical methods can outperform in specific domains.
+\end{enumerate}
+\end{keybox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Concept} & \textbf{Definition} & \textbf{Implication} \\
+\midrule
+Inverse problem & Infer causes from outcomes & Multiple solutions possible \\
+Ill-posed & No unique solution & Need priors to constrain \\
+Prior & Additional constraining info & Makes some interpretations likely \\
+Forward engineering & Top-down design & Computational theory first \\
+Reverse engineering & Bottom-up modelling & Study biological systems \\
+\bottomrule
+\end{tabular}
+\end{center}
