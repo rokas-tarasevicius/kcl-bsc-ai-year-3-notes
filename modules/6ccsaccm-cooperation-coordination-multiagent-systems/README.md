@@ -6,11 +6,6 @@ This folder contains compact, exam-focused LaTeX revision notes built from the m
 
 - Compile `main.tex` with your preferred LaTeX toolchain (e.g. `latexmk -pdf main.tex`).
 
-## Sources
-
-- Put lecture slides in `sources/slides/` (unchanged).
-- Put past/exam questions in `sources/exams/` (unchanged).
-
 ## Notes structure
 
 - `main.tex`: assembles the document.

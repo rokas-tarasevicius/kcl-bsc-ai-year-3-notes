@@ -64,7 +64,6 @@ CCM2. [Outcome 2]
 - `main.tex` — Assembly file (title page, TOC, topic includes)
 - `preamble.tex` — Shared packages + box environments
 - `topics/00-module-overview.tex` — Module overview with learning outcomes
-- `figures/`, `tables/`, `sources/` directories with README files
 - Compiled PDF
 
 ---
@@ -205,17 +204,11 @@ modules/[module-slug]/
 ├── main.tex               # Assembly file
 ├── main.pdf               # Compiled output
 ├── preamble.tex           # Shared packages + environments
-├── topics/
-│   ├── 00-module-overview.tex
-│   ├── week-01-[topic].tex
-│   ├── week-02-[topic].tex
-│   └── ...
-├── figures/               # Images
-├── tables/                # Standalone tables
-└── sources/
-    ├── slides/            # Original lecture PDFs
-    ├── exams/             # Past papers/quizzes
-    └── misc/              # Additional materials
+└── topics/
+    ├── 00-module-overview.tex
+    ├── week-01-[topic].tex
+    ├── week-02-[topic].tex
+    └── ...
 ```
 
 ### Topic File Structure:

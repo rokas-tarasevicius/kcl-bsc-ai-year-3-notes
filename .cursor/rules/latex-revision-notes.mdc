@@ -37,19 +37,12 @@ modules/{module-slug}/
     week-01-{topic-slug}.tex
     week-02-{topic-slug}.tex
     ...
-  figures/
-  tables/
-  sources/
-    slides/
-    exams/
-    misc/
 ```
 
 ### Naming rules
 
 - `module-slug`: kebab-case, short, stable (e.g. `cs301-algorithms`, `math210-linear-algebra`)
 - `topic-slug`: kebab-case, short, stable (e.g. `probability-basics`, `pca`, `tcp-congestion`)
-- Keep user-provided PDFs/PNGs/etc in `sources/` **unchanged**.
 
 ## Required document structure (per module)
 
