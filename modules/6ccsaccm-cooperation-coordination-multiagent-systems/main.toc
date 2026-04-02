@@ -47,3 +47,17 @@
 \contentsline {subsubsection}{\numberline {3.2.10}Infinitely Repeated Games}{37}{subsubsection.3.2.10}%
 \contentsline {subsubsection}{\numberline {3.2.11}Sustaining Cooperation: Tit-for-Tat and Trigger}{37}{subsubsection.3.2.11}%
 \contentsline {subsubsection}{\numberline {3.2.12}Summary: Key Concepts}{39}{subsubsection.3.2.12}%
+\contentsline {section}{\numberline {4}Week 4: Cooperative Games (Part I)}{40}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Topic Summary}{40}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Overview + Core Concepts + Extended Theory}{41}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}From Non-Cooperative to Cooperative Games}{41}{subsubsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2}Transferable Utility Games: Formal Definition}{42}{subsubsection.4.2.2}%
+\contentsline {subsubsection}{\numberline {4.2.3}Important Game Types}{42}{subsubsection.4.2.3}%
+\contentsline {subsubsection}{\numberline {4.2.4}Special Classes of TU Games}{43}{subsubsection.4.2.4}%
+\contentsline {subsubsection}{\numberline {4.2.5}The Core}{44}{subsubsection.4.2.5}%
+\contentsline {subsubsection}{\numberline {4.2.6}Core of Special Game Classes}{45}{subsubsection.4.2.6}%
+\contentsline {subsubsection}{\numberline {4.2.7}Core Relaxations}{46}{subsubsection.4.2.7}%
+\contentsline {subsubsection}{\numberline {4.2.8}Shapley Value}{46}{subsubsection.4.2.8}%
+\contentsline {subsubsection}{\numberline {4.2.9}Shapley Value: Axiomatic Properties}{47}{subsubsection.4.2.9}%
+\contentsline {subsubsection}{\numberline {4.2.10}Banzhaf Index}{48}{subsubsection.4.2.10}%
+\contentsline {subsubsection}{\numberline {4.2.11}Summary: Key Concepts}{49}{subsubsection.4.2.11}%
