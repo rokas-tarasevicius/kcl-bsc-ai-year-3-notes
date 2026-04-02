@@ -102,3 +102,20 @@
 \contentsline {subsubsection}{\numberline {7.2.8}Envy-Freeness up to Any Good (EFX)}{76}{subsubsection.7.2.8}%
 \contentsline {subsubsection}{\numberline {7.2.9}Worked Examples from Exercises}{77}{subsubsection.7.2.9}%
 \contentsline {subsubsection}{\numberline {7.2.10}Summary: Algorithms and Guarantees}{78}{subsubsection.7.2.10}%
+\contentsline {section}{\numberline {8}Week 9: Mechanism Design}{79}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Topic Summary}{79}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Overview + Core Concepts + Extended Theory}{79}{subsection.8.2}%
+\contentsline {subsubsection}{\numberline {8.2.1}Mechanism Design: Motivation}{80}{subsubsection.8.2.1}%
+\contentsline {subsubsection}{\numberline {8.2.2}Single-Good Auctions}{80}{subsubsection.8.2.2}%
+\contentsline {subsubsection}{\numberline {8.2.3}Bayesian Games and Bayes-Nash Equilibrium}{81}{subsubsection.8.2.3}%
+\contentsline {subsubsection}{\numberline {8.2.4}First-Price Sealed-Bid Auction: BNE}{81}{subsubsection.8.2.4}%
+\contentsline {subsubsection}{\numberline {8.2.5}Vickrey (Second-Price) Auction: Strategyproofness}{82}{subsubsection.8.2.5}%
+\contentsline {subsubsection}{\numberline {8.2.6}Revenue Equivalence Theorem}{82}{subsubsection.8.2.6}%
+\contentsline {subsubsection}{\numberline {8.2.7}Collusion}{82}{subsubsection.8.2.7}%
+\contentsline {subsubsection}{\numberline {8.2.8}Winner's Curse}{83}{subsubsection.8.2.8}%
+\contentsline {subsubsection}{\numberline {8.2.9}Cheating Auctioneers}{83}{subsubsection.8.2.9}%
+\contentsline {subsubsection}{\numberline {8.2.10}Multi-Unit and Combinatorial Auctions}{83}{subsubsection.8.2.10}%
+\contentsline {subsubsection}{\numberline {8.2.11}Vickrey-Clarke-Groves (VCG) Mechanism}{84}{subsubsection.8.2.11}%
+\contentsline {subsubsection}{\numberline {8.2.12}Continuous Double Auctions (CDA)}{85}{subsubsection.8.2.12}%
+\contentsline {subsubsection}{\numberline {8.2.13}Worked Examples from Exercises}{85}{subsubsection.8.2.13}%
+\contentsline {subsubsection}{\numberline {8.2.14}Summary: Auction Properties}{86}{subsubsection.8.2.14}%
