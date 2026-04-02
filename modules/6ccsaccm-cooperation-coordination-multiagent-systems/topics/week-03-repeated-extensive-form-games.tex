@@ -1,0 +1,480 @@
+% =============================================================================
+%                  WEEK 3: REPEATED AND EXTENSIVE-FORM GAMES
+% =============================================================================
+\section{Week 3: Repeated and Extensive-Form Games}
+
+% -----------------------------------------------------------------------------
+%                              3.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Define the core concepts of \textbf{extensive form games}, including game trees, choice nodes, and terminal nodes.
+  \item Formulate real-world scenarios as \textbf{extensive-form games} with perfect or imperfect information.
+  \item Identify \textbf{pure strategies} in extensive form games as complete plans specifying actions at every choice node.
+  \item Derive the \textbf{induced normal form} from an extensive form game and analyse its Nash equilibria.
+  \item Define and compute \textbf{subgame-perfect equilibria (SPE)} using backward induction.
+  \item Distinguish between \textbf{finitely} and \textbf{infinitely repeated games} and their equilibrium properties.
+  \item Analyse cooperation-sustaining strategies (\textbf{Tit-for-Tat}, \textbf{Trigger}) in infinitely repeated Prisoner's Dilemma.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week moves beyond normal form (simultaneous) games to settings where players act \textbf{sequentially} or \textbf{repeatedly}. Two key representations are introduced:
+
+\begin{itemize}
+  \item \textbf{Extensive form games:} Game trees that model sequential moves, with \textbf{perfect information} (all history visible) or \textbf{imperfect information} (some moves hidden via information sets). The key refinement is \textbf{subgame-perfect equilibrium}, which eliminates non-credible threats.
+  \item \textbf{Repeated games:} The same stage game played multiple times. Finitely repeated games collapse to stage-game NE by backward induction; \textbf{infinitely repeated games} can sustain cooperation via strategies like Tit-for-Tat and Trigger, provided the discount factor is sufficiently large.
+\end{itemize}
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Write the \textbf{formal definition} of a perfect-information extensive form game (the 8-tuple).
+  \item Given a game tree, enumerate all \textbf{pure strategies} for each player.
+  \item Derive the \textbf{induced normal form} (payoff matrix) from a game tree.
+  \item Find all \textbf{Nash equilibria} of the induced normal form, then identify which are \textbf{subgame-perfect}.
+  \item Apply \textbf{backward induction} to compute SPE.
+  \item Explain why every perfect-information game has a \textbf{pure strategy NE}.
+  \item Show that the only NE of a \textbf{finitely repeated} Prisoner's Dilemma is always Defect.
+  \item For infinitely repeated PD: compute the \textbf{minimum discount factor} $\beta$ for Tit-for-Tat or Trigger to be a NE.
+  \item Define \textbf{information sets} and explain the difference between perfect and imperfect information games.
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+%           3.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Extensive form games: motivation and applications
+  \item Perfect-information games: formal definition
+  \item Strategies in extensive form games
+  \item Induced normal form and its redundancy
+  \item Pure strategy NE existence theorem
+  \item Subgame-perfect equilibrium and backward induction
+  \item Imperfect-information games and information sets
+  \item Repeated games: finite and infinite
+  \item Payoff definitions: average reward and discounted reward
+  \item Cooperation strategies: Tit-for-Tat and Trigger
+\end{enumerate}
+
+\bigseparator
+
+% --- Motivation ---
+\subsubsection{From Normal Form to Extensive Form}
+
+\begin{defbox}[Why Extensive Form?]
+The normal form (payoff matrix) is universal but has limitations:
+\begin{itemize}
+  \item Assumes \textbf{simultaneous} moves---cannot capture sequential structure
+  \item Can be \textbf{exponentially larger} than the equivalent extensive form
+  \item Misses solution concepts that depend on the \textbf{order of play} (e.g., subgame perfection)
+\end{itemize}
+
+Extensive form games are visualised as \textbf{game trees} and are widely used in AI:
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8.5cm} @{}}
+\toprule
+\textbf{Application} & \textbf{How Extensive Form Is Used} \\
+\midrule
+Chess, Go & Sequential moves modelled explicitly; minimax / alpha-beta pruning \\
+Poker & Imperfect information; extensive-form fictitious self-play \\
+Automated negotiation & Multi-stage strategic interaction with bluffing \\
+Sequential auctions & Bids placed in turn; captures information and tactics \\
+Security / patrolling & Sequential actions to maximise system utility (e.g., Stackelberg games) \\
+Multi-agent RL & Sequential, stage-dependent strategies with private histories \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{defbox}
+
+\separator
+
+% --- Perfect-Information Games ---
+\subsubsection{Perfect-Information Extensive Form Games}
+
+\begin{defbox}[Perfect-Information Game (Formal Definition)]
+A \textbf{finite perfect-information game} in extensive form is a tuple:
+\[
+G = (N,\; A,\; H,\; Z,\; \chi,\; \rho,\; \sigma,\; u)
+\]
+where:
+\begin{itemize}
+  \item $N$: set of $n$ players
+  \item $A$: set of actions
+  \item $H$: set of \textbf{nonterminal choice nodes}
+  \item $Z$: set of \textbf{terminal nodes} (disjoint from $H$)
+  \item $\chi: H \to 2^A$: \textbf{action function}---assigns available actions to each choice node
+  \item $\rho: H \to N$: \textbf{player function}---assigns a player to each choice node
+  \item $\sigma: H \times A \to H \cup Z$: \textbf{successor function}---maps (node, action) to the next node; injective (if $\sigma(h_1, a_1) = \sigma(h_2, a_2)$ then $h_1 = h_2$ and $a_1 = a_2$)
+  \item $u = (u_1, \ldots, u_n)$: \textbf{utility functions} $u_i: Z \to \mathbb{R}$
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[Exam Tip: Tree Terminology]
+Since choice nodes form a tree:
+\begin{itemize}
+  \item Each node can be identified with its \textbf{history}---the sequence of actions from the root
+  \item The \textbf{descendants} of node $h$ are all nodes in the subtree rooted at $h$
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+% --- Strategies ---
+\subsubsection{Strategies in Perfect-Information Games}
+
+\begin{defbox}[Pure Strategy (Extensive Form)]
+A \textbf{pure strategy} for player $i$ is a \textit{complete} specification of which action to take at \textbf{every} choice node belonging to $i$:
+\[
+s_i \in \prod_{h \in H,\; \rho(h) = i} \chi(h)
+\]
+
+\textbf{Key point:} A strategy must specify an action at every node of player $i$, \textit{even nodes that cannot be reached} given the other choices in the strategy.
+\end{defbox}
+
+\begin{exbox}[Example: Sharing Game]
+\textbf{Setup:} A brother and sister share two identical presents. The brother proposes a split ($2$--$0$, $1$--$1$, or $0$--$2$), then the sister accepts or rejects. Rejection gives both $0$.
+
+\textbf{Strategies:}
+\begin{itemize}
+  \item Player 1 (brother): 3 strategies: $\{2\text{--}0,\; 1\text{--}1,\; 0\text{--}2\}$
+  \item Player 2 (sister): $2^3 = 8$ strategies (accept/reject at each of 3 nodes):
+
+  $S_2 = \{(\text{Y,Y,Y}), (\text{Y,Y,N}), (\text{Y,N,Y}), \ldots, (\text{N,N,N})\}$
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example: Two-Player Game Tree with Induced Normal Form]
+\textbf{Players:} 1 has choice nodes with actions $\{A,B\}$ and $\{G,H\}$; 2 has choice nodes with actions $\{C,D\}$ and $\{E,F\}$.
+
+\textbf{Strategy sets:}
+$S_1 = \{(A,G),\; (A,H),\; (B,G),\; (B,H)\}$, \quad $S_2 = \{(C,E),\; (C,F),\; (D,E),\; (D,F)\}$
+
+\textbf{Induced normal form:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} c | c c c c @{}}
+ & $(C,E)$ & $(C,F)$ & $(D,E)$ & $(D,F)$ \\
+\midrule
+$(A,G)$ & $3,8$ & $3,8$ & $8,3$ & $8,3$ \\
+$(A,H)$ & $3,8$ & $3,8$ & $8,3$ & $8,3$ \\
+$(B,G)$ & $5,5$ & $2,10$ & $5,5$ & $2,10$ \\
+$(B,H)$ & $5,5$ & $1,0$ & $5,5$ & $1,0$ \\
+\end{tabular}
+\end{center}
+
+\textbf{Redundancy:} Only 5 distinct outcomes in the tree, but 16 cells in the matrix---many duplicated because unreachable nodes don't affect payoffs.
+\end{exbox}
+
+\separator
+
+% --- Extensive vs Normal Form ---
+\subsubsection{Extensive Form vs.\ Normal Form}
+
+\begin{thmbox}[Relationship Between Representations]
+\begin{itemize}
+  \item \textbf{Every} perfect-information extensive form game has a corresponding normal form game (the induced normal form).
+  \item The reverse is \textbf{not} always possible---not every normal form game can be represented as a perfect-information extensive form game.
+  \item \textbf{Example:} Prisoner's Dilemma cannot be represented as a perfect-information game (simultaneous moves require imperfect information).
+\end{itemize}
+\end{thmbox}
+
+\begin{thmbox}[Pure Strategy NE Existence]
+Every finite perfect-information game in extensive form has a \textbf{pure strategy Nash equilibrium}.
+
+\textbf{Proof idea:} Since players take turns and observe all prior moves, randomisation is never needed---backward induction yields a pure-strategy equilibrium.
+
+\textbf{Important:} This does \textbf{not} hold for imperfect-information games (e.g., Matching Pennies has no pure NE).
+\end{thmbox}
+
+\bigseparator
+
+% --- Subgame-Perfect Equilibrium ---
+\subsubsection{Subgame-Perfect Equilibrium}
+
+\begin{defbox}[Subgame]
+Given a perfect-information game $G$, the \textbf{subgame} of $G$ rooted at node $h$ is the restriction of $G$ to the descendants of $h$.
+
+The set of subgames of $G$ consists of all subgames rooted at any node in $G$ (including $G$ itself).
+\end{defbox}
+
+\begin{defbox}[Subgame-Perfect Equilibrium (SPE)]
+A strategy profile $s$ is a \textbf{subgame-perfect equilibrium} of $G$ if, for every subgame $G'$ of $G$, the restriction of $s$ to $G'$ is a Nash equilibrium of $G'$.
+
+\textbf{Key properties:}
+\begin{itemize}
+  \item Every SPE is a Nash equilibrium (but not vice versa)
+  \item SPE eliminates equilibria based on \textbf{non-credible threats}
+  \item Every perfect-information game has at least one SPE
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[Exam Tip: SPE vs NE]
+If a question asks ``find all Nash equilibria, then identify which are subgame-perfect'':
+\begin{enumerate}
+  \item Find all NE from the induced normal form
+  \item Check each NE against every subgame
+  \item Discard any NE where a player's strategy is not a best response in some subgame (non-credible threat)
+\end{enumerate}
+\end{tipbox}
+
+\begin{exbox}[Example: Filtering NE to SPE]
+From the game tree example above, the induced normal form has three Nash equilibria:
+\begin{itemize}
+  \item $\{(A,G),\; (C,F)\}$, \quad $\{(A,H),\; (C,F)\}$, \quad $\{(B,H),\; (C,E)\}$
+\end{itemize}
+
+\textbf{Only $\{(B,H),\; (C,E)\}$ is subgame-perfect}---the other two involve non-credible threats (actions at unreached nodes that are not best responses in their respective subgames).
+\end{exbox}
+
+\separator
+
+% --- Backward Induction ---
+\subsubsection{Computing SPE: Backward Induction}
+
+\begin{thmbox}[Backward Induction Algorithm]
+\textbf{Procedure:}
+\begin{enumerate}
+  \item Start at the \textbf{bottom-most} (deepest) subgames of the tree
+  \item At each terminal decision node, the player chooses the action maximising their payoff
+  \item Replace the subtree with the resulting payoff vector
+  \item Move up one level and repeat
+\end{enumerate}
+
+\textbf{Properties:}
+\begin{itemize}
+  \item Guarantees finding a \textbf{subgame-perfect} equilibrium
+  \item Implemented as a single \textbf{depth-first traversal}---runs in time \textbf{linear} in the size of the game tree
+  \item Avoids non-credible threats by construction
+\end{itemize}
+\end{thmbox}
+
+\begin{exbox}[Centipede Game]
+In the Centipede game, backward induction predicts that the first player \textbf{immediately takes} (defects) at the first node, even though continued cooperation would yield higher payoffs. This is a classic case where the SPE prediction seems counterintuitive---in experiments, players often cooperate for several rounds.
+\end{exbox}
+
+\bigseparator
+
+% --- Imperfect Information ---
+\subsubsection{Imperfect-Information Games}
+
+\begin{defbox}[Imperfect-Information Game]
+A \textbf{finite imperfect-information game} extends the perfect-information tuple with \textbf{information sets}:
+\[
+G = (N,\; A,\; H,\; Z,\; \chi,\; \rho,\; \sigma,\; u,\; I)
+\]
+where:
+\begin{itemize}
+  \item $(N, A, H, Z, \chi, \rho, \sigma, u)$ is a perfect-information game
+  \item $I = (I_1, \ldots, I_n)$, where $I_i = (I_{i,1}, \ldots, I_{i,k_i})$ is a partition of player $i$'s choice nodes such that for any two nodes $h, h'$ in the same information set $I_{i,j}$:
+  \begin{itemize}
+    \item $\chi(h) = \chi(h')$ \quad (same available actions)
+    \item $\rho(h) = \rho(h')$ \quad (same player)
+  \end{itemize}
+\end{itemize}
+
+\textbf{Interpretation:} If $h$ and $h'$ are in the same information set, the player \textbf{cannot distinguish} between them---they don't know which node they're at.
+\end{defbox}
+
+\begin{defbox}[Pure Strategy (Imperfect Information)]
+A pure strategy for player $i$ selects one action in each \textbf{information set} (not each node):
+\[
+s_i \in \prod_{I_{i,j} \in I_i} \chi(I_{i,j})
+\]
+
+Perfect-information games are the special case where every information set is a \textbf{singleton}.
+\end{defbox}
+
+\begin{tipbox}[Key Relationships]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Direction} & \textbf{Result} \\
+\midrule
+Perfect info $\to$ normal form & Always possible (induced normal form) \\
+Normal form $\to$ perfect info & \textbf{Not} always possible (e.g., Prisoner's Dilemma) \\
+Normal form $\to$ imperfect info & Always possible (trivially: one information set per player) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Consequence:} The set of perfect-information games is \textbf{strictly smaller} than the set of all normal form games. Imperfect-information games are equally expressive as normal form games.
+
+Imperfect-information games may \textbf{not} always have a pure strategy NE (unlike perfect-information games).
+\end{tipbox}
+
+\bigseparator
+
+% --- Repeated Games ---
+\subsubsection{Repeated Games}
+
+\begin{defbox}[Repeated Game]
+A \textbf{repeated game} consists of the same \textbf{stage game} (in normal form) played multiple times by the same set of players.
+
+Key questions:
+\begin{itemize}
+  \item Do agents observe what others played in previous rounds?
+  \item Do they remember their own history?
+  \item How is the overall utility defined from the sequence of stage-game payoffs?
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Strategies in Repeated Games]
+\begin{itemize}
+  \item A \textbf{stationary strategy}: play the same action in every round (memoryless)
+  \item In general, the action at round $t$ can depend on the \textbf{entire history} of play up to $t$
+  \item History-dependent strategies are crucial for sustaining cooperation in infinitely repeated games
+\end{itemize}
+\end{defbox}
+
+\separator
+
+% --- Finitely Repeated Games ---
+\subsubsection{Finitely Repeated Games}
+
+\begin{thmbox}[Backward Induction in Finitely Repeated Games]
+In a finitely repeated game with a \textbf{known} number of rounds:
+\begin{itemize}
+  \item Can be represented as an extensive form game with imperfect information
+  \item Payoffs are typically \textbf{additive} (sum of stage-game payoffs)
+  \item At each stage, players observe what was played in previous rounds but not the current round
+  \item Backward induction applies: in the last round, play the stage-game NE; knowing this, play the stage-game NE in the second-to-last round; and so on
+\end{itemize}
+
+\textbf{Result:} The only NE of a finitely repeated Prisoner's Dilemma is to \textbf{always Defect} in every round.
+\end{thmbox}
+
+\begin{tipbox}[Exam Tip: Finite Repetition Does Not Help]
+A common exam question: ``Can cooperation be sustained in a finitely repeated Prisoner's Dilemma?'' The answer is \textbf{no}---backward induction unravels cooperation from the last round.
+\end{tipbox}
+
+\separator
+
+% --- Infinitely Repeated Games ---
+\subsubsection{Infinitely Repeated Games}
+
+\begin{defbox}[Payoff Definitions for Infinite Games]
+Since the game never ends, payoffs cannot be attached to terminal nodes. Two standard definitions:
+
+\textbf{1.\ Average reward:}
+\[
+\bar{u}_i = \lim_{k \to \infty} \frac{\sum_{j=1}^{k} u_i^{(j)}}{k}
+\]
+
+\textbf{2.\ Future discounted reward} (more common):
+\[
+U_i = \sum_{j=1}^{\infty} \beta^{j} \cdot u_i^{(j)}
+\]
+where $\beta \in [0,1)$ is the \textbf{discount factor}.
+\end{defbox}
+
+\begin{defbox}[Discount Factor $\beta$: Two Interpretations]
+\begin{enumerate}
+  \item \textbf{Time preference:} The agent cares more about near-term payoffs than distant ones.
+  \item \textbf{Continuation probability:} The game continues to the next round with probability $\beta$; it stops with probability $1 - \beta$.
+\end{enumerate}
+
+A higher $\beta$ (closer to 1) means the agent is more \textbf{patient} / the game is more likely to continue.
+\end{defbox}
+
+\separator
+
+% --- Cooperation Strategies ---
+\subsubsection{Sustaining Cooperation: Tit-for-Tat and Trigger}
+
+\begin{defbox}[Tit-for-Tat (TFT)]
+\begin{enumerate}
+  \item Start by \textbf{cooperating}
+  \item In round $j+1$, play whatever the opponent played in round $j$
+\end{enumerate}
+
+\textbf{Properties:} Forgiving (returns to cooperation after opponent cooperates again), simple, retaliatory.
+\end{defbox}
+
+\begin{defbox}[Trigger Strategy (Grim Trigger)]
+\begin{enumerate}
+  \item Start by \textbf{cooperating}
+  \item If the opponent \textbf{ever} defects, defect \textbf{forever}
+\end{enumerate}
+
+\textbf{Properties:} Unforgiving (permanent punishment), strong deterrent, harsher than TFT.
+\end{defbox}
+
+\begin{thmbox}[Cooperation in Infinitely Repeated PD]
+Both Tit-for-Tat and Trigger strategy are \textbf{Nash equilibria} in the infinitely repeated Prisoner's Dilemma for \textbf{sufficiently large} discount factor $\beta$.
+
+Moreover, they form an equilibrium not just with themselves but also \textbf{with each other}---if one player uses TFT and the other uses Trigger, mutual cooperation is sustained.
+
+\textbf{Intuition:} The short-term gain from defecting is outweighed by the long-run punishment, provided the player cares enough about future payoffs ($\beta$ large enough).
+\end{thmbox}
+
+\begin{exbox}[Computing Minimum $\beta$ for Trigger Strategy]
+Consider the Prisoner's Dilemma with payoffs:
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} c | c c @{}}
+ & C & D \\
+\midrule
+C & $-1, -1$ & $-4, 0$ \\
+D & $0, -4$ & $-3, -3$ \\
+\end{tabular}
+\end{center}
+
+\textbf{If both play Trigger (cooperate forever):}
+\[
+U_{\text{coop}} = \sum_{j=1}^{\infty} \beta^j (-1) = \frac{-\beta}{1 - \beta}
+\]
+
+\textbf{If player deviates (defect once, then both defect forever):}
+\[
+U_{\text{dev}} = \beta \cdot 0 + \sum_{j=2}^{\infty} \beta^j (-3) = \frac{-3\beta^2}{1 - \beta}
+\]
+
+\textbf{Cooperation is a NE when:} $U_{\text{coop}} \geq U_{\text{dev}}$
+\[
+\frac{-\beta}{1 - \beta} \geq \frac{-3\beta^2}{1 - \beta} \implies -1 \geq -3\beta \implies \beta \geq \frac{1}{3}
+\]
+
+So Trigger sustains cooperation for $\beta \geq \frac{1}{3}$.
+\end{exbox}
+
+\bigseparator
+
+% --- Summary Table ---
+\subsubsection{Summary: Key Concepts}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} l p{9.5cm} @{}}
+\toprule
+\textbf{Concept} & \textbf{Key Fact} \\
+\midrule
+Perfect-info extensive form & 8-tuple $(N, A, H, Z, \chi, \rho, \sigma, u)$; game tree with full history visible \\
+Pure strategy (extensive) & Complete plan: one action per choice node (or info set), even unreachable ones \\
+Induced normal form & Exponentially larger; many cells map to the same leaf \\
+Perfect info $\Rightarrow$ pure NE & Always exists (backward induction) \\
+SPE & NE in every subgame; eliminates non-credible threats \\
+Backward induction & Depth-first, linear-time algorithm to compute SPE \\
+Imperfect info & Information sets partition choice nodes; player cannot distinguish nodes in same set \\
+Finitely repeated PD & Only NE is always Defect (backward induction unravels) \\
+Infinitely repeated PD & Cooperation via TFT/Trigger for large enough $\beta$ \\
+Discount factor $\beta$ & Time preference or continuation probability; higher $\beta$ = more patient \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.27)  28 JAN 2026 15:10
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.27)  2 APR 2026 11:05
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -818,21 +818,23 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 [1
 
 {/usr/local/texlive/2025basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-(./main.toc)
+(./main.toc
+
+[2
+
+])
 \tf@toc=\write5
 \openout5 = `main.toc'.
 
 
 
-[2
+[3] (./topics/00-module-overview.tex
 
-] (./topics/00-module-overview.tex
-
-[3
+[4
 
 ])
 
-[4] (./topics/week-01-non-cooperative-games-part-1.tex
+[5] (./topics/week-01-non-cooperative-games-part-1.tex
 Overfull \hbox (2.9364pt too wide) in paragraph at lines 19--20
 []\OT1/cmr/m/n/10 Evaluate the po-ten-tial for and lim-i-ta-tions of non-cooper
 ative so-lu-tions, in-clud-ing is-sues of \OT1/cmr/bx/n/10 unique-
@@ -840,11 +842,9 @@ ative so-lu-tions, in-clud-ing is-sues of \OT1/cmr/bx/n/10 unique-
 
 
 
-[5
+[6
 
 ]
-
-[6]
 
 [7]
 
@@ -859,17 +859,19 @@ ative so-lu-tions, in-clud-ing is-sues of \OT1/cmr/bx/n/10 unique-
 [12]
 
 [13]
+
+[14]
 Underfull \hbox (badness 10000) in paragraph at lines 664--665
 []|\OT1/cmr/m/n/10 Dominant strat-egy,
  []
 
 
 
-[14])
+[15])
 
-[15]
+[16]
 
-[16] (./topics/week-02-non-cooperative-games-part-2.tex
+[17] (./topics/week-02-non-cooperative-games-part-2.tex
 Overfull \hbox (2.9364pt too wide) in paragraph at lines 19--20
 []\OT1/cmr/m/n/10 Evaluate the po-ten-tial for and lim-i-ta-tions of non-cooper
 ative so-lu-tions, in-clud-ing is-sues of \OT1/cmr/bx/n/10 unique-
@@ -877,11 +879,9 @@ ative so-lu-tions, in-clud-ing is-sues of \OT1/cmr/bx/n/10 unique-
 
 
 
-[17
+[18
 
 ]
-
-[18]
 
 [19]
 
@@ -901,21 +901,43 @@ ative so-lu-tions, in-clud-ing is-sues of \OT1/cmr/bx/n/10 unique-
 
 [27]
 
-[28])
+[28]
 
-[29] (./main.aux)
+[29])
+
+[30] (./topics/week-03-repeated-extensive-form-games.tex
+
+[31
+
+]
+
+[32]
+
+[33]
+
+[34]
+
+[35]
+
+[36]
+
+[37]
+
+[38])
+
+[39] (./main.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 1E57B62B5C5D4943C81220C2F55D050E;7177.
+(rerunfilecheck)             Checksum: 5925035E99156E0BCB6D4D83CA8AA292;10565.
  ) 
 Here is how much of TeX's memory you used:
- 23165 strings out of 474662
- 429565 string characters out of 5751109
- 838571 words of memory out of 5000000
- 45668 multiletter control sequences out of 15000+600000
+ 23244 strings out of 474662
+ 430748 string characters out of 5751109
+ 840585 words of memory out of 5000000
+ 45686 multiletter control sequences out of 15000+600000
  571130 words of font info for 82 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
  89i,13n,94p,451b,822s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -943,10 +965,10 @@ sr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb
 ></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/symbols/m
 sam10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/
 symbols/msbm10.pfb>
-Output written on main.pdf (29 pages, 331813 bytes).
+Output written on main.pdf (39 pages, 361302 bytes).
 PDF statistics:
- 530 PDF objects out of 1000 (max. 8388607)
- 450 compressed objects within 5 object streams
- 145 named destinations out of 1000 (max. 500000)
- 285 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 694 PDF objects out of 1000 (max. 8388607)
+ 602 compressed objects within 7 object streams
+ 203 named destinations out of 1000 (max. 500000)
+ 405 words of extra memory for PDF output out of 10000 (max. 10000000)
 
