@@ -1,0 +1,509 @@
+% =============================================================================
+%                    WEEK 10: VOTING (PART I)
+% =============================================================================
+\section{Week 10: Voting (Part I)}
+
+% -----------------------------------------------------------------------------
+%                              10.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+After studying this topic, you should be able to:
+\begin{enumerate}
+  \item Explain core ideas from voting theory: \textbf{preference aggregation}, \textbf{voting rules}, and \textbf{social choice functions}.
+  \item Compare classical rules such as \textbf{plurality}, \textbf{Borda}, \textbf{approval voting}, and \textbf{IRV}, including what information each rule uses.
+  \item Model a group decision problem formally using candidates, voters, ballots, and a voting rule.
+  \item Analyse strengths, weaknesses, and vulnerabilities of voting rules, especially \textbf{strategic manipulation} and failure of the \textbf{Condorcet principle}.
+  \item Compute winners under several rules, including \textbf{positional scoring rules}, \textbf{Llull/Copeland}, \textbf{maximin}, \textbf{Dodgson}, and \textbf{IRV}.
+  \item Solve proof-style questions about structural properties such as \textbf{anonymity}, \textbf{neutrality}, and \textbf{Condorcet-consistency}.
+  \item Discuss why voting matters beyond politics: recommender systems, resource allocation, and multi-agent AI decision-making.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+Weeks~7--9 focused on fair division and mechanism design. This week shifts to \textbf{collective choice}: how a group with different preferences should aggregate those preferences into one decision. The exam themes are very standard: define the formal model, compute winners under several rules, identify when a rule violates the Condorcet principle, and prove short impossibility or non-manipulability statements.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Compute the winner of the \textbf{same profile} under plurality, Borda, Llull/Copeland, maximin, Dodgson, and IRV.
+  \item Distinguish \textbf{ballot formats} (rankings, approval sets, scores) from \textbf{outcome formats} (single winner, committee, full ranking).
+  \item Decide whether a candidate is a \textbf{Condorcet winner} by checking all pairwise contests.
+  \item Explain why \textbf{plurality}, \textbf{Borda}, and more generally \textbf{all positional scoring rules} fail Condorcet-consistency.
+  \item Prove the short impossibility result: with \textbf{2 voters and 2 alternatives}, no rule can be both anonymous and neutral.
+  \item Define manipulation for \textbf{approval voting with dichotomous preferences} and argue why truthful approval is optimal.
+  \item Be explicit about \textbf{tie-breaking}: IRV and plurality-with-runoff questions often depend on it.
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+%           10.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Why computational social choice matters
+  \item Formal model of a single-winner election
+  \item Positional scoring rules: plurality, Borda, $k$-approval, veto
+  \item Elimination rules: plurality with runoff and IRV
+  \item Condorcet winner, Condorcet paradox, and Condorcet-consistency
+  \item Pairwise-comparison rules: Llull/Copeland, maximin, Dodgson
+  \item Core proof questions from the exercise sheet
+  \item Approval voting and manipulation under dichotomous preferences
+\end{enumerate}
+
+\bigseparator
+
+\subsubsection{Why Voting Theory Matters}
+
+\begin{defbox}[Computational Social Choice]
+Computational social choice studies how a group of agents should make decisions when agents have different preferences. It sits at the intersection of \textbf{algorithms}, \textbf{game theory}, and \textbf{social choice}.
+\end{defbox}
+
+Applications from the lecture:
+\begin{itemize}
+  \item \textbf{Recommender systems:} aggregate many users' preferences into a shared list or ranking.
+  \item \textbf{Resource allocation:} choose projects, bundles, or public goods while balancing fairness and efficiency.
+  \item \textbf{Multi-agent AI:} let multiple agents or models vote over actions, plans, or hypotheses.
+\end{itemize}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{2.8cm}p{4.4cm}p{5.1cm}@{}}
+\toprule
+\textbf{Object} & \textbf{What the voter reports} & \textbf{Typical use} \\
+\midrule
+Rankings & Full order over alternatives & Borda, IRV, Condorcet methods \\
+Approval sets & Subset of acceptable alternatives & Approval voting, multiwinner approval rules \\
+Scores / stars & Numerical ratings for each alternative & Rating aggregation, recommender systems \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{3.2cm}p{3.8cm}p{5.3cm}@{}}
+\toprule
+\textbf{Outcome type} & \textbf{Output} & \textbf{Example} \\
+\midrule
+Single-winner rule & One winning alternative & Plurality, Borda, IRV \\
+Multiwinner rule & Committee of fixed size & Council seats, top-$k$ recommendations \\
+Social-welfare function & Full ranking of alternatives & Downstream choice from a societal order \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\subsubsection{Formal Model of a Single-Winner Election}
+
+\begin{defbox}[Single-Winner Election]
+Fix a finite candidate set $C = \{c_1,\ldots,c_m\}$ with $m \geq 2$ and a voter set $N = \{1,\ldots,n\}$. Let $L(C)$ be the set of all strict linear orders on $C$.
+
+Each voter $i$ reports a ballot $R_i \in L(C)$, and the full profile is
+\[
+  R = (R_1,\ldots,R_n) \in L(C)^n.
+\]
+A voting rule (social choice function) maps a profile to a non-empty set of winners:
+\[
+  F : L(C)^n \to 2^C \setminus \{\emptyset\}.
+\]
+If $|F(R)| = 1$ for every profile $R$, then $F$ is \textbf{resolute}. Otherwise it is \textbf{irresolute} and needs a tie-breaker to pick one winner.
+\end{defbox}
+
+\begin{tipbox}[Spot It in a Question]
+If the exam says ``compute the winner'', first identify:
+\begin{itemize}
+  \item ballot type: rankings or approvals?
+  \item rule family: scoring, elimination, or pairwise comparison?
+  \item tie-breaker: random, lexicographic, alphabetical?
+\end{itemize}
+Wrong tie-breaking often flips the answer in IRV questions.
+\end{tipbox}
+
+\separator
+
+\subsubsection{Positional Scoring Rules}
+
+\begin{defbox}[Plurality]
+Each voter gives 1 point to their top-ranked candidate and 0 to all others. The candidate with the highest total wins.
+\end{defbox}
+
+\begin{defbox}[Borda Count]
+With $m$ candidates, a voter gives $m-1$ points to the candidate ranked first, $m-2$ to the candidate ranked second, \ldots, and $0$ to the candidate ranked last.
+\end{defbox}
+
+\begin{defbox}[Positional Scoring Rule (PSR)]
+A PSR is defined by a score vector
+\[
+  s = (s_1,\ldots,s_m) \in \mathbb{R}^m
+\]
+with $s_1 \geq s_2 \geq \cdots \geq s_m = 0$ and $s_1 > 0$. A candidate receives $s_j$ points from every ballot placing them in position $j$.
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Rule} & \textbf{Score vector} & \textbf{Idea} \\
+\midrule
+Plurality & $(1,0,\ldots,0)$ & Reward only first places \\
+Borda & $(m-1,m-2,\ldots,0)$ & Use the full ranking \\
+Veto & $(1,\ldots,1,0)$ & Penalise only last place \\
+$k$-approval & $(\underbrace{1,\ldots,1}_{k},0,\ldots,0)$ & Approve top $k$ positions \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Exam Tip: Why PSRs Matter]
+Plurality and Borda are just special cases of the same template. If the exam asks for a general statement about ``all positional scoring rules'', think in terms of the score vector, not one named rule.
+\end{tipbox}
+
+\separator
+
+\subsubsection{Elimination-Based Rules}
+
+\begin{defbox}[Plurality with Runoff]
+Run plurality once, keep the two front-runners, then run a head-to-head majority contest between those two.
+\end{defbox}
+
+\begin{defbox}[Instant-Runoff Voting (IRV)]
+Tabulate first-place votes among the remaining candidates. Eliminate the candidate with the lowest plurality score, transfer those ballots to the next remaining candidate on each ballot, and repeat until one candidate is left.
+\end{defbox}
+
+\begin{tipbox}[Typical Pitfalls]
+\begin{itemize}
+  \item IRV is \textbf{not} the same as plurality with runoff.
+  \item In IRV you must \textbf{recompute first-place votes after each elimination}.
+  \item If several candidates tie for last place, the tie-breaker matters.
+\end{itemize}
+\end{tipbox}
+
+\begin{exbox}[Worked Example: Same Profile, Different Winners]
+Lecture profile over four candidates:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+\textbf{V1} & \textbf{V2} & \textbf{V3} & \textbf{V4} & \textbf{V5} \\
+\midrule
+$a$ & $a$ & $b$ & $c$ & $d$ \\
+$b$ & $b$ & $c$ & $b$ & $b$ \\
+$c$ & $c$ & $d$ & $d$ & $c$ \\
+$d$ & $d$ & $a$ & $a$ & $a$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Plurality:} $a$ wins with 2 first-place votes.
+
+\textbf{Borda:} scores are $a=6$, $b=11$, $c=8$, $d=5$, so $b$ wins.
+
+\textbf{IRV (alphabetical tie-break for last place):}
+\begin{itemize}
+  \item Round 1: $(a,b,c,d) = (2,1,1,1)$, eliminate $b$.
+  \item Round 2: $(a,c,d) = (2,2,1)$, eliminate $d$.
+  \item Round 3: $(a,c) = (2,3)$, so $c$ wins.
+\end{itemize}
+
+\textbf{Condorcet check:} $b$ beats $a$ by $3{:}2$, beats $c$ by $4{:}1$, and beats $d$ by $4{:}1$. Hence $b$ is the \textbf{Condorcet winner}.
+
+So this one profile already shows:
+\[
+  \text{plurality winner } a,\qquad
+  \text{Borda winner } b,\qquad
+  \text{IRV winner } c.
+\]
+\end{exbox}
+
+\separator
+
+\subsubsection{Condorcet Winner and Condorcet Paradox}
+
+\begin{defbox}[Condorcet Winner]
+A candidate $x \in C$ is a \textbf{Condorcet winner} if for every other candidate $y \neq x$, a strict majority of voters prefers $x$ to $y$.
+\end{defbox}
+
+\begin{defbox}[Condorcet-Consistent Rule]
+A rule is \textbf{Condorcet-consistent} if it always selects a Condorcet winner whenever one exists.
+\end{defbox}
+
+\begin{defbox}[Condorcet Paradox]
+Majority preferences can cycle even if each individual voter has a transitive ranking. For example:
+\[
+  a \succ b \succ c,\qquad
+  c \succ a \succ b,\qquad
+  b \succ c \succ a.
+\]
+Then the majority prefers $a$ to $b$, $b$ to $c$, and $c$ to $a$.
+\end{defbox}
+
+\begin{tipbox}[What This Means for Exams]
+To test whether a candidate is Condorcet, do \textbf{all pairwise contests}. One first-place count is not enough. Condorcet is about \textbf{head-to-head majority support}, not raw score totals.
+\end{tipbox}
+
+\separator
+
+\subsubsection{Condorcet Methods: Llull, Maximin, Dodgson}
+
+Let $N(x,y)$ denote the number of voters who rank $x$ above $y$.
+
+\begin{defbox}[Llull / Copeland Rule]
+Candidate $x$ gets 1 point for every pairwise contest they win and $\frac{1}{2}$ for every pairwise tie. The candidate with highest total pairwise score wins.
+\end{defbox}
+
+\begin{defbox}[Maximin Rule]
+Candidate $x$ gets score
+\[
+  \min_{y \neq x} N(x,y).
+\]
+The winner is the candidate whose \textbf{worst pairwise support} is as large as possible.
+\end{defbox}
+
+\begin{defbox}[Dodgson Rule]
+The Dodgson score of candidate $x$ is the minimum number of \textbf{adjacent swaps} in voters' rankings needed to make $x$ a Condorcet winner. A candidate with minimum score wins.
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{2.2cm}p{5.7cm}p{3.3cm}@{}}
+\toprule
+\textbf{Rule} & \textbf{How to compute} & \textbf{Exam fact} \\
+\midrule
+Llull & Count pairwise wins & Condorcet-consistent \\
+Maximin & Look at each candidate's weakest head-to-head contest & Condorcet-consistent \\
+Dodgson & Find minimum adjacent swaps to make a candidate Condorcet & Condorcet-consistent, but hard to compute in general \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Why These Rules Respect Condorcet]
+If $x$ is a Condorcet winner, then:
+\begin{itemize}
+  \item under Llull, $x$ wins every pairwise contest;
+  \item under maximin, every pairwise support count for $x$ is $> n/2$, so its worst contest is still strong;
+  \item under Dodgson, $x$ already has score 0.
+\end{itemize}
+\end{tipbox}
+
+\begin{exbox}[Worked Example: Six Rules on the 100-Voter Exercise]
+Exercise profile over $C = \{a,b,c,d,e\}$:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}cccccc@{}}
+\toprule
+\textbf{33} & \textbf{16} & \textbf{3} & \textbf{8} & \textbf{18} & \textbf{22} \\
+\midrule
+$a$ & $b$ & $c$ & $c$ & $d$ & $e$ \\
+$b$ & $d$ & $d$ & $e$ & $e$ & $c$ \\
+$c$ & $c$ & $b$ & $b$ & $c$ & $b$ \\
+$d$ & $e$ & $a$ & $d$ & $b$ & $d$ \\
+$e$ & $a$ & $e$ & $a$ & $a$ & $a$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Plurality:} first-place counts are
+\[
+  a=33,\quad b=16,\quad c=11,\quad d=18,\quad e=22,
+\]
+so plurality elects $a$.
+
+\textbf{Borda:} with score vector $(4,3,2,1,0)$,
+\[
+  a=135,\quad b=247,\quad c=244,\quad d=192,\quad e=182,
+\]
+so Borda elects $b$.
+
+\textbf{Pairwise checks:} candidate $c$ beats every rival:
+\[
+  N(c,a)=67,\quad N(c,b)=51,\quad N(c,d)=66,\quad N(c,e)=60.
+\]
+Hence $c$ is the \textbf{Condorcet winner}.
+
+\textbf{Llull / Copeland:} pairwise-win counts are
+\[
+  a=0,\quad b=3,\quad c=4,\quad d=2,\quad e=1,
+\]
+so Llull elects $c$.
+
+\textbf{Maximin:}
+\[
+  \min N(a,\cdot)=33,\quad
+  \min N(b,\cdot)=49,\quad
+  \min N(c,\cdot)=51,\quad
+  \min N(d,\cdot)=21,\quad
+  \min N(e,\cdot)=30,
+\]
+so maximin elects $c$.
+
+\textbf{Dodgson:} because $c$ is already a Condorcet winner, its Dodgson score is 0, so Dodgson elects $c$.
+
+\textbf{IRV:}
+\begin{itemize}
+  \item Round 1: $(a,b,c,d,e)=(33,16,11,18,22)$, eliminate $c$.
+  \item Round 2: $(a,b,d,e)=(33,16,21,30)$, eliminate $b$.
+  \item Round 3: $(a,d,e)=(33,37,30)$, eliminate $e$.
+  \item Round 4: $(a,d)=(33,67)$, so $d$ wins.
+\end{itemize}
+
+Final answers:
+\[
+  \text{plurality } a,\quad
+  \text{Borda } b,\quad
+  \text{Llull } c,\quad
+  \text{Dodgson } c,\quad
+  \text{maximin } c,\quad
+  \text{IRV } d.
+\]
+\end{exbox}
+
+\separator
+
+\subsubsection{Anonymous and Neutral? Not in the 2-by-2 Case}
+
+\begin{defbox}[Anonymity]
+A rule is \textbf{anonymous} if permuting voter identities does not change the outcome.
+\end{defbox}
+
+\begin{defbox}[Neutrality]
+A rule is \textbf{neutral} if relabelling candidates only relabels the outcome in the same way.
+\end{defbox}
+
+\begin{thmbox}[No Rule is Both Anonymous and Neutral for 2 Voters and 2 Alternatives]
+For two voters and two alternatives, no social choice function can satisfy both anonymity and neutrality.
+\end{thmbox}
+
+\textbf{Proof.} Let the alternatives be $a$ and $b$, and consider the mixed profile
+\[
+  R = (a \succ b,\; b \succ a).
+\]
+Swap the names of candidates using the bijection $\pi$ with $\pi(a)=b$ and $\pi(b)=a$. Then
+\[
+  \pi(R) = (b \succ a,\; a \succ b),
+\]
+which is just the original profile with the two voters exchanged. By \textbf{anonymity},
+\[
+  F(\pi(R)) = F(R).
+\]
+By \textbf{neutrality},
+\[
+  F(\pi(R)) = \pi(F(R)).
+\]
+Therefore $F(R) = \pi(F(R))$. But $\pi$ swaps $a$ and $b$, so no single winner can be unchanged by $\pi$. Contradiction. \qed
+
+\separator
+
+\subsubsection{Why Positional Scoring Rules Fail the Condorcet Principle}
+
+\begin{thmbox}[Every Positional Scoring Rule Fails Condorcet-Consistency]
+Fix $m \geq 3$ and a score vector $s=(s_1,\ldots,s_m)$ with $s_1 \geq \cdots \geq s_m = 0$ and $s_1 > 0$. The corresponding positional scoring rule is \textbf{not} Condorcet-consistent.
+\end{thmbox}
+
+\textbf{Proof sketch.} Split into two cases.
+
+\textbf{Case 1: $s_2 = 0$.} Then the rule is just plurality up to a positive scaling. Use the standard plurality counterexample on three candidates:
+\begin{itemize}
+  \item 3 voters: $b \succ a \succ c$
+  \item 2 voters: $c \succ a \succ b$
+  \item 2 voters: $a \succ c \succ b$
+\end{itemize}
+Candidate $a$ beats both $b$ and $c$ head-to-head, so $a$ is the Condorcet winner, but plurality elects $b$ because $b$ has the most first-place votes. For $m>3$, append the remaining candidates to the bottom of every ballot in the same order.
+
+\textbf{Case 2: $s_2 > 0$.} Choose an integer $t$ with $(t+1)s_2 > s_1$. Consider the profile:
+\begin{itemize}
+  \item $t+1$ voters: $a \succ b \succ c \succ \cdots$
+  \item $t$ voters: $b \succ c \succ \cdots \succ a$
+\end{itemize}
+Candidate $a$ is ranked above every rival by the first $t+1$ voters and below every rival by only $t$ voters, so $a$ beats every other candidate pairwise and is therefore the Condorcet winner.
+
+But the PSR scores satisfy
+\[
+  \text{score}(a) = (t+1)s_1,
+\]
+because $a$ is first on $t+1$ ballots and last on $t$ ballots, and
+\[
+  \text{score}(b) = ts_1 + (t+1)s_2.
+\]
+Since $(t+1)s_2 > s_1$, we get
+\[
+  ts_1 + (t+1)s_2 > (t+1)s_1 = \text{score}(a),
+\]
+so $b$ outscores the Condorcet winner $a$. Also, $b$ is above every other non-$a$ candidate on every ballot, so no other candidate can beat $b$ on score. Hence the PSR does not elect the Condorcet winner. \qed
+
+\begin{tipbox}[Exam Strategy]
+For proof questions of this type, do not try random numbers first. Identify the \textbf{family parameter} you can exploit:
+\begin{itemize}
+  \item if $s_2=0$, the rule is plurality-like;
+  \item if $s_2>0$, build many ballots where a candidate gets \textbf{lots of second places} to beat the Condorcet winner on total score.
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+\subsubsection{Approval Voting with Dichotomous Preferences}
+
+\begin{defbox}[Approval Model]
+Each voter $i$ approves a subset $A_i \subseteq C$ and disapproves $C \setminus A_i$. The voter is indifferent among approved candidates, indifferent among disapproved candidates, and strictly prefers every approved candidate to every disapproved candidate.
+\end{defbox}
+
+\begin{defbox}[Approval Rule]
+Given reported approval sets, elect a candidate with the maximum number of approvals, breaking ties using a fixed order on candidates.
+\end{defbox}
+
+\begin{defbox}[Manipulation in This Model]
+Voter $i$ manipulates if there exists a false report $A'_i \neq A_i$ such that, holding all other reports fixed, the winner under $(A'_i,A_{-i})$ is strictly preferred by voter $i$ to the winner under $(A_i,A_{-i})$.
+\end{defbox}
+
+\begin{thmbox}[Truthful Approval is Non-Manipulable Here]
+Under dichotomous preferences and fixed tie-breaking, approving exactly $A_i$ is weakly dominant. Hence this approval rule is non-manipulable.
+\end{thmbox}
+
+\textbf{Why.} Let $s_{-i}(x)$ be the number of approvals candidate $x$ receives from voters other than $i$.
+\begin{itemize}
+  \item If truthful voting already elects some $x \in A_i$, then voter $i$ is already getting an approved winner, and all approved winners are equally good.
+  \item If truthful voting elects some $x \notin A_i$, then every approved candidate $a \in A_i$ already received the \textbf{maximum possible help} from voter $i$, namely +1 approval, while every disapproved candidate received 0 from $i$.
+\end{itemize}
+So a false report can only:
+\begin{itemize}
+  \item remove support from approved candidates, or
+  \item add support to disapproved candidates.
+\end{itemize}
+Neither can turn a truthful disapproved outcome into a strictly better approved one. Therefore misreporting cannot help, so the rule is non-manipulable in this dichotomous setting. \qed
+
+\separator
+
+\subsubsection{Section-End Summary Table}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{2.1cm}p{2.2cm}p{2.4cm}p{4.1cm}@{}}
+\toprule
+\textbf{Rule} & \textbf{Uses} & \textbf{Condorcet-consistent?} & \textbf{What to remember} \\
+\midrule
+Plurality & First places only & No & Fast to compute; ignores lower ranks \\
+Borda & Full ranking & No & Rewards broad support; still can miss Condorcet winner \\
+PSR (general) & Fixed position scores & No & Think score vector $(s_1,\ldots,s_m)$ \\
+Plurality with runoff & First places + final majority contest & No in general & Two-stage elimination \\
+IRV & Repeated first-place elimination & No & Recount after every elimination \\
+Llull / Copeland & Pairwise wins & Yes & Count head-to-head victories \\
+Maximin & Pairwise margins / support & Yes & Maximise weakest matchup \\
+Dodgson & Adjacent swaps to Condorcet & Yes & Conceptually clean, computationally hard \\
+Approval (dichotomous) & Approval sets & Not the focus here & Truthful approval is weakly dominant in this model \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Source Gap]
+The week overview mentions \textbf{STV}, but the provided Week 10 slides and exercise sheet here do not define or analyse it. \TODO{} Add a compact STV section once the relevant slide text or Week 11 material is available.
+\end{tipbox}

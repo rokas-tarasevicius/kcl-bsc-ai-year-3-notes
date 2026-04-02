@@ -1,0 +1,476 @@
+% =============================================================================
+%                    WEEK 11: VOTING (PART II)
+% =============================================================================
+\section{Week 11: Voting (Part II)}
+
+% -----------------------------------------------------------------------------
+%                              11.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+After studying this topic, you should be able to:
+\begin{enumerate}
+  \item Explain the goals of \textbf{multiwinner voting}: excellence-based selection, diversity, and proportional representation.
+  \item Describe and distinguish key multiwinner rules such as \textbf{STV}, \textbf{Bloc}, \textbf{k-Borda}, \textbf{Chamberlin--Courant}, and \textbf{PAV}.
+  \item Model committee-selection problems formally in both the \textbf{ordinal} and \textbf{approval} settings.
+  \item Compute winning committees under committee scoring rules, Condorcet-style multiwinner rules, and approval-based Thiele methods.
+  \item Analyse proportionality notions such as \textbf{JR} and \textbf{EJR}.
+  \item Evaluate how well different rules capture fairness, representation, and robustness.
+  \item Discuss computational issues: many interesting multiwinner rules are harder to compute than their single-winner analogues.
+  \item Connect the theory to applications such as parliamentary elections, shortlisting, recommender systems, and participatory budgeting.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+Week~10 asked: ``who should win?'' Week~11 asks the harder question: ``which \textbf{set} of winners should we choose?'' Once we move from one winner to a committee of size $k$, the objective changes dramatically. Sometimes we want the \textbf{best $k$ individuals}; sometimes we want a \textbf{diverse set}; sometimes we want \textbf{proportional representation}. Different rules target different goals, so exam questions often test whether you can match the rule to the purpose and compute the resulting committee.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Define a \textbf{multiwinner voting rule} formally and distinguish ordinal from approval elections.
+  \item Run \textbf{STV} round by round, including the quota and elimination steps.
+  \item Compute winning committees under \textbf{SNTV}, \textbf{Bloc}, \textbf{k-Borda}, and \textbf{$\beta$-CC}.
+  \item Check whether a committee is a \textbf{weak Condorcet set}, then compute \textbf{NED} and \textbf{SEO}.
+  \item Compute committees under \textbf{AV}, \textbf{$\alpha$-CC}, and \textbf{PAV}.
+  \item State and use the definitions of \textbf{JR} and \textbf{EJR}.
+  \item Compare rules by purpose: excellence, diversity/coverage, or proportional representation.
+  \item Identify where \textbf{tie-breaking} or multiple winning committees matter.
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+%           11.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Why multiwinner voting is different
+  \item Formal model: ordinal vs.\ approval elections
+  \item STV
+  \item Committee scoring rules
+  \item Condorcet committees and stable rules
+  \item Approval-based Thiele methods
+  \item JR and EJR
+  \item Summary of what each rule is trying to optimise
+\end{enumerate}
+
+\bigseparator
+
+\subsubsection{Why Multiwinner Voting is Different}
+
+\begin{defbox}[Three Main Multiwinner Objectives]
+\begin{itemize}
+  \item \textbf{Excellence-based elections:} choose the ``best'' $k$ candidates, as in shortlisting finalists.
+  \item \textbf{Diverse committees:} choose members that cover different needs or regions.
+  \item \textbf{Proportional representation:} choose a committee that reflects the structure of voter support.
+\end{itemize}
+\end{defbox}
+
+\begin{tipbox}[Exam Tip]
+Before doing any calculation, ask: what is the rule trying to reward?
+\begin{itemize}
+  \item Rules like \textbf{k-Borda} behave like ``top $k$ individual stars''.
+  \item Rules like \textbf{Chamberlin--Courant} reward \textbf{coverage/representation}.
+  \item Rules like \textbf{PAV} try to balance representation \textbf{and} proportionality.
+\end{itemize}
+\end{tipbox}
+
+\textbf{Challenges highlighted in the lecture:}
+\begin{itemize}
+  \item \textbf{Axiomatic:} which properties make a rule suitable for a given application?
+  \item \textbf{Computational:} many multiwinner rules are much harder to compute than single-winner rules.
+\end{itemize}
+
+\separator
+
+\subsubsection{Formal Model}
+
+\begin{defbox}[Multiwinner Election]
+An election is a pair $(C,R)$, where $C$ is the set of candidates and $R$ is the profile of voter preferences.
+\end{defbox}
+
+\begin{defbox}[Ordinal vs.\ Approval Model]
+\textbf{Ordinal model:} each voter $i$ reports a linear order $R_i \in L(C)$.
+
+\textbf{Approval model:} each voter $i$ reports an approval set $A_i \subseteq C$.
+\end{defbox}
+
+\begin{defbox}[Multiwinner Voting Rule]
+Given an election $(C,R)$ and a committee size $k$ with $1 \leq k \leq |C|$, a multiwinner rule returns a non-empty family of size-$k$ subsets of $C$. In practice, a tie-breaker is then used to select one winning committee.
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{2.6cm}p{4.4cm}p{4.6cm}@{}}
+\toprule
+\textbf{Model} & \textbf{What a voter reports} & \textbf{Typical rules here} \\
+\midrule
+Ordinal & Full ranking of all candidates & STV, Bloc, k-Borda, $\beta$-CC, NED, SEO \\
+Approval & Set of approved candidates & AV, $\alpha$-CC, PAV, JR/EJR analysis \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\subsubsection{Single Transferable Vote (STV)}
+
+\begin{defbox}[STV]
+Suppose there are $n$ voters, $m$ candidates, and target committee size $k$. STV runs in rounds until $k$ candidates are elected.
+\end{defbox}
+
+\begin{thmbox}[STV Procedure]
+\begin{enumerate}
+  \item Compute the quota
+  \[
+    q = \left\lfloor \frac{n}{k+1} \right\rfloor + 1.
+  \]
+  \item If some candidate is ranked first by at least $q$ voters, elect that candidate.
+  \item Remove $q$ voters who ranked that candidate first, and delete the elected candidate from all remaining ballots.
+  \item If no candidate reaches quota, eliminate a candidate with the fewest first-place votes and delete them from all ballots.
+  \item Repeat until $k$ candidates have been elected.
+\end{enumerate}
+\end{thmbox}
+
+\begin{tipbox}[Why STV Feels Like IRV]
+For $k=1$,
+\[
+  q = \left\lfloor \frac{n}{2} \right\rfloor + 1,
+\]
+which is the majority threshold. So IRV is the single-winner special case of STV.
+\end{tipbox}
+
+\begin{exbox}[Worked Example: STV with $k=2$]
+Use the Week 11 ordinal profile:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}cccccc@{}}
+\toprule
+\textbf{V1} & \textbf{V2} & \textbf{V3} & \textbf{V4} & \textbf{V5} & \textbf{V6} \\
+\midrule
+$a$ & $e$ & $d$ & $c$ & $c$ & $b$ \\
+$b$ & $a$ & $a$ & $b$ & $b$ & $c$ \\
+$c$ & $b$ & $b$ & $d$ & $e$ & $d$ \\
+$d$ & $d$ & $c$ & $e$ & $a$ & $e$ \\
+$e$ & $c$ & $e$ & $a$ & $d$ & $a$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Here $n=6$ and $k=2$, so
+\[
+  q=\left\lfloor \frac{6}{3}\right\rfloor +1 = 3.
+\]
+
+\textbf{Round 1:} first-place counts are $(a,b,c,d,e)=(1,1,2,1,1)$. Nobody reaches 3. Eliminate $a$.
+
+\textbf{Round 2:} after removing $a$, counts become $(b,c,d,e)=(2,2,1,1)$. Nobody reaches 3. Eliminate $d$.
+
+\textbf{Round 3:} after removing $d$, counts become $(b,c,e)=(3,2,1)$. Candidate $b$ reaches quota and is elected. Remove $b$ and the three voters who currently rank $b$ first.
+
+\textbf{Round 4:} among the remaining three voters, first-place counts are $(c,e)=(2,1)$. Nobody reaches 3. Eliminate $e$.
+
+\textbf{Round 5:} candidate $c$ now reaches quota and is elected.
+
+So along this tie-breaking path, STV elects
+\[
+  \{b,c\}.
+\]
+\end{exbox}
+
+\begin{tipbox}[Tie-Breaking Warning]
+STV is highly tie-sensitive. On this profile, different elimination choices can lead to different winning committees. Under parallel-universe tie-breaking, the possible winners include $\{a,c\}$, $\{b,c\}$, and $\{c,d\}$.
+\end{tipbox}
+
+\separator
+
+\subsubsection{Committee Scoring Rules}
+
+The multiwinner analogue of a positional scoring rule assigns a score to the \textbf{position of a whole committee} inside a ballot.
+
+\begin{defbox}[Committee Position]
+Let $S$ be a size-$k$ committee and let $\succ$ be a ranking. The \textbf{position} of $S$ in $\succ$, denoted $\operatorname{pos}_{\succ}(S)$, is the sorted list of positions occupied by the members of $S$.
+
+Example: if
+\[
+  a \succ b \succ c \succ d \succ e
+\]
+and $S=\{a,e\}$, then
+\[
+  \operatorname{pos}_{\succ}(S)=(1,5).
+\]
+\end{defbox}
+
+\begin{defbox}[Committee Scoring Function]
+A committee scoring function $\gamma_{m,k}$ assigns a score to each increasing $k$-tuple of positions. If every member of committee position $I$ is ranked at least as highly as the corresponding member of $J$, then $\gamma_{m,k}(I)\geq \gamma_{m,k}(J)$.
+\end{defbox}
+
+\begin{defbox}[Committee Scoring Rule]
+For election $E=(C,R)$ and committee $W$ of size $k$,
+\[
+  \operatorname{score}(W,E)=\sum_{i=1}^n \gamma_{|C|,k}(\operatorname{pos}_{R_i}(W)).
+\]
+The winning committees maximise this score.
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{2.3cm}p{5.3cm}p{3.6cm}@{}}
+\toprule
+\textbf{Rule} & \textbf{What a voter gives points for} & \textbf{Interpretation} \\
+\midrule
+SNTV & Committee contains the voter's top candidate & Very plurality-like \\
+Bloc & Committee members inside the voter's top $k$ & Top-$k$ popularity \\
+$k$-Borda & Sum of individual Borda scores of committee members & Best $k$ candidates individually \\
+$\beta$-CC & Borda score of the voter's favourite committee member & Coverage / representation \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{exbox}[Worked Example: Committee Scoring Rules for $k=2$]
+Use the same ordinal profile as above.
+
+\textbf{SNTV.} A committee gets 1 point from a voter iff it contains that voter's top candidate. Since $c$ is ranked first by two voters and every other candidate is ranked first once, every SNTV winner must contain $c$ and one other candidate whose top-support reaches 1. Thus the SNTV winners are:
+\[
+  \{a,c\},\ \{b,c\},\ \{c,d\},\ \{c,e\}.
+\]
+
+\textbf{Bloc.} Each voter awards one point to each member of the committee appearing in their top 2. Counting top-2 appearances gives:
+\[
+  a=3,\quad b=4,\quad c=3,\quad d=1,\quad e=1.
+\]
+So the winning committees are
+\[
+  \{a,b\}\quad \text{and}\quad \{b,c\}.
+\]
+
+\textbf{$k$-Borda.} The individual Borda scores are
+\[
+  a=11,\quad b=17,\quad c=14,\quad d=10,\quad e=8.
+\]
+Hence the unique $k$-Borda winner is
+\[
+  \{b,c\}.
+\]
+
+\textbf{$\beta$-CC.} Each voter only cares about their favourite member of the committee, measured by Borda score. The committee scores are maximised by
+\[
+  \{a,c\},
+\]
+with total score 21. For comparison, $\{b,c\}$ scores 19.
+\end{exbox}
+
+\begin{tipbox}[What Changes Between $k$-Borda and $\beta$-CC?]
+\textbf{$k$-Borda} adds up the quality of \emph{all} committee members. \textbf{$\beta$-CC} asks whether each voter has \emph{at least one} highly ranked representative. That is why $\beta$-CC is much more representation-oriented.
+\end{tipbox}
+
+\separator
+
+\subsubsection{Condorcet Committees and Stable Rules}
+
+\begin{defbox}[Fishburn Condorcet Committee]
+A committee $S$ is a \textbf{Condorcet committee} if, for every other committee $T$ of the same size, a majority of voters prefers $S$ to $T$.
+\end{defbox}
+
+\begin{defbox}[Weak Condorcet Set]
+Let $S$ be a committee of size $k$. Then $S$ is a \textbf{weak Condorcet set} if for every $c\in S$ and every $d\in C\setminus S$, at least half of the voters prefer $c$ to $d$.
+
+If ``at least half'' is strengthened to ``more than half'', then $S$ is a Condorcet set.
+\end{defbox}
+
+\begin{defbox}[Stable Rule]
+A multiwinner rule is \textbf{stable} if it outputs a weak Condorcet set whenever one exists.
+\end{defbox}
+
+\begin{defbox}[NED]
+The \textbf{number of external defeats} of a committee $S$ is the number of pairs $(c,d)$ with $c\in S$, $d\notin S$, such that at least half of the voters prefer $c$ to $d$. NED elects committees with maximum such score.
+\end{defbox}
+
+\begin{defbox}[SEO]
+The \textbf{minimum size of external opposition} score of a committee $S$ is
+\[
+  \min_{c\in S,\ d\notin S} |\{i\in N : c \succ_i d\}|.
+\]
+SEO elects committees with maximum such score.
+\end{defbox}
+
+\begin{exbox}[Worked Example: Weak Condorcet Set, NED, and SEO]
+Again use the Week 11 ordinal profile with committee size 2.
+
+For committee $\{b,c\}$, compare each insider with each outsider $a,d,e$:
+\[
+  N(b,a)=3,\quad N(c,a)=3,\quad N(b,d)=5,\quad N(c,d)=4,\quad N(b,e)=5,\quad N(c,e)=5.
+\]
+Each count is at least half of the 6 voters, so $\{b,c\}$ is a \textbf{weak Condorcet set}.
+
+It is in fact the \textbf{unique} weak Condorcet set of size 2 on this profile.
+
+\textbf{NED score of $\{b,c\}$:} there are $2 \times 3 = 6$ insider-outsider pairs, and all 6 satisfy the weak-majority condition, so
+\[
+  \operatorname{NED}(\{b,c\})=6.
+\]
+This is maximal, so NED elects $\{b,c\}$.
+
+\textbf{SEO score of $\{b,c\}$:}
+\[
+  \min\{3,3,5,4,5,5\}=3.
+\]
+This is also maximal, so SEO elects $\{b,c\}$.
+\end{exbox}
+
+\begin{tipbox}[Single-Winner Analogy]
+NED and SEO play the same role in the multiwinner world that Llull/Copeland and maximin play in the single-winner world: they extend pairwise-majority reasoning from candidates to committees.
+\end{tipbox}
+
+\separator
+
+\subsubsection{Approval-Based Thiele Methods}
+
+\begin{defbox}[Thiele Score]
+Let $w^{(k)}=(w^{(k)}_1,\ldots,w^{(k)}_k)$ be a weight vector. If voter $i$ approves set $A_i$ and committee $S$ is chosen, then voter $i$ gives $S$ the score
+\[
+  \sum_{j=1}^{|S\cap A_i|} w^{(k)}_j.
+\]
+\end{defbox}
+
+\begin{defbox}[Thiele Method]
+Given a sequence of weight vectors, the winning committees are those maximising the sum of the above scores over all voters.
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{2.4cm}p{3.8cm}p{4.7cm}@{}}
+\toprule
+\textbf{Rule} & \textbf{Weight vector} & \textbf{Interpretation} \\
+\midrule
+Approval Voting (AV) & $(1,\ldots,1)$ & Every approved committee member counts equally \\
+$\alpha$-CC & $(1,0,\ldots,0)$ & Only care whether the voter is represented at all \\
+PAV & $(1,\frac12,\frac13,\ldots,\frac1k)$ & Diminishing returns from extra representatives \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{exbox}[Worked Example: AV, $\alpha$-CC, and PAV]
+Use the approval profile:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}cl@{}}
+\toprule
+\textbf{Voter} & \textbf{Approval ballot} \\
+\midrule
+1 & $\{a,b,c\}$ \\
+2 & $\{a,e\}$ \\
+3 & $\{d\}$ \\
+4 & $\{b,c,d\}$ \\
+5 & $\{b,c\}$ \\
+6 & $\{b\}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{AV.} Count total approvals:
+\[
+  a=2,\quad b=4,\quad c=3,\quad d=2,\quad e=1.
+\]
+So AV elects
+\[
+  \{b,c\}.
+\]
+
+\textbf{$\alpha$-CC.} A voter contributes 1 iff at least one committee member is approved by that voter. The best committees represent 5 of the 6 voters, namely
+\[
+  \{a,b\},\ \{b,d\},\ \{b,e\}.
+\]
+
+\textbf{PAV.} The first approved committee member gives 1 point, the second gives $\frac12$, and so on. The winning score is 5.5, achieved by
+\[
+  \{a,b\},\ \{b,c\},\ \{b,d\}.
+\]
+
+Example calculation for $\{a,b\}$:
+\[
+  1.5 + 1 + 0 + 1 + 1 + 1 = 5.5.
+\]
+Voter 1 contributes $1+\frac12$ because both $a$ and $b$ are approved.
+\end{exbox}
+
+\separator
+
+\subsubsection{Proportionality: JR and EJR}
+
+\begin{defbox}[$\ell$-Cohesive Group]
+In an approval election with $n$ voters and committee size $k$, a group $X$ of voters is \textbf{$\ell$-cohesive} if:
+\begin{itemize}
+  \item $|X| \geq \ell \cdot \frac{n}{k}$, and
+  \item the voters in $X$ approve at least $\ell$ common candidates:
+  \[
+    \left|\bigcap_{i\in X} A_i\right| \geq \ell.
+  \]
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Justified Representation (JR)]
+A committee $W$ satisfies \textbf{JR} if there is no group of at least $\frac{n}{k}$ voters who all approve some common candidate, yet none of them approves any member of $W$.
+\end{defbox}
+
+\begin{defbox}[Extended Justified Representation (EJR)]
+A committee $W$ satisfies \textbf{EJR} if for every integer $\ell \in \{1,\ldots,k\}$ and every $\ell$-cohesive group $X$, there exists some voter $i\in X$ such that
+\[
+  |A_i \cap W| \geq \ell.
+\]
+\end{defbox}
+
+\begin{tipbox}[Interpretation]
+If there are $n$ voters and $k$ seats, then one seat corresponds to roughly $\frac{n}{k}$ voters.
+\begin{itemize}
+  \item A group of size at least $\frac{n}{k}$ deserves \textbf{one} representative.
+  \item A group of size at least $\ell\frac{n}{k}$ with $\ell$ common approved candidates deserves roughly \textbf{$\ell$ representatives}.
+\end{itemize}
+\end{tipbox}
+
+\begin{thmbox}[Rule Comparison from the Lecture]
+\begin{itemize}
+  \item \textbf{AV} fails JR, so it also fails EJR.
+  \item \textbf{$\alpha$-CC} satisfies JR but fails EJR.
+  \item \textbf{PAV} satisfies EJR.
+  \item Among the Thiele methods considered here, the \textbf{harmonic} PAV weights are the unique ones that deliver this strong proportionality guarantee.
+\end{itemize}
+\end{thmbox}
+
+\separator
+
+\subsubsection{Summary Table}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{2.2cm}p{2.2cm}p{2.3cm}p{4.1cm}@{}}
+\toprule
+\textbf{Rule} & \textbf{Ballot type} & \textbf{Primary goal} & \textbf{What to remember} \\
+\midrule
+STV & Ordinal & Representation with elimination & Quota $q=\lfloor n/(k+1)\rfloor+1$; tie-sensitive \\
+SNTV & Ordinal & Top-choice coverage & Committee contains popular first choices \\
+Bloc & Ordinal & Top-$k$ popularity & Count top-$k$ appearances \\
+$k$-Borda & Ordinal & Excellence & Take the $k$ best individual Borda scorers \\
+$\beta$-CC & Ordinal & Representation / coverage & Each voter values only best committee member \\
+NED & Ordinal & Weak Condorcet stability & Count insider-outsider weak-majority wins \\
+SEO & Ordinal & Weak Condorcet stability & Maximise weakest insider-outsider pairwise support \\
+AV & Approval & Raw approval total & Simple but can fail proportionality badly \\
+$\alpha$-CC & Approval & Representation & Represent as many voters as possible \\
+PAV & Approval & Proportional representation & Harmonic diminishing returns; satisfies EJR \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Source Gap]
+The week overview mentions \textbf{participatory budgeting} and group assignments, but the provided Week 11 slide text here does not include a formal budgeting model or budgeting-specific rules. \TODO{} Add a compact participatory-budgeting section if those slides or exercises are provided.
+\end{tipbox}
