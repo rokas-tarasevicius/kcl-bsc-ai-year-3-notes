@@ -1,79 +1,91 @@
-\contentsline {section}{Module Overview}{4}{section*.2}%
-\contentsline {section}{\numberline {1}Week 1: Non-Cooperative Games (Part I)}{6}{section.1}%
-\contentsline {subsection}{\numberline {1.1}Topic Summary}{6}{subsection.1.1}%
-\contentsline {subsection}{\numberline {1.2}Overview + Core Concepts + Extended Theory}{7}{subsection.1.2}%
-\contentsline {subsubsection}{\numberline {1.2.1}Multi-Agent Systems}{7}{subsubsection.1.2.1}%
-\contentsline {subsubsection}{\numberline {1.2.2}Normal Form Games}{7}{subsubsection.1.2.2}%
-\contentsline {subsubsection}{\numberline {1.2.3}The Prisoner's Dilemma}{8}{subsubsection.1.2.3}%
-\contentsline {subsubsection}{\numberline {1.2.4}Dominance}{9}{subsubsection.1.2.4}%
-\contentsline {subsubsection}{\numberline {1.2.5}Iterated Elimination of Dominated Strategies (IEDS)}{9}{subsubsection.1.2.5}%
-\contentsline {subsubsection}{\numberline {1.2.6}Nash Equilibrium (Pure Strategies)}{10}{subsubsection.1.2.6}%
-\contentsline {subsubsection}{\numberline {1.2.7}Coordination Games}{11}{subsubsection.1.2.7}%
-\contentsline {subsubsection}{\numberline {1.2.8}Mixed Strategies}{11}{subsubsection.1.2.8}%
-\contentsline {subsubsection}{\numberline {1.2.9}Computing Mixed Strategy Nash Equilibria}{12}{subsubsection.1.2.9}%
-\contentsline {subsubsection}{\numberline {1.2.10}Maximin and Minimax Strategies}{13}{subsubsection.1.2.10}%
-\contentsline {subsubsection}{\numberline {1.2.11}Zero-Sum Games and the Minimax Theorem}{14}{subsubsection.1.2.11}%
-\contentsline {subsubsection}{\numberline {1.2.12}Other Solution Concepts}{15}{subsubsection.1.2.12}%
-\contentsline {subsubsection}{\numberline {1.2.13}Summary: Classic Games}{15}{subsubsection.1.2.13}%
-\contentsline {subsubsection}{\numberline {1.2.14}Worked Examples from Exercises}{16}{subsubsection.1.2.14}%
-\contentsline {subsubsection}{\numberline {1.2.15}Other Game Types (Preview)}{16}{subsubsection.1.2.15}%
-\contentsline {section}{\numberline {2}Week 2: Non-Cooperative Games (Part II)}{18}{section.2}%
-\contentsline {subsection}{\numberline {2.1}Topic Summary}{18}{subsection.2.1}%
-\contentsline {subsection}{\numberline {2.2}Overview + Core Concepts + Extended Theory}{19}{subsection.2.2}%
-\contentsline {subsubsection}{\numberline {2.2.1}Large Games and Representation}{19}{subsubsection.2.2.1}%
-\contentsline {subsubsection}{\numberline {2.2.2}Congestion Games}{19}{subsubsection.2.2.2}%
-\contentsline {subsubsection}{\numberline {2.2.3}Network Congestion (Routing) Games}{20}{subsubsection.2.2.3}%
-\contentsline {subsubsection}{\numberline {2.2.4}Applications of Congestion Games}{21}{subsubsection.2.2.4}%
-\contentsline {subsubsection}{\numberline {2.2.5}Best Response Dynamics}{22}{subsubsection.2.2.5}%
-\contentsline {subsubsection}{\numberline {2.2.6}Rosenthal's Potential Function}{23}{subsubsection.2.2.6}%
-\contentsline {subsubsection}{\numberline {2.2.7}Potential Games}{24}{subsubsection.2.2.7}%
-\contentsline {subsubsection}{\numberline {2.2.8}Price of Anarchy and Price of Stability}{24}{subsubsection.2.2.8}%
-\contentsline {subsubsection}{\numberline {2.2.9}Linear Congestion Games}{26}{subsubsection.2.2.9}%
-\contentsline {subsubsection}{\numberline {2.2.10}Relating Potential Function to Social Cost}{27}{subsubsection.2.2.10}%
-\contentsline {subsubsection}{\numberline {2.2.11}Worked Examples from Exercises}{28}{subsubsection.2.2.11}%
-\contentsline {subsubsection}{\numberline {2.2.12}Summary: Key Concepts}{30}{subsubsection.2.2.12}%
-\contentsline {section}{\numberline {3}Week 3: Repeated and Extensive-Form Games}{31}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Topic Summary}{31}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Overview + Core Concepts + Extended Theory}{32}{subsection.3.2}%
-\contentsline {subsubsection}{\numberline {3.2.1}From Normal Form to Extensive Form}{32}{subsubsection.3.2.1}%
-\contentsline {subsubsection}{\numberline {3.2.2}Perfect-Information Extensive Form Games}{32}{subsubsection.3.2.2}%
-\contentsline {subsubsection}{\numberline {3.2.3}Strategies in Perfect-Information Games}{33}{subsubsection.3.2.3}%
-\contentsline {subsubsection}{\numberline {3.2.4}Extensive Form vs.\ Normal Form}{34}{subsubsection.3.2.4}%
-\contentsline {subsubsection}{\numberline {3.2.5}Subgame-Perfect Equilibrium}{34}{subsubsection.3.2.5}%
-\contentsline {subsubsection}{\numberline {3.2.6}Computing SPE: Backward Induction}{35}{subsubsection.3.2.6}%
-\contentsline {subsubsection}{\numberline {3.2.7}Imperfect-Information Games}{35}{subsubsection.3.2.7}%
-\contentsline {subsubsection}{\numberline {3.2.8}Repeated Games}{36}{subsubsection.3.2.8}%
-\contentsline {subsubsection}{\numberline {3.2.9}Finitely Repeated Games}{37}{subsubsection.3.2.9}%
-\contentsline {subsubsection}{\numberline {3.2.10}Infinitely Repeated Games}{37}{subsubsection.3.2.10}%
-\contentsline {subsubsection}{\numberline {3.2.11}Sustaining Cooperation: Tit-for-Tat and Trigger}{37}{subsubsection.3.2.11}%
-\contentsline {subsubsection}{\numberline {3.2.12}Summary: Key Concepts}{39}{subsubsection.3.2.12}%
-\contentsline {section}{\numberline {4}Week 4: Cooperative Games (Part I)}{40}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Topic Summary}{40}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Overview + Core Concepts + Extended Theory}{41}{subsection.4.2}%
-\contentsline {subsubsection}{\numberline {4.2.1}From Non-Cooperative to Cooperative Games}{41}{subsubsection.4.2.1}%
-\contentsline {subsubsection}{\numberline {4.2.2}Transferable Utility Games: Formal Definition}{42}{subsubsection.4.2.2}%
-\contentsline {subsubsection}{\numberline {4.2.3}Important Game Types}{42}{subsubsection.4.2.3}%
-\contentsline {subsubsection}{\numberline {4.2.4}Special Classes of TU Games}{43}{subsubsection.4.2.4}%
-\contentsline {subsubsection}{\numberline {4.2.5}The Core}{44}{subsubsection.4.2.5}%
-\contentsline {subsubsection}{\numberline {4.2.6}Core of Special Game Classes}{45}{subsubsection.4.2.6}%
-\contentsline {subsubsection}{\numberline {4.2.7}Core Relaxations}{46}{subsubsection.4.2.7}%
-\contentsline {subsubsection}{\numberline {4.2.8}Shapley Value}{46}{subsubsection.4.2.8}%
-\contentsline {subsubsection}{\numberline {4.2.9}Shapley Value: Axiomatic Properties}{47}{subsubsection.4.2.9}%
-\contentsline {subsubsection}{\numberline {4.2.10}Banzhaf Index}{48}{subsubsection.4.2.10}%
-\contentsline {subsubsection}{\numberline {4.2.11}Summary: Key Concepts}{49}{subsubsection.4.2.11}%
-\contentsline {section}{\numberline {5}Week 5: Cooperative Games (Part II)}{50}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Topic Summary}{50}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}Overview + Core Concepts + Extended Theory}{51}{subsection.5.2}%
-\contentsline {subsubsection}{\numberline {5.2.1}Non-Transferable Utility Games}{51}{subsubsection.5.2.1}%
-\contentsline {subsubsection}{\numberline {5.2.2}Hedonic Games}{51}{subsubsection.5.2.2}%
-\contentsline {subsubsection}{\numberline {5.2.3}Compactly Representable Hedonic Games}{52}{subsubsection.5.2.3}%
-\contentsline {subsubsection}{\numberline {5.2.4}Stability Concepts for Hedonic Games}{52}{subsubsection.5.2.4}%
-\contentsline {subsubsection}{\numberline {5.2.5}Friends-and-Enemies Games}{54}{subsubsection.5.2.5}%
-\contentsline {subsubsection}{\numberline {5.2.6}The Stable Matching Problem}{54}{subsubsection.5.2.6}%
-\contentsline {subsubsection}{\numberline {5.2.7}The Stable Roommate Problem}{55}{subsubsection.5.2.7}%
-\contentsline {subsubsection}{\numberline {5.2.8}Gale-Shapley Deferred Acceptance Algorithm}{56}{subsubsection.5.2.8}%
-\contentsline {subsubsection}{\numberline {5.2.9}Optimality and Pessimality}{56}{subsubsection.5.2.9}%
-\contentsline {subsubsection}{\numberline {5.2.10}Strategyproofness}{57}{subsubsection.5.2.10}%
-\contentsline {subsubsection}{\numberline {5.2.11}Applications and Extensions}{57}{subsubsection.5.2.11}%
-\contentsline {subsubsection}{\numberline {5.2.12}Worked Examples from Exercises}{58}{subsubsection.5.2.12}%
-\contentsline {subsubsection}{\numberline {5.2.13}Summary: Key Concepts}{60}{subsubsection.5.2.13}%
+\contentsline {section}{Module Overview}{5}{section*.2}%
+\contentsline {section}{\numberline {1}Week 1: Non-Cooperative Games (Part I)}{7}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Topic Summary}{7}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Overview + Core Concepts + Extended Theory}{8}{subsection.1.2}%
+\contentsline {subsubsection}{\numberline {1.2.1}Multi-Agent Systems}{8}{subsubsection.1.2.1}%
+\contentsline {subsubsection}{\numberline {1.2.2}Normal Form Games}{8}{subsubsection.1.2.2}%
+\contentsline {subsubsection}{\numberline {1.2.3}The Prisoner's Dilemma}{9}{subsubsection.1.2.3}%
+\contentsline {subsubsection}{\numberline {1.2.4}Dominance}{10}{subsubsection.1.2.4}%
+\contentsline {subsubsection}{\numberline {1.2.5}Iterated Elimination of Dominated Strategies (IEDS)}{10}{subsubsection.1.2.5}%
+\contentsline {subsubsection}{\numberline {1.2.6}Nash Equilibrium (Pure Strategies)}{11}{subsubsection.1.2.6}%
+\contentsline {subsubsection}{\numberline {1.2.7}Coordination Games}{12}{subsubsection.1.2.7}%
+\contentsline {subsubsection}{\numberline {1.2.8}Mixed Strategies}{12}{subsubsection.1.2.8}%
+\contentsline {subsubsection}{\numberline {1.2.9}Computing Mixed Strategy Nash Equilibria}{13}{subsubsection.1.2.9}%
+\contentsline {subsubsection}{\numberline {1.2.10}Maximin and Minimax Strategies}{14}{subsubsection.1.2.10}%
+\contentsline {subsubsection}{\numberline {1.2.11}Zero-Sum Games and the Minimax Theorem}{15}{subsubsection.1.2.11}%
+\contentsline {subsubsection}{\numberline {1.2.12}Other Solution Concepts}{16}{subsubsection.1.2.12}%
+\contentsline {subsubsection}{\numberline {1.2.13}Summary: Classic Games}{16}{subsubsection.1.2.13}%
+\contentsline {subsubsection}{\numberline {1.2.14}Worked Examples from Exercises}{17}{subsubsection.1.2.14}%
+\contentsline {subsubsection}{\numberline {1.2.15}Other Game Types (Preview)}{17}{subsubsection.1.2.15}%
+\contentsline {section}{\numberline {2}Week 2: Non-Cooperative Games (Part II)}{19}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Topic Summary}{19}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Overview + Core Concepts + Extended Theory}{20}{subsection.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.1}Large Games and Representation}{20}{subsubsection.2.2.1}%
+\contentsline {subsubsection}{\numberline {2.2.2}Congestion Games}{20}{subsubsection.2.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.3}Network Congestion (Routing) Games}{21}{subsubsection.2.2.3}%
+\contentsline {subsubsection}{\numberline {2.2.4}Applications of Congestion Games}{22}{subsubsection.2.2.4}%
+\contentsline {subsubsection}{\numberline {2.2.5}Best Response Dynamics}{23}{subsubsection.2.2.5}%
+\contentsline {subsubsection}{\numberline {2.2.6}Rosenthal's Potential Function}{24}{subsubsection.2.2.6}%
+\contentsline {subsubsection}{\numberline {2.2.7}Potential Games}{25}{subsubsection.2.2.7}%
+\contentsline {subsubsection}{\numberline {2.2.8}Price of Anarchy and Price of Stability}{25}{subsubsection.2.2.8}%
+\contentsline {subsubsection}{\numberline {2.2.9}Linear Congestion Games}{27}{subsubsection.2.2.9}%
+\contentsline {subsubsection}{\numberline {2.2.10}Relating Potential Function to Social Cost}{28}{subsubsection.2.2.10}%
+\contentsline {subsubsection}{\numberline {2.2.11}Worked Examples from Exercises}{29}{subsubsection.2.2.11}%
+\contentsline {subsubsection}{\numberline {2.2.12}Summary: Key Concepts}{31}{subsubsection.2.2.12}%
+\contentsline {section}{\numberline {3}Week 3: Repeated and Extensive-Form Games}{32}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Topic Summary}{32}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Overview + Core Concepts + Extended Theory}{33}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}From Normal Form to Extensive Form}{33}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Perfect-Information Extensive Form Games}{33}{subsubsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.3}Strategies in Perfect-Information Games}{34}{subsubsection.3.2.3}%
+\contentsline {subsubsection}{\numberline {3.2.4}Extensive Form vs.\ Normal Form}{35}{subsubsection.3.2.4}%
+\contentsline {subsubsection}{\numberline {3.2.5}Subgame-Perfect Equilibrium}{35}{subsubsection.3.2.5}%
+\contentsline {subsubsection}{\numberline {3.2.6}Computing SPE: Backward Induction}{36}{subsubsection.3.2.6}%
+\contentsline {subsubsection}{\numberline {3.2.7}Imperfect-Information Games}{36}{subsubsection.3.2.7}%
+\contentsline {subsubsection}{\numberline {3.2.8}Repeated Games}{37}{subsubsection.3.2.8}%
+\contentsline {subsubsection}{\numberline {3.2.9}Finitely Repeated Games}{38}{subsubsection.3.2.9}%
+\contentsline {subsubsection}{\numberline {3.2.10}Infinitely Repeated Games}{38}{subsubsection.3.2.10}%
+\contentsline {subsubsection}{\numberline {3.2.11}Sustaining Cooperation: Tit-for-Tat and Trigger}{38}{subsubsection.3.2.11}%
+\contentsline {subsubsection}{\numberline {3.2.12}Summary: Key Concepts}{40}{subsubsection.3.2.12}%
+\contentsline {section}{\numberline {4}Week 4: Cooperative Games (Part I)}{41}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Topic Summary}{41}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Overview + Core Concepts + Extended Theory}{42}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}From Non-Cooperative to Cooperative Games}{42}{subsubsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2}Transferable Utility Games: Formal Definition}{43}{subsubsection.4.2.2}%
+\contentsline {subsubsection}{\numberline {4.2.3}Important Game Types}{43}{subsubsection.4.2.3}%
+\contentsline {subsubsection}{\numberline {4.2.4}Special Classes of TU Games}{44}{subsubsection.4.2.4}%
+\contentsline {subsubsection}{\numberline {4.2.5}The Core}{45}{subsubsection.4.2.5}%
+\contentsline {subsubsection}{\numberline {4.2.6}Core of Special Game Classes}{46}{subsubsection.4.2.6}%
+\contentsline {subsubsection}{\numberline {4.2.7}Core Relaxations}{47}{subsubsection.4.2.7}%
+\contentsline {subsubsection}{\numberline {4.2.8}Shapley Value}{47}{subsubsection.4.2.8}%
+\contentsline {subsubsection}{\numberline {4.2.9}Shapley Value: Axiomatic Properties}{48}{subsubsection.4.2.9}%
+\contentsline {subsubsection}{\numberline {4.2.10}Banzhaf Index}{49}{subsubsection.4.2.10}%
+\contentsline {subsubsection}{\numberline {4.2.11}Summary: Key Concepts}{50}{subsubsection.4.2.11}%
+\contentsline {section}{\numberline {5}Week 5: Cooperative Games (Part II)}{51}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Topic Summary}{51}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Overview + Core Concepts + Extended Theory}{52}{subsection.5.2}%
+\contentsline {subsubsection}{\numberline {5.2.1}Non-Transferable Utility Games}{52}{subsubsection.5.2.1}%
+\contentsline {subsubsection}{\numberline {5.2.2}Hedonic Games}{52}{subsubsection.5.2.2}%
+\contentsline {subsubsection}{\numberline {5.2.3}Compactly Representable Hedonic Games}{53}{subsubsection.5.2.3}%
+\contentsline {subsubsection}{\numberline {5.2.4}Stability Concepts for Hedonic Games}{53}{subsubsection.5.2.4}%
+\contentsline {subsubsection}{\numberline {5.2.5}Friends-and-Enemies Games}{55}{subsubsection.5.2.5}%
+\contentsline {subsubsection}{\numberline {5.2.6}The Stable Matching Problem}{55}{subsubsection.5.2.6}%
+\contentsline {subsubsection}{\numberline {5.2.7}The Stable Roommate Problem}{56}{subsubsection.5.2.7}%
+\contentsline {subsubsection}{\numberline {5.2.8}Gale-Shapley Deferred Acceptance Algorithm}{57}{subsubsection.5.2.8}%
+\contentsline {subsubsection}{\numberline {5.2.9}Optimality and Pessimality}{57}{subsubsection.5.2.9}%
+\contentsline {subsubsection}{\numberline {5.2.10}Strategyproofness}{58}{subsubsection.5.2.10}%
+\contentsline {subsubsection}{\numberline {5.2.11}Applications and Extensions}{58}{subsubsection.5.2.11}%
+\contentsline {subsubsection}{\numberline {5.2.12}Worked Examples from Exercises}{59}{subsubsection.5.2.12}%
+\contentsline {subsubsection}{\numberline {5.2.13}Summary: Key Concepts}{61}{subsubsection.5.2.13}%
+\contentsline {section}{\numberline {6}Week 7: Fair Division (Part I)}{62}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Topic Summary}{62}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Overview + Core Concepts + Extended Theory}{62}{subsection.6.2}%
+\contentsline {subsubsection}{\numberline {6.2.1}The Fair Division Setting}{63}{subsubsection.6.2.1}%
+\contentsline {subsubsection}{\numberline {6.2.2}Fairness Criteria}{63}{subsubsection.6.2.2}%
+\contentsline {subsubsection}{\numberline {6.2.3}Cake-Cutting Model}{64}{subsubsection.6.2.3}%
+\contentsline {subsubsection}{\numberline {6.2.4}Cut-and-Choose (2 Agents)}{64}{subsubsection.6.2.4}%
+\contentsline {subsubsection}{\numberline {6.2.5}Dubins--Spanier Moving Knife ($n$ Agents, Proportional)}{65}{subsubsection.6.2.5}%
+\contentsline {subsubsection}{\numberline {6.2.6}Even--Paz Algorithm ($n$ Agents, Proportional, Optimal)}{66}{subsubsection.6.2.6}%
+\contentsline {subsubsection}{\numberline {6.2.7}Selfridge--Conway Algorithm (3 Agents, Envy-Free)}{66}{subsubsection.6.2.7}%
+\contentsline {subsubsection}{\numberline {6.2.8}General Envy-Free Cake Cutting}{67}{subsubsection.6.2.8}%
+\contentsline {subsubsection}{\numberline {6.2.9}Worked Examples}{68}{subsubsection.6.2.9}%
