@@ -1,0 +1,457 @@
+% =============================================================================
+%                    WEEK 7: FAIR DIVISION (PART I)
+% =============================================================================
+\section{Week 7: Fair Division (Part I)}
+
+% -----------------------------------------------------------------------------
+%                              7.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Explain foundational concepts of fair division: \textbf{proportionality}, \textbf{envy-freeness}, and \textbf{efficiency}.
+  \item Model resource allocation problems as fair division scenarios using mathematical and algorithmic frameworks.
+  \item Apply classic algorithms (\textbf{Cut-and-Choose}, \textbf{Dubins--Spanier}, \textbf{Even--Paz}, \textbf{Selfridge--Conway}) to achieve fair outcomes for \textbf{divisible goods}.
+  \item Analyse the strengths and limitations of different fair division procedures (guarantees, complexity, strategic aspects).
+  \item Assess allocation solutions for fairness and optimality using formal properties and counterexamples.
+  \item Solve practical and theoretical problems involving cake-cutting, rent division, and item allocation.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+The first half of the module covered strategic interaction (non-cooperative and cooperative games). The second half turns to \textbf{collective decision-making}: fair division (Weeks~7--8), mechanism design, and voting. Fair division asks: how should one or more goods be divided among agents so that every agent considers the outcome \emph{fair}? This week focuses on \textbf{divisible goods} (cake-cutting); Week~8 treats \textbf{indivisible goods}.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Define proportionality and envy-freeness; prove one implies the other for $n=2$.
+  \item Trace the \textbf{Cut-and-Choose}, \textbf{Dubins--Spanier}, or \textbf{Even--Paz} algorithm on a concrete instance.
+  \item Show that a given algorithm is (or is not) proportional / envy-free / equitable.
+  \item Analyse variants of moving-knife procedures (e.g.\ ``$1/3$-envy-free'' bounds).
+  \item Compute the \textbf{price of proportionality} (welfare loss from requiring proportionality).
+  \item Determine whether a connected allocation with given value guarantees exists.
+  \item State complexity results under the \textbf{Robertson--Webb model}.
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+%           7.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Setting: agents, goods, divisible vs.\ indivisible
+  \item Fairness criteria: proportionality, envy-freeness, equitability, Pareto-optimality
+  \item Cake-cutting model and the Robertson--Webb computational model
+  \item Algorithm: Cut-and-Choose (2 agents, EF)
+  \item Algorithm: Dubins--Spanier moving knife ($n$ agents, proportional)
+  \item Algorithm: Even--Paz ($n$ agents, proportional, optimal complexity)
+  \item Algorithm: Selfridge--Conway (3 agents, EF)
+  \item General existence and complexity of envy-free algorithms
+  \item Worked examples and exam-style problems
+\end{enumerate}
+
+\bigseparator
+
+% --- Setting ---
+\subsubsection{The Fair Division Setting}
+
+\begin{defbox}[Fair Division Problem]
+A \textbf{fair division problem} consists of:
+\begin{itemize}
+  \item A finite set of \textbf{agents} $N = \{1, \ldots, n\}$.
+  \item A set of \textbf{goods} (resources/items) to be divided.
+  \item Each agent $i$ has a \textbf{valuation function} $v_i$ over (portions of) the goods.
+\end{itemize}
+An \textbf{allocation} assigns (parts of) the goods to agents.
+\end{defbox}
+
+\textbf{Types of goods:}
+\begin{itemize}
+  \item \textbf{Divisible} (e.g.\ cake): any fraction can be allocated. This week's focus.
+  \item \textbf{Indivisible} (e.g.\ a book): must be allocated whole. Week~8's focus.
+  \item \textbf{Mixed}: indivisible goods + money (a divisible resource).
+\end{itemize}
+
+We assume goods are \textbf{static} (properties don't change), available in \textbf{single units}, and \textbf{cannot be shared} between agents.
+
+\separator
+
+% --- Fairness Criteria ---
+\subsubsection{Fairness Criteria}
+
+Let $(A_1, \ldots, A_n)$ be an allocation to $n$ agents.
+
+\begin{defbox}[Proportionality]
+An allocation is \textbf{proportional} if every agent receives at least their ``fair share'':
+\[
+  v_i(A_i) \;\ge\; \frac{1}{n} \quad \text{for all } i \in N.
+\]
+(Valuations are normalised so $v_i(\text{whole cake}) = 1$.)
+\end{defbox}
+
+\begin{defbox}[Envy-Freeness (EF)]
+An allocation is \textbf{envy-free} if no agent prefers another agent's bundle:
+\[
+  v_i(A_i) \;\ge\; v_i(A_j) \quad \text{for all } i, j \in N.
+\]
+\end{defbox}
+
+\begin{thmbox}[EF $\Rightarrow$ Proportionality]
+For $n$ agents, envy-freeness implies proportionality.
+
+\textit{Proof.} If the allocation is EF, then $v_i(A_i) \ge v_i(A_j)$ for all $j$. Summing over all $j$:
+$n \cdot v_i(A_i) \ge \sum_{j=1}^{n} v_i(A_j) = v_i(\text{whole cake}) = 1$,
+so $v_i(A_i) \ge 1/n$. \qed
+\end{thmbox}
+
+\begin{thmbox}[Equivalence for $n=2$]
+For two agents, an allocation is envy-free \textbf{if and only if} it is proportional.
+
+\textit{Proof.} EF $\Rightarrow$ proportional: shown above. Proportional $\Rightarrow$ EF: if $v_i(A_i) \ge 1/2$, then $v_i(A_j) = 1 - v_i(A_i) \le 1/2 \le v_i(A_i)$. \qed
+\end{thmbox}
+
+\begin{tipbox}[Exam Tip]
+For $n \ge 3$, proportionality does \textbf{not} imply envy-freeness. Be ready to give a counterexample (e.g.\ Dubins--Spanier chocolate/sponge example below).
+\end{tipbox}
+
+\begin{defbox}[Equitability]
+An allocation is \textbf{equitable} if all agents derive the same value: $v_i(A_i) = v_j(A_j)$ for all $i, j$.
+\end{defbox}
+
+\begin{defbox}[Pareto Optimality]
+An allocation is \textbf{Pareto optimal} if there is no other allocation that makes some agent strictly better off without making any agent worse off.
+\end{defbox}
+
+\separator
+
+% --- Cake Cutting Model ---
+\subsubsection{Cake-Cutting Model}
+
+The ``cake'' is the interval $[0, 1]$. Each agent $i$ has a valuation $v_i$ that is:
+\begin{itemize}
+  \item \textbf{Non-negative}: $v_i(X) \ge 0$ for all $X \subseteq [0,1]$.
+  \item \textbf{Additive}: $v_i(X \cup Y) = v_i(X) + v_i(Y)$ for disjoint $X, Y$.
+  \item \textbf{Divisible}: for any $X$ with $v_i(X) > 0$ and $0 < \lambda < 1$, there exists $Y \subseteq X$ with $v_i(Y) = \lambda \cdot v_i(X)$.
+  \item \textbf{Normalised}: $v_i([0,1]) = 1$.
+\end{itemize}
+
+\begin{defbox}[Robertson--Webb Model]
+The complexity of cake-cutting algorithms is measured by the number of the following two queries:
+\begin{enumerate}
+  \item \textbf{Evaluation query} $\mathrm{Eval}_i(x, y)$: returns $v_i([x, y])$ --- ``How much does agent $i$ value piece $[x,y]$?''
+  \item \textbf{Cut query} $\mathrm{Cut}_i(x, \alpha)$: returns $y$ such that $v_i([x, y]) = \alpha$ --- ``Starting at $x$, where must we cut so agent $i$ values the piece at exactly $\alpha$?''
+\end{enumerate}
+\end{defbox}
+
+\separator
+
+% --- Cut and Choose ---
+\subsubsection{Cut-and-Choose (2 Agents)}
+
+\begin{thmbox}[Cut-and-Choose Algorithm]
+\begin{enumerate}
+  \item Player~1 cuts the cake into two pieces $X_1, X_2$ with $v_1(X_1) = v_1(X_2) = 1/2$.
+  \item Player~2 chooses the piece they prefer; Player~1 gets the other.
+\end{enumerate}
+\textbf{Properties:}
+\begin{itemize}
+  \item \textbf{Envy-free} (and hence proportional for $n=2$): Player~1 values both pieces equally, so never envies. Player~2 picks their favourite, so never envies.
+  \item \textbf{Not necessarily equitable.}
+  \item \textbf{Complexity}: 2 operations (1 cut + 1 eval) under Robertson--Webb.
+\end{itemize}
+\end{thmbox}
+
+\begin{exbox}[Inequity in Cut-and-Choose]
+Cake: left half chocolate, right half sponge. Agent~1 values only chocolate ($v_1 = 1$ for chocolate half). Agent~2 values everything uniformly.
+
+\textbf{Agent~1 cuts first:} Cuts chocolate half in two. Agent~2 picks one quarter (value $1/4$ to them) + the sponge side is not offered this way. Actually: Agent~1 must cut so \emph{they} value both halves equally. Since Agent~1 values only chocolate, they cut at the midpoint of the chocolate region, i.e.\ at $x = 1/4$. Pieces: $[0, 1/4]$ and $[1/4, 1]$.
+\begin{itemize}
+  \item Agent~2 picks $[1/4, 1]$ (value $3/4$). Agent~1 gets $[0, 1/4]$ (value $1/2$).
+\end{itemize}
+
+\textbf{Agent~2 cuts first:} Cuts at $x = 1/2$ (values both halves equally). Agent~1 picks $[0, 1/2]$ (value $1$ --- all the chocolate!). Agent~2 gets $[1/2, 1]$ (value $1/2$).
+
+Both are envy-free, but the values differ: the cutter advantage varies by who cuts.
+\end{exbox}
+
+\separator
+
+% --- Dubins-Spanier ---
+\subsubsection{Dubins--Spanier Moving Knife ($n$ Agents, Proportional)}
+
+\begin{thmbox}[Dubins--Spanier Algorithm]
+A referee moves a knife continuously from left to right across the cake.
+\begin{enumerate}
+  \item When any player finds the piece to the left of the knife worth $\ge 1/n$ to them, they shout ``Stop!''
+  \item That player receives the piece to the left, leaves the game. (Ties broken arbitrarily.)
+  \item Repeat with remaining $n-1$ players on the remaining cake.
+  \item The last player receives the remainder.
+\end{enumerate}
+\end{thmbox}
+
+\textbf{Proportionality proof:}
+\begin{itemize}
+  \item Any player who shouts ``Stop!'' receives a piece worth $\ge 1/n$ to them.
+  \item The last player never shouted (or tied): they valued each of the $n-1$ removed pieces at $\le 1/n$, so the remainder is worth $\ge 1 - (n-1)/n = 1/n$.
+\end{itemize}
+
+\textbf{Not envy-free for $n \ge 3$:}
+
+\begin{exbox}[Dubins--Spanier Fails Envy-Freeness]
+Cake: $[0, 1/2]$ chocolate, $[1/2, 1]$ sponge. Three agents:
+\begin{itemize}
+  \item Agent~1: values everything uniformly.
+  \item Agents~2,~3: value only sponge.
+\end{itemize}
+Agent~1 shouts at $1/3$, gets $[0, 1/3]$. Agents~2 and 3 both shout at $2/3$ (the point where sponge value reaches $1/3$). Say Agent~2 wins the tie, gets $[1/3, 2/3]$. Agent~3 gets $[2/3, 1]$.
+
+Agent~2 \textbf{envies} Agent~3: Agent~3 has more sponge ($[2/3, 1]$ is all sponge, while $[1/3, 2/3]$ is half chocolate, half sponge).
+\end{exbox}
+
+\textbf{Complexity:} $\Theta(n^2)$ under Robertson--Webb (at each round, $O(n)$ queries for $n$ rounds total: $n + (n-1) + \cdots + 2 = \Theta(n^2)$).
+
+\textbf{Also not necessarily equitable or Pareto-optimal.}
+
+\separator
+
+% --- Even-Paz ---
+\subsubsection{Even--Paz Algorithm ($n$ Agents, Proportional, Optimal)}
+
+\begin{thmbox}[Even--Paz Algorithm]
+Divide-and-conquer approach (described for $n = 2^k$; extends to arbitrary $n$):
+\begin{enumerate}
+  \item Let $[s, t]$ be the current piece. If $n = 1$: give it to the remaining agent.
+  \item Each agent $i$ marks a point $z_i$ on $[s, t]$ such that $v_i([s, z_i]) = \tfrac{1}{2} v_i([s, t])$.
+  \item Find the median mark $z^*$ that splits the agents into two halves.
+  \item Recursively allocate $[s, z^*]$ to the left half of agents and $[z^*, t]$ to the right half.
+\end{enumerate}
+\end{thmbox}
+
+\textbf{Proportionality proof (by induction):}
+\begin{itemize}
+  \item \textbf{Base case} ($k=0$): one agent gets the whole cake, valued at $1 \ge 1/n$.
+  \item \textbf{Inductive step}: at step $k$, agents sharing a piece value it at $\ge 1/2^k$. At step $k+1$, each agent is assigned to the half they value at $\ge \tfrac{1}{2} \cdot \tfrac{1}{2^k} = \tfrac{1}{2^{k+1}}$.
+  \item After $\log n$ steps: each agent's piece is valued at $\ge 1/2^{\log n} = 1/n$.
+\end{itemize}
+
+\textbf{Complexity:} $O(n \log n)$ under Robertson--Webb ($\log n$ levels, $O(n)$ queries per level).
+
+\begin{thmbox}[Optimality of Even--Paz]
+Any proportional cake-cutting algorithm requires $\Omega(n \log n)$ operations under the Robertson--Webb model. Hence Even--Paz is \textbf{optimal}.
+\end{thmbox}
+
+\begin{tipbox}[Exam Tip: Comparing Proportional Algorithms]
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Algorithm} & \textbf{Agents} & \textbf{Guarantee} & \textbf{Complexity} \\
+\midrule
+Cut-and-Choose & 2 & EF (+ prop.) & $O(1)$ \\
+Dubins--Spanier & $n$ & Proportional & $\Theta(n^2)$ \\
+Even--Paz & $n$ & Proportional & $\Theta(n \log n)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Dubins--Spanier is simpler but suboptimal in query complexity.
+\end{tipbox}
+
+\separator
+
+% --- Selfridge-Conway ---
+\subsubsection{Selfridge--Conway Algorithm (3 Agents, Envy-Free)}
+
+\begin{thmbox}[Selfridge--Conway Algorithm]
+Achieves \textbf{envy-free allocation for 3 agents} in a bounded number of steps.
+
+\textbf{Stage 0 --- Initial cut and trim:}
+\begin{enumerate}
+  \item Player~1 cuts the cake into 3 pieces they value equally (each worth $1/3$).
+  \item Player~2 examines the pieces. If the two largest (in Player~2's view) are not equal, Player~2 \textbf{trims} the largest so the two largest are tied.
+  \item The trimmings become \textbf{Cake~2}; the three pieces form \textbf{Cake~1}.
+\end{enumerate}
+
+\textbf{Stage 1 --- Allocate Cake~1:}
+\begin{enumerate}
+  \item Player~3 picks their favourite piece from Cake~1.
+  \item If Player~3 did \emph{not} take the trimmed piece $\Rightarrow$ Player~2 must take the trimmed piece.\\
+        If Player~3 \emph{did} take the trimmed piece $\Rightarrow$ Player~2 picks their favourite from the remaining two.
+  \item Player~1 gets the remaining piece.
+\end{enumerate}
+Let $T$ = the player (2 or 3) who got the trimmed piece; $T'$ = the other.
+
+\textbf{Stage 2 --- Allocate Cake~2 (the trimmings):}
+\begin{enumerate}
+  \item Player $T'$ cuts Cake~2 into 3 equal pieces (in their view).
+  \item Players choose in order: $T$, then Player~1, then $T'$.
+\end{enumerate}
+\end{thmbox}
+
+\textbf{Envy-freeness proof (per player, using additivity to argue on Cake~1 and Cake~2 separately):}
+
+\begin{itemize}
+  \item \textbf{Player $T'$}: On Cake~2, divided it equally $\Rightarrow$ EF. On Cake~1: if $T' = 3$, they chose first among all three pieces $\Rightarrow$ EF. If $T' = 2$, they trimmed so the two largest pieces are equal, and they got one of those $\Rightarrow$ EF.
+
+  \item \textbf{Player $T$}: On Cake~2, they choose first $\Rightarrow$ EF. On Cake~1, same argument as above.
+
+  \item \textbf{Player~1}: On Cake~1, they cut equally so every piece is worth $1/3$ $\Rightarrow$ EF (they didn't get the trimmed piece). On Cake~2: Player~1 doesn't envy $T'$ (Player~1 chose before $T'$). Player~1 doesn't envy $T$ because $T$ got the trimmed piece on Cake~1, which is worth $\le 1/3$ to Player~1; even if $T$ gets \emph{all} of Cake~2, $T$'s total $\le 1/3$, so Player~1's ``irrevocable advantage'' ensures no envy.
+\end{itemize}
+
+\separator
+
+% --- General EF results ---
+\subsubsection{General Envy-Free Cake Cutting}
+
+\begin{thmbox}[Existence (Brams--Taylor, 1995)]
+An envy-free cake-cutting algorithm exists for \textbf{any number of players} $n$ under the Robertson--Webb model. However, its complexity cannot be bounded as a function of $n$ alone (it depends on the valuation functions).
+\end{thmbox}
+
+\begin{thmbox}[Bounded Protocol (Aziz--Mackenzie, 2016)]
+A \textbf{bounded} envy-free algorithm exists for $n$ agents, but with extremely high complexity:
+\[
+  O\!\bigl(\underbrace{n^{n^{n^{\cdot^{\cdot^{\cdot^n}}}}}}_{5 \text{ levels}}\bigr).
+\]
+\end{thmbox}
+
+\begin{thmbox}[Lower Bound (Procaccia, 2009)]
+Any envy-free cake-cutting algorithm requires $\Omega(n^2)$ queries.
+\end{thmbox}
+
+\begin{tipbox}[Exam Tip: EF Complexity Summary]
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Agents} & \textbf{Algorithm} & \textbf{Complexity} \\
+\midrule
+$n = 2$ & Cut-and-Choose & $O(1)$ \\
+$n = 3$ & Selfridge--Conway & $O(1)$ (bounded) \\
+$n \ge 4$ & Aziz--Mackenzie & $O(n^{n^{n^{n^n}}})$ \\
+\midrule
+\multicolumn{2}{l}{\textbf{Lower bound (any $n$)}} & $\Omega(n^2)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+There is a large gap between the upper and lower bounds for $n \ge 4$.
+\end{tipbox}
+
+\bigseparator
+
+% --- Worked Examples ---
+\subsubsection{Worked Examples}
+
+\begin{exbox}[Example 1: Moving Knife Variant --- $1/3$-Envy-Freeness]
+\textbf{Problem (Exercise 1).} Consider a variant of the moving knife where agents shout ``Stop!'' when the left piece is worth exactly $1/3$. The piece goes to the shouting agent, and the process continues. Prove the resulting allocation is $1/3$-envy-free, i.e.\ $v_i(A_i) \ge v_i(A_j) - 1/3$ for all $i, j$.
+
+\textbf{Solution.}
+An agent who shouts ``Stop!'' receives a piece worth exactly $1/3$ to them. Any piece to the \emph{left} of theirs was cut when some other agent valued it at $1/3$; since the shouter waited, they value that earlier piece at $\le 1/3$. So no envy towards earlier agents.
+
+For pieces to the \emph{right}: an agent might value a later piece at up to $2/3$ (the entire remaining cake was worth $2/3$ when they shouted). So the maximum envy is $v_i(A_j) - v_i(A_i) \le 2/3 - 1/3 = 1/3$. Hence $v_i(A_i) \ge v_i(A_j) - 1/3$.
+
+For the last agent(s) who didn't shout: they valued each removed piece at $\le 1/3$, so the remainder is $\ge 1/3$, and the same bound applies.
+
+\textbf{Is $1/3$ tight?} Yes. Consider 2 agents, cake uniform. Agent~1 shouts at $1/3$, gets $[0, 1/3]$ (value $1/3$). Agent~2 gets $[1/3, 1]$ (value $2/3$). Agent~1 envies Agent~2 by exactly $2/3 - 1/3 = 1/3$.
+\end{exbox}
+
+\separator
+
+\begin{exbox}[Example 2: Connected Allocations]
+\textbf{Problem (Exercise 2).} Two agents, Alice and Bob.
+\begin{enumerate}
+  \item[(a)] Is there always a connected allocation with $v_A(A_A) \ge 0.6$ and $v_B(A_B) \ge 0.4$?
+  \item[(b)] What if we drop connectivity?
+  \item[(c)] Is there always a connected allocation where \emph{one} agent gets $\ge 0.6$ and the other $\ge 0.4$?
+\end{enumerate}
+
+\textbf{Solution.}
+
+\textbf{(a) No.} Counterexample: both agents value the cake uniformly. Any connected allocation is a split at some point $x$: one gets $[0,x]$, the other $[x,1]$. For Alice to get $\ge 0.6$, she needs a piece of length $\ge 0.6$, leaving Bob $\le 0.4$. But requiring $v_B \ge 0.4$ means Bob gets exactly $0.4$ only if $x = 0.6$ or $x = 0.4$. This works for uniform valuations. However, consider: Alice values $[0, 0.5]$ at $1$ and $[0.5, 1]$ at $0$; Bob values $[0, 0.5]$ at $1$ and $[0.5, 1]$ at $0$. A connected split at $x$: Alice gets $[0, x]$, Bob gets $[x, 1]$. For Alice $\ge 0.6$: need $x \ge 0.3$ (since $v_A([0,x]) = \min(2x, 1)$ for $x \le 0.5$; so $2x \ge 0.6 \Rightarrow x \ge 0.3$). For Bob $\ge 0.4$: need $v_B([x,1]) \ge 0.4$, i.e.\ $v_B([x, 0.5]) = 2(0.5 - x) \ge 0.4 \Rightarrow x \le 0.3$. So $x = 0.3$ works: Alice gets $0.6$, Bob gets $0.4$. This particular example works, but we can also swap who gets which side.
+
+Actually, for the specific question: with \emph{arbitrary} valuations and a \emph{fixed assignment} (Alice gets left, Bob gets right), it is \textbf{not always} possible. Consider Alice values $[0.5, 1]$ at $1$ and Bob values $[0, 0.5]$ at $1$. Any connected split $[0, x]$ to Alice, $[x, 1]$ to Bob: Alice needs $v_A([0,x]) \ge 0.6 \Rightarrow x > 0.5$, so Bob gets $[x, 1]$ with $x > 0.5$, but $v_B([x,1]) = 0 < 0.4$.
+
+\textbf{(b) Yes} (without connectivity). By a probabilistic / measure-theoretic argument, for any two additive valuations summing to $1$, we can find a (possibly disconnected) allocation giving each agent $\ge 1/2$, which exceeds both $0.6$ and $0.4$... Actually, we need Alice $\ge 0.6$ \emph{and} Bob $\ge 0.4$. Since EF gives each $\ge 1/2 > 0.4$, but Alice needs $0.6$. Without connectivity, we can partition $[0,1]$ into intervals and assign optimally. The answer is \textbf{yes}: we can always achieve $v_A \ge 0.6$ and $v_B \ge 0.4$ without connectivity (this follows from Lyapunov's theorem on the range of vector measures).
+
+\textbf{(c) Yes.} We can always find a connected allocation where one agent gets $\ge 0.6$ and the other gets $\ge 0.4$. Consider the function $f(x) = v_A([0, x])$: it is continuous, $f(0)=0$, $f(1)=1$. By IVT, there exists $x^*$ with $f(x^*) = 0.6$. Then $v_A([0, x^*]) = 0.6$ and $v_B([x^*, 1]) = 1 - v_B([0, x^*])$. If $v_B([x^*,1]) \ge 0.4$, we are done. Otherwise, $v_B([0, x^*]) > 0.6$, so assign Bob $[0, x^*]$ (value $> 0.6 \ge 0.4$). By IVT, find $y^*$ with $v_B([0, y^*]) = 0.4$; then give Alice $[y^*, 1]$ with $v_A([y^*, 1]) = 1 - v_A([0, y^*])$. Since $y^* < x^*$ (Bob reaches $0.4$ before Alice reaches $0.6$), $v_A([y^*,1]) > 0.4$. The flexibility of choosing \emph{which} agent gets which side guarantees existence.
+\end{exbox}
+
+\separator
+
+\begin{exbox}[Example 3: Price of Proportionality]
+\textbf{Problem (Exercise 3).} $n = k^2$ agents. Agents $1, \ldots, k$ have valuation uniform on $[(i-1)/k,\, i/k]$ and $0$ elsewhere (agent $i$ values subintervals of $[(i-1)/k, i/k]$ at $k$ times their length). The remaining $k^2 - k$ agents value the entire cake uniformly.
+
+\textbf{(a) Maximum social welfare.}
+Give each ``specialist'' agent $i$ (for $i = 1, \ldots, k$) their favourite interval $[(i-1)/k, i/k]$. Each gets value $1$. The remaining $k^2 - k$ uniform agents get nothing (value $0$).
+\[
+  \text{Max SW} = k \cdot 1 + (k^2 - k) \cdot 0 = k.
+\]
+
+\textbf{(b) Maximum social welfare under proportionality.}
+Each of the $n = k^2$ agents must get value $\ge 1/k^2$. The $k^2 - k$ uniform agents need total cake length $\ge (k^2 - k)/k^2 = 1 - 1/k$. This leaves $\le 1/k$ of the cake for the $k$ specialist agents combined. Since the specialists' favourite intervals are disjoint and each has length $1/k$, at most one specialist can get their full interval (impossible---we've only $1/k$ total). In fact, each specialist must get at least $1/k^2$ (proportional share) from their interval, contributing $k \cdot (1/k^2) = 1/k$ to specialist welfare at minimum.
+
+The uniform agents' total welfare from their share: each gets $\ge 1/k^2$ cake length, so total uniform welfare $\ge (k^2 - k)/k^2$. The specialists' welfare: each specialist $i$ gets some portion of $[(i-1)/k, i/k]$ with total specialist cake $\le 1/k$, so total specialist welfare $\le k \cdot 1 = k$ is not achievable.
+
+Optimally: give each specialist exactly $1/k^2$ of their interval (satisfying proportionality, value $= k \cdot 1/k^2 = 1/k$), and distribute the rest ($1 - k \cdot 1/k^2 = 1 - 1/k$) to uniform agents. Uniform agents sharing $1 - 1/k$ cake, each needing $\ge 1/k^2$, total uniform welfare $= 1 - 1/k$.
+
+\[
+  \text{Max proportional SW} = k \cdot \frac{1}{k} + (1 - \frac{1}{k}) = 1 + 1 - \frac{1}{k} = 2 - \frac{1}{k}.
+\]
+
+\textbf{Price of proportionality} $= k / (2 - 1/k) = k^2 / (2k - 1) \approx k/2$ for large $k$, i.e.\ $\approx \sqrt{n}/2$.
+\end{exbox}
+
+\separator
+
+\begin{exbox}[Example 4: Cut-and-Choose Trace]
+\textbf{Problem.} Cake: $[0, 1]$, left half strawberry, right half vanilla. Agent~A values strawberry at $0.8$, vanilla at $0.2$. Agent~B values both equally. Agent~A cuts. Where do they cut, and what does each agent get?
+
+\textbf{Solution.} Agent~A wants two pieces of equal value ($0.5$ each). Strawberry density for A: $0.8/0.5 = 1.6$ per unit length on $[0, 0.5]$; vanilla density: $0.2/0.5 = 0.4$ on $[0.5, 1]$.
+
+Cut at point $x$. Value of $[0, x]$ to A:
+\begin{itemize}
+  \item If $x \le 0.5$: $v_A = 1.6x$. Set $= 0.5$: $x = 5/16 = 0.3125$.
+\end{itemize}
+So A cuts at $x = 0.3125$. Piece~1: $[0, 0.3125]$, Piece~2: $[0.3125, 1]$.
+
+Agent~B (uniform): $v_B(\text{Piece 1}) = 0.3125$, $v_B(\text{Piece 2}) = 0.6875$. B picks Piece~2.
+
+\textbf{Result:} A gets $[0, 0.3125]$ (value $0.5$), B gets $[0.3125, 1]$ (value $0.6875$). Envy-free. Not equitable.
+\end{exbox}
+
+\separator
+
+\begin{exbox}[Example 5: Even--Paz Trace]
+\textbf{Problem.} Four agents with the following valuations on $[0,1]$: Agent~1 uniform, Agent~2 values $[0, 0.5]$ at $1$, Agent~3 values $[0.5, 1]$ at $1$, Agent~4 uniform. Run Even--Paz.
+
+\textbf{Solution.} Each agent marks the midpoint of their value on $[0, 1]$:
+\begin{itemize}
+  \item Agent~1: $z_1 = 0.5$ (uniform $\Rightarrow$ midpoint by length).
+  \item Agent~2: $z_2 = 0.25$ ($v_2([0, 0.25]) = 0.5$).
+  \item Agent~3: $z_3 = 0.75$ ($v_3([0.5, 0.75]) = 0.5$, but need $v_3([0, z_3]) = 0.5$; since $v_3([0, 0.5]) = 0$, need $v_3([0.5, z_3]) = 0.5 \Rightarrow z_3 = 0.75$).
+  \item Agent~4: $z_4 = 0.5$.
+\end{itemize}
+Sorted marks: $0.25, 0.5, 0.5, 0.75$. Median split $z^* = 0.5$. Left group (marks $\le 0.5$): Agents~$\{2, 1, 4\}$---but we need exactly 2 per side. Take the two smallest marks: Agents~2 and 1 go left on $[0, 0.5]$; Agents~4 and 3 go right on $[0.5, 1]$.
+
+Recurse on each half with 2 agents each (essentially Cut-and-Choose). Each agent ends up with $\ge 1/4$ of total value.
+\end{exbox}
+
+\separator
+
+\begin{exbox}[Example 6: Selfridge--Conway Trace]
+\textbf{Problem.} Three agents. Agent~1 values the cake uniformly. Agent~2 values $[0, 0.5]$ at $0.8$ and $[0.5, 1]$ at $0.2$. Agent~3 values $[0, 0.5]$ at $0.3$ and $[0.5, 1]$ at $0.7$.
+
+\textbf{Stage 0:} Agent~1 cuts into three equal pieces: $[0, 1/3], [1/3, 2/3], [2/3, 1]$, each worth $1/3$ to Agent~1.
+
+Agent~2's valuations: $v_2([0, 1/3]) = 0.8 \cdot (2/3) = 0.533$, $v_2([1/3, 1/2]) = 0.8 \cdot (1/3) = 0.267$, so $v_2([1/3, 2/3]) = 0.267 + 0.2 \cdot (1/6) = 0.267 + 0.033 = 0.3$, $v_2([2/3, 1]) = 0.2 \cdot (1/3)/0.5 = 0.133$. Largest piece for Agent~2: $[0, 1/3]$ at $0.533$, second largest: $[1/3, 2/3]$ at $0.3$.
+
+Agent~2 trims $[0, 1/3]$ to match $0.3$. The trimming (Cake~2) has value $0.533 - 0.3 = 0.233$ to Agent~2.
+
+\textbf{Stage 1:} Agent~3 picks their favourite from the three Cake~1 pieces. Then allocation proceeds per the algorithm. \textbf{Stage 2:} Cake~2 divided by $T'$, chosen in order $T, 1, T'$. Result is envy-free.
+\end{exbox}
