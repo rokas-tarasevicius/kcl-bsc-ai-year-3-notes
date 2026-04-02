@@ -1,0 +1,467 @@
+% =============================================================================
+%                    WEEK 9: MECHANISM DESIGN
+% =============================================================================
+\section{Week 9: Mechanism Design}
+
+% -----------------------------------------------------------------------------
+%                              9.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Describe core concepts of \textbf{mechanism design}: social choice functions, incentive compatibility, and strategyproofness.
+  \item Define the four classic \textbf{single-good auction formats} (English, Dutch, first-price sealed-bid, Vickrey) and their strategic equivalences.
+  \item Model auctions as \textbf{Bayesian games} and compute Bayes-Nash equilibrium bid functions.
+  \item Prove that truthful bidding is a \textbf{weakly dominant strategy} in the Vickrey (second-price) auction.
+  \item State and apply the \textbf{Revenue Equivalence Theorem}.
+  \item Analyse \textbf{collusion}, \textbf{cheating auctioneers}, and the \textbf{winner's curse}.
+  \item Define the \textbf{VCG mechanism} for combinatorial auctions: allocation rule, transfer rule, and key properties.
+  \item Describe \textbf{multi-unit auctions}, \textbf{combinatorial auctions}, and \textbf{continuous double auctions}.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+Weeks~7--8 studied fair division, where a planner distributes resources without payments. This week moves to \textbf{mechanism design}: engineering rules so that self-interested agents, each maximising their own utility, produce \textbf{desirable outcomes} (efficiency, revenue, truthfulness). The primary application is \textbf{auctions}---protocols for allocating goods among strategic bidders with private valuations. The crown jewel is the \textbf{VCG mechanism}, which achieves efficiency and truthfulness in general combinatorial settings.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Fill in the payoff matrix for a \textbf{first-price} or \textbf{second-price} auction with given valuations and find Nash equilibria.
+  \item Prove that \textbf{truthful bidding is weakly dominant} in the Vickrey auction.
+  \item Compute the \textbf{BNE bid function} $s_i(\theta_i) = \frac{n-1}{n}\theta_i$ for the first-price auction with uniform priors.
+  \item State and explain the \textbf{Revenue Equivalence Theorem}.
+  \item Compute \textbf{VCG allocations and payments} for multi-item or multi-unit settings.
+  \item Analyse \textbf{collusion}: optimal bids and surplus for colluding bidders in a second-price auction.
+  \item Determine the \textbf{equilibrium price} in a continuous double auction.
+  \item Check whether a VCG outcome is \textbf{individually rational} and \textbf{weakly budget-balanced}.
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+%           9.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Mechanism design: motivation and framework
+  \item Single-good auction formats (English, Dutch, first-price, Vickrey)
+  \item Bayesian games and Bayes-Nash equilibrium
+  \item First-price auction: BNE analysis
+  \item Vickrey auction: strategyproofness
+  \item Strategic equivalences and Revenue Equivalence Theorem
+  \item Collusion, cheating auctioneers, winner's curse
+  \item Multi-unit and combinatorial auctions
+  \item VCG mechanism
+  \item Continuous double auctions
+\end{enumerate}
+
+\bigseparator
+
+% --- Mechanism design intro ---
+\subsubsection{Mechanism Design: Motivation}
+
+\begin{defbox}[Mechanism Design]
+\textbf{Mechanism design} is the ``inverse'' of game theory: instead of analysing a given game, we \textbf{design the rules} (action spaces, information flows, payoff rules) so that certain objectives are achieved at equilibrium when agents maximise their own utility.
+
+Objectives include: \textbf{efficiency} (maximise total welfare), \textbf{revenue maximisation}, \textbf{truthfulness} (incentive compatibility), \textbf{fairness}.
+\end{defbox}
+
+Examples:
+\begin{itemize}
+  \item \textbf{Elections:} design voting protocols so that the best candidate wins or dissatisfaction is minimised.
+  \item \textbf{Marketplaces:} design auctions to maximise efficiency, seller profit, or truthful reporting.
+\end{itemize}
+
+\separator
+
+% --- Auctions ---
+\subsubsection{Single-Good Auctions}
+
+\begin{defbox}[Auction Setting]
+One indivisible item, one seller, $n$ buyers. Each buyer $i$ has a \textbf{private valuation} $\theta_i$ (willingness to pay). Utility is \textbf{quasi-linear}:
+\[
+  u_i = \begin{cases} \theta_i - p_i & \text{if } i \text{ wins and pays } p_i, \\ 0 & \text{otherwise.} \end{cases}
+\]
+Bidders do not know others' valuations but have beliefs described by a distribution $F$ (common knowledge). We assume no collusion (for now) and risk-neutral bidders.
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{llll}
+\toprule
+\textbf{Format} & \textbf{Type} & \textbf{Winner} & \textbf{Price paid} \\
+\midrule
+English         & Open, ascending  & Last remaining bidder & Own (final) bid \\
+Dutch           & Open, descending & First to bid          & Own bid \\
+First-price sealed-bid & Sealed & Highest bidder & Own bid \\
+Vickrey (2nd-price)    & Sealed & Highest bidder & Second-highest bid \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Strategic Equivalences]
+\begin{itemize}
+  \item \textbf{Dutch $\equiv$ First-price sealed-bid:} same strategy space and BNE (both: trade off winning probability vs.\ payment). Dutch is sometimes called the ``open first-price auction.''
+  \item \textbf{English $\approx$ Vickrey:} both result in the highest-valued bidder winning and paying $\approx$ the second-highest valuation. English is sometimes called the ``open second-price auction.''
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+% --- Bayesian games ---
+\subsubsection{Bayesian Games and Bayes-Nash Equilibrium}
+
+\begin{defbox}[Bayesian Game]
+A tuple $(N, (A_i, \Theta_i, u_i)_{i \in N}, \Pr)$ where:
+\begin{itemize}
+  \item $N$: set of agents.
+  \item $A_i$: action set of player $i$.
+  \item $\Theta_i$: \textbf{type space} of player $i$; player $i$ knows $\theta_i \in \Theta_i$ but not $\theta_{-i}$.
+  \item $\Pr: \Theta_1 \times \cdots \times \Theta_n \to [0,1]$: \textbf{common prior} over type profiles.
+  \item $u_i: (\times_{j} A_j) \times \Theta_i \to \mathbb{R}$: utility function.
+\end{itemize}
+A \textbf{strategy} is a mapping $s_i: \Theta_i \to A_i$.
+\end{defbox}
+
+\begin{defbox}[Bayes-Nash Equilibrium (BNE)]
+A strategy profile $s = (s_1, \ldots, s_n)$ is a \textbf{BNE} if for every $i$, every $\theta_i$, and every $a_i \in A_i$:
+\[
+  \sum_{\theta_{-i}} \Pr(\theta_{-i})\, u_i(\theta_i, s_i(\theta_i), s_{-i}(\theta_{-i})) \;\geq\; \sum_{\theta_{-i}} \Pr(\theta_{-i})\, u_i(\theta_i, a_i, s_{-i}(\theta_{-i})).
+\]
+No player can improve expected utility by unilateral deviation, given beliefs about others' types.
+\end{defbox}
+
+\separator
+
+% --- First-price BNE ---
+\subsubsection{First-Price Sealed-Bid Auction: BNE}
+
+\begin{thmbox}[BNE for First-Price Auction (Uniform Prior)]
+Assume $n$ bidders with types $\theta_i \overset{\text{i.i.d.}}{\sim} U[0,1]$. The symmetric BNE strategy is:
+\[
+  s_i(\theta_i) = \frac{n-1}{n}\,\theta_i.
+\]
+\end{thmbox}
+
+Key properties:
+\begin{itemize}
+  \item Bidders \textbf{shade their bid} below their true value. Shading decreases as $n \to \infty$.
+  \item For $n = 2$: bid $\frac{1}{2}\theta_i$. For $n = 10$: bid $\frac{9}{10}\theta_i$.
+  \item Strategy is \textbf{monotonically increasing} $\Rightarrow$ highest-valued bidder wins $\Rightarrow$ auction is \textbf{efficient}.
+\end{itemize}
+
+\begin{exbox}[First-Price Auction Payoff Matrix]
+Two players: $\theta_1 = 4$, $\theta_2 = 2$. Integer bids $b_i \in \{0,1,2,3,4\}$, ties broken randomly.
+
+\begin{center}
+\small
+\begin{tabular}{c|ccccc}
+$\theta_1{=}4 \backslash \theta_2{=}2$ & $b_2{=}0$ & $b_2{=}1$ & $b_2{=}2$ & $b_2{=}3$ & $b_2{=}4$ \\
+\hline
+$b_1{=}0$ & 2, 1   & 0, 1     & 0, 0     & 0, $-1$  & 0, $-2$ \\
+$b_1{=}1$ & 3, 0   & 1.5, 0.5 & 0, 0     & 0, $-1$  & 0, $-2$ \\
+$b_1{=}2$ & 2, 0   & 2, 0     & 1, 0     & 0, $-1$  & 0, $-2$ \\
+$b_1{=}3$ & 1, 0   & 1, 0     & 1, 0     & 0.5, $-0.5$ & 0, $-2$ \\
+$b_1{=}4$ & 0, 0   & 0, 0     & 0, 0     & 0, 0     & 0, $-1$ \\
+\end{tabular}
+\end{center}
+
+Note: this matrix assumes \emph{known} types. In practice, types are private $\Rightarrow$ need Bayesian game model.
+\end{exbox}
+
+\separator
+
+% --- Vickrey auction ---
+\subsubsection{Vickrey (Second-Price) Auction: Strategyproofness}
+
+\begin{thmbox}[Truthful Bidding is Weakly Dominant in Vickrey Auction]
+In the second-price sealed-bid auction, bidding $s_i(\theta_i) = \theta_i$ is a \textbf{weakly dominant strategy} for every bidder.
+\end{thmbox}
+
+\textbf{Proof.} Suppose bidder $i$ bids truthfully ($b_i = \theta_i$). Let $p = \max_{j \neq i} b_j$ (second-highest bid).
+
+\emph{Case 1: $i$ wins ($\theta_i > p$).} Utility $= \theta_i - p > 0$.
+\begin{itemize}
+  \item Bidding \emph{lower}: same payment $p$ if still winning, but risks losing (utility drops to 0).
+  \item Bidding \emph{higher}: no change (still wins at price $p$).
+\end{itemize}
+
+\emph{Case 2: $i$ loses ($\theta_i < p$).} Utility $= 0$.
+\begin{itemize}
+  \item Bidding \emph{lower}: no change (still loses).
+  \item Bidding \emph{higher}: might win, but then pays $p > \theta_i$ $\Rightarrow$ negative utility.
+\end{itemize}
+
+In both cases, no deviation improves utility $\Rightarrow$ truthful bidding is weakly dominant. \qed
+
+\begin{tipbox}[Why Vickrey Works]
+The key insight: the \textbf{payment does not depend on the winner's bid}. Since $i$'s bid affects only whether they win (not what they pay), bidding truthfully maximises the chance of winning exactly when winning is profitable ($\theta_i > p$).
+\end{tipbox}
+
+\separator
+
+% --- Revenue Equivalence ---
+\subsubsection{Revenue Equivalence Theorem}
+
+\begin{thmbox}[Revenue Equivalence Theorem]
+Suppose valuations are drawn i.i.d.\ from a continuous distribution on $[L, H]$ and agents are risk-neutral. Then any two auctions that:
+\begin{enumerate}
+  \item In equilibrium, always allocate the item to the \textbf{highest-valued} bidder, and
+  \item give a bidder with valuation $L$ an expected utility of $0$,
+\end{enumerate}
+yield the same \textbf{expected revenue} to the auctioneer.
+\end{thmbox}
+
+\textbf{Implication:} All four standard auctions (English, Dutch, first-price, Vickrey) are \textbf{revenue-equivalent} under these assumptions.
+
+\separator
+
+% --- Collusion ---
+\subsubsection{Collusion}
+
+\begin{defbox}[Collusion]
+A group of bidders coordinates bids to reduce the price paid. The colluders split the surplus.
+\end{defbox}
+
+\textbf{Vulnerability by auction type:}
+\begin{itemize}
+  \item \textbf{English auction: vulnerable.} A \term{bidding ring} agrees not to bid against each other. Defection is visible, so the highest-valued ring member can retaliate by outbidding.
+  \item \textbf{Dutch auction: resistant.} A ring member can secretly defect (others cannot respond before the item is sold).
+\end{itemize}
+
+\begin{exbox}[Collusion in Second-Price Auction (2 bidders only)]
+Bidders 1, 2 with $\theta_1 > \theta_2$. Optimal collusion: bidder 2 bids 0, bidder 1 bids any $b_1 > 0$.
+
+\textbf{Honest payoff:} $\theta_1 - \theta_2$ (bidder 1 wins, pays $\theta_2$). \textbf{Collusion payoff:} $\theta_1$ (bidder 1 wins, pays 0).
+
+Extra surplus $= \theta_2$, split evenly: each gets $\frac{\theta_2}{2}$.
+\end{exbox}
+
+\begin{exbox}[Collusion with a Third Player]
+Bidders 1, 2 collude ($\theta_1 > \theta_2$); bidder 3 draws $\theta_3 \sim U[0,1]$ independently.
+
+Optimal strategy: $b_2 = 0$, $b_1 = \theta_1$ (play truthfully against bidder 3).
+
+\textbf{Honest expected payoff} (bidder 1): $\displaystyle\int_0^{\theta_2}(\theta_1 - \theta_2)\,d\theta_3 + \int_{\theta_2}^{\theta_1}(\theta_1 - \theta_3)\,d\theta_3 = \frac{\theta_1^2 - \theta_2^2}{2}$.
+
+\textbf{Collusion expected payoff} (bidder 1): $\displaystyle\int_0^{\theta_1}(\theta_1 - \theta_3)\,d\theta_3 = \frac{\theta_1^2}{2}$.
+
+Extra surplus $= \frac{\theta_2^2}{2}$; each colluder gets $\frac{\theta_2^2}{4}$.
+\end{exbox}
+
+\separator
+
+% --- Winner's curse ---
+\subsubsection{Winner's Curse}
+
+\begin{defbox}[Winner's Curse]
+In \textbf{common-value auctions} (all bidders value the item equally, but estimate it with uncertainty), the winner is the bidder with the \textbf{highest estimate}---likely an \textbf{overestimate}. Formally:
+\[
+  \mathbb{E}[\text{value} - \text{price} \mid \text{win}] < 0.
+\]
+The curse is more severe with \textbf{more bidders} (the $n$-th order statistic increases with $n$).
+\end{defbox}
+
+\textbf{Mitigation:} Savvy bidders \textbf{shade their bids} downward, conditioning on the event of winning. The Revenue Equivalence Theorem implies rational bidders need never actually overpay.
+
+\textbf{Real-world examples:} offshore oil field auctions (1950s--70s), spectrum auctions, IPOs, pay-per-click advertising.
+
+\separator
+
+% --- Cheating auctioneers ---
+\subsubsection{Cheating Auctioneers}
+
+\begin{itemize}
+  \item \textbf{Vickrey auction:} auctioneer can lie about the second-highest bid (it is unverifiable).
+  \item \textbf{English auction:} auctioneer can use \textbf{shill bidders} (fake bids to inflate the price).
+\end{itemize}
+
+\separator
+
+% --- Multi-unit auctions ---
+\subsubsection{Multi-Unit and Combinatorial Auctions}
+
+\begin{defbox}[Multi-Unit Auction]
+$k$ \textbf{identical} copies of a good. Payment rules:
+\begin{itemize}
+  \item \textbf{Discriminatory pricing (pay-your-bid):} each winner pays their own bid.
+  \item \textbf{Uniform pricing:} all winners pay the same price (highest losing bid or lowest winning bid).
+\end{itemize}
+Bids can be \textbf{all-or-nothing} (fixed quantity) or \textbf{divisible} (accept fewer units at same per-unit price).
+\end{defbox}
+
+\begin{defbox}[Single-Unit Demand: $(k+1)$-st Price Auction]
+If each bidder wants at most 1 unit: sell to the $k$ highest bidders, all paying the $(k+1)$-st highest bid. This is a special case of the \textbf{VCG mechanism} and is \textbf{efficient} and \textbf{dominant-strategy truthful}.
+\end{defbox}
+
+\begin{defbox}[Combinatorial Auction]
+Multiple \textbf{heterogeneous} goods. Bidders' valuations depend on which \emph{subset} of goods they receive (complementarities and substitutes). Examples: spectrum auctions, energy markets, procurement.
+\end{defbox}
+
+\separator
+
+% --- VCG ---
+\subsubsection{Vickrey-Clarke-Groves (VCG) Mechanism}
+
+\begin{defbox}[VCG Mechanism]
+Given $n$ bidders, $m$ goods, type space $\Theta$, valuation $v: 2^G \times \Theta \to \mathbb{R}$, and feasible allocations $X \subseteq (2^G)^n$:
+
+\textbf{Allocation rule} (efficient):
+\[
+  f(\hat{\theta}_1, \ldots, \hat{\theta}_n) \in \arg\max_{x \in X} \sum_{i \in N} v(x_i, \hat{\theta}_i).
+\]
+
+\textbf{Transfer rule} (externality payment):
+\[
+  t_i(\hat{\theta}) = \underbrace{\sum_{j \neq i} v\bigl(f(\hat{\theta})_j,\, \hat{\theta}_j\bigr)}_{\text{others' value when } i \text{ present}} - \underbrace{\max_{x \in X} \sum_{j \neq i} v(x_j, \hat{\theta}_j)}_{\text{others' best value without } i}.
+\]
+
+Agent $i$'s \textbf{payment} is $-t_i$: the \textbf{harm} $i$'s presence causes to other agents.
+\end{defbox}
+
+\begin{thmbox}[VCG Properties]
+The VCG mechanism is:
+\begin{enumerate}
+  \item \textbf{Efficient:} maximises total welfare.
+  \item \textbf{Dominant-strategy truthful:} reporting $\hat{\theta}_i = \theta_i$ is weakly dominant.
+  \item \textbf{Individually rational:} $u_i \geq 0$ for all $i$.
+  \item \textbf{Weakly budget-balanced:} total payments $\geq 0$ (mechanism never runs a deficit). Note: VCG is \emph{not} strongly budget-balanced (may have surplus).
+\end{enumerate}
+\end{thmbox}
+
+\begin{tipbox}[VCG Reduces to Known Auctions]
+\begin{itemize}
+  \item \textbf{Single item:} VCG $=$ Vickrey (second-price) auction.
+  \item \textbf{$k$ identical items, unit demand:} VCG $=$ $(k+1)$-st price auction.
+\end{itemize}
+\end{tipbox}
+
+\separator
+
+% --- Double auctions ---
+\subsubsection{Continuous Double Auctions (CDA)}
+
+\begin{defbox}[Continuous Double Auction]
+Multiple buyers and sellers trade units of the same good. Each buyer has a \textbf{limit price} (max willing to pay); each seller has a \textbf{limit price} (min willing to accept). Agents bid at their own pace.
+
+The \textbf{equilibrium price} is found where the \textbf{demand curve} (buyers' limit prices, sorted descending) crosses the \textbf{supply curve} (sellers' limit prices, sorted ascending). Trades occur between buyers and sellers whose limit prices are compatible at the equilibrium price.
+\end{defbox}
+
+\separator
+
+% --- Worked examples ---
+\subsubsection{Worked Examples from Exercises}
+
+\begin{exbox}[VCG for 5 Identical Items, 7 Buyers (Exercise 1)]
+\textbf{Setting:} 5 identical items, 7 buyers (unit demand). Valuations: $v_1 = 70$, $v_2 = 30$, $v_3 = 27$, $v_4 = 25$, $v_5 = 12$, $v_6 = 5$, $v_7 = 2$.
+
+\textbf{(a) Assignment:} Efficient allocation gives items to the 5 highest-valued buyers: \textbf{buyers 1--5}.
+
+\textbf{(b) Transfers/payments:} This is a $(k{+}1)$-st price auction. All winners pay the 6th-highest bid: $\mathbf{p = v_6 = 5}$.
+
+Alternatively, computing VCG transfers directly: for each winner $i$, the payment equals the externality---the value the 6th bidder would have received without $i$'s presence. Since each winner displaces buyer 6 (the highest loser), each winner pays $v_6 = 5$.
+
+Payments: buyers 1--5 each pay \textbf{5}. Total revenue = $5 \times 5 = 25$.
+
+\textbf{(c) General rule:} With $k$ identical items and $n$ bidders (unit demand), VCG allocates to the $k$ highest bidders, each paying the $(k{+}1)$-st valuation (the highest losing bid). This is dominant-strategy truthful and efficient.
+\end{exbox}
+
+\begin{exbox}[VCG for Two Heterogeneous Items (Exercise 2)]
+\textbf{Setting:} Items $\{A, B\}$, buyers $\{1, 2, 3\}$. Valuations:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+       & $\emptyset$ & $\{A\}$ & $\{B\}$ & $\{A,B\}$ \\
+\midrule
+Buyer 1 & 0 & 5  & 3  & 23 \\
+Buyer 2 & 0 & 3  & 12 & 15 \\
+Buyer 3 & 0 & 15 & 5  & 18 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{(a) Efficient allocation:} Enumerate assignments and find the one maximising total value:
+\begin{itemize}
+  \item Give $\{A,B\}$ to buyer 1: total $= 23 + 0 + 0 = 23$.
+  \item Give $A$ to buyer 3, $B$ to buyer 2: total $= 0 + 12 + 15 = 27$.
+  \item Give $\{A,B\}$ to buyer 3: total $= 0 + 0 + 18 = 18$.
+  \item Give $A$ to buyer 1, $B$ to buyer 2: total $= 5 + 12 + 0 = 17$.
+  \item (Other combinations yield $\leq 27$.)
+\end{itemize}
+
+\textbf{Optimal:} $A \to$ buyer 3, $B \to$ buyer 2. Total welfare $= 27$.
+
+\textbf{VCG payments:} For each buyer, payment $= -t_i = \text{(others' best without } i\text{)} - \text{(others' value with } i\text{)}$.
+
+\emph{Buyer 2:} With buyer 2: others get $0 + 15 = 15$. Without buyer 2: best is $\{A,B\} \to$ buyer 1 giving $23$, or $A \to 3, B \to 1$ giving $3 + 15 = 18$, or $\{A,B\} \to 3$ giving $18$. Best without 2 $= 23$. Payment $= 23 - 15 = 8$.
+
+\emph{Buyer 3:} With buyer 3: others get $0 + 12 = 12$. Without buyer 3: best is $\{A,B\} \to 1$ giving $23$, or $A \to 1, B \to 2$ giving $5 + 12 = 17$. Best without 3 $= 23$. Payment $= 23 - 12 = 11$.
+
+\emph{Buyer 1:} Gets nothing in optimal allocation. Payment $= 0$.
+
+\textbf{(b) Buyer 1's objection:} Buyer 1 values $\{A,B\}$ at 23, but gets nothing (total value of giving both to buyer 1 is only 23 vs.\ 27 for the optimal split). Despite having the highest individual bundle value, the efficient allocation serves the group better by splitting items.
+
+\textbf{(c) Weakly budget-balanced?} Total payments $= 0 + 8 + 11 = 19 \geq 0$. Yes, the mechanism collects a surplus. \checkmark
+
+\textbf{(d) Individually rational?} Buyer 1: $u_1 = 0 \geq 0$ \checkmark. Buyer 2: $u_2 = 12 - 8 = 4 \geq 0$ \checkmark. Buyer 3: $u_3 = 15 - 11 = 4 \geq 0$ \checkmark. Yes. \checkmark
+\end{exbox}
+
+\begin{exbox}[Continuous Double Auction (Exercise 3)]
+\textbf{Setting:} 5 buyers with limit prices \pounds 2, \pounds 4, \pounds 6, \pounds 8, \pounds 10. Three sellers with limit prices \pounds 4, \pounds 8, \pounds 12.
+
+Sort buyers descending: \pounds 10, \pounds 8, \pounds 6, \pounds 4, \pounds 2. Sort sellers ascending: \pounds 4, \pounds 8, \pounds 12.
+
+Match where buyer limit $\geq$ seller limit:
+\begin{itemize}
+  \item Buyer (\pounds 10) -- Seller (\pounds 4): compatible.
+  \item Buyer (\pounds 8) -- Seller (\pounds 8): compatible (equal).
+  \item Buyer (\pounds 6) -- Seller (\pounds 12): \textbf{not compatible}.
+\end{itemize}
+
+Demand curve crosses supply curve between the 2nd and 3rd trades. The \textbf{equilibrium price} is \pounds\textbf{8} (where the last feasible trade occurs).
+
+\textbf{Transactions:} Two trades at \pounds 8---the buyer with limit \pounds 10 and buyer with limit \pounds 8 trade with the sellers with limits \pounds 4 and \pounds 8.
+\end{exbox}
+
+\separator
+
+% --- Summary table ---
+\subsubsection{Summary: Auction Properties}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Property} & \textbf{First-price} & \textbf{Vickrey} & \textbf{English} & \textbf{Dutch} \\
+\midrule
+Dominant-strategy truthful & $\times$ & \checkmark & $\approx$ \checkmark & $\times$ \\
+Efficient (in eq.)         & \checkmark & \checkmark & \checkmark & \checkmark \\
+Revenue equivalent         & \checkmark & \checkmark & \checkmark & \checkmark \\
+Resistant to collusion     & Partial & $\times$ & $\times$ & \checkmark \\
+Resistant to cheating auctioneer & \checkmark & $\times$ & $\times$ & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Mechanism} & \textbf{Efficient} & \textbf{Truthful} & \textbf{IR} & \textbf{W.~Budget-Bal.} & \textbf{S.~Budget-Bal.} \\
+\midrule
+VCG         & \checkmark & \checkmark & \checkmark & \checkmark & $\times$ \\
+$(k{+}1)$-st price & \checkmark & \checkmark & \checkmark & \checkmark & $\times$ \\
+Vickrey     & \checkmark & \checkmark & \checkmark & \checkmark & $\times$ \\
+\bottomrule
+\end{tabular}
+\end{center}
