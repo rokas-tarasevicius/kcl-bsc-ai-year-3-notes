@@ -5,7 +5,7 @@
 | Module | PDF | Weeks covered | Latest week |
 |---|---|---:|---:|
 | **6CCSAACV — Advanced Computer Vision** | [main.pdf](modules/6ccsaacv-advanced-computer-vision/main.pdf) | 2 (W1–W2) | 2 |
-| **6CCSACCM — Cooperation, Coordination and Multi-Agent Systems** | [main.pdf](modules/6ccsaccm-cooperation-coordination-multiagent-systems/main.pdf) | 4 (W1–W4) | 4 |
+| **6CCSACCM — Cooperation, Coordination and Multi-Agent Systems** | [main.pdf](modules/6ccsaccm-cooperation-coordination-multiagent-systems/main.pdf) | 6 (W1–W5, W8) | 8 |
 | **6CCSAHAI — Human-AI Interaction** | [HAI.pdf](modules/6ccsahai-human-ai-interaction/HAI.pdf) | 9 (W1–W5, W7–W10) | 10 |
 | **6CCSANLP — Natural Language Processing** | [NLP.pdf](modules/6ccsanlp-natural-language-processing/NLP.pdf) | 10 (W1–W5, W7–W11) | 11 |
 | **6CCSAPEA — Philosophy & Ethics of AI** | [Philosophy\_and\_ethics.pdf](modules/6ccsapea-philosophy-ethics-ai/Philosophy_and_ethics.pdf) | 9 (W1–W9) | 9 |

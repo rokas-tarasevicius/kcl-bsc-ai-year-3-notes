@@ -89,3 +89,16 @@
 \contentsline {subsubsection}{\numberline {6.2.7}Selfridge--Conway Algorithm (3 Agents, Envy-Free)}{66}{subsubsection.6.2.7}%
 \contentsline {subsubsection}{\numberline {6.2.8}General Envy-Free Cake Cutting}{67}{subsubsection.6.2.8}%
 \contentsline {subsubsection}{\numberline {6.2.9}Worked Examples}{68}{subsubsection.6.2.9}%
+\contentsline {section}{\numberline {7}Week 8: Fair Division (Part II)}{71}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Topic Summary}{71}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Overview + Core Concepts + Extended Theory}{71}{subsection.7.2}%
+\contentsline {subsubsection}{\numberline {7.2.1}Indivisible Goods: Model and Applications}{72}{subsubsection.7.2.1}%
+\contentsline {subsubsection}{\numberline {7.2.2}Fairness Relaxations: EF1 and PROP1}{72}{subsubsection.7.2.2}%
+\contentsline {subsubsection}{\numberline {7.2.3}Round-Robin Algorithm (Additive Valuations)}{73}{subsubsection.7.2.3}%
+\contentsline {subsubsection}{\numberline {7.2.4}Limitations of Round-Robin}{74}{subsubsection.7.2.4}%
+\contentsline {subsubsection}{\numberline {7.2.5}Envy-Cycle Elimination (Monotone Valuations)}{74}{subsubsection.7.2.5}%
+\contentsline {subsubsection}{\numberline {7.2.6}Concepts of Welfare}{75}{subsubsection.7.2.6}%
+\contentsline {subsubsection}{\numberline {7.2.7}Fairness vs.\ Efficiency Trade-Offs}{75}{subsubsection.7.2.7}%
+\contentsline {subsubsection}{\numberline {7.2.8}Envy-Freeness up to Any Good (EFX)}{76}{subsubsection.7.2.8}%
+\contentsline {subsubsection}{\numberline {7.2.9}Worked Examples from Exercises}{77}{subsubsection.7.2.9}%
+\contentsline {subsubsection}{\numberline {7.2.10}Summary: Algorithms and Guarantees}{78}{subsubsection.7.2.10}%

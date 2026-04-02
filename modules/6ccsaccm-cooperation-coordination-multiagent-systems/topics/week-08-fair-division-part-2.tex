@@ -1,0 +1,413 @@
+% =============================================================================
+%                    WEEK 8: FAIR DIVISION (PART II)
+% =============================================================================
+\section{Week 8: Fair Division (Part II)}
+
+% -----------------------------------------------------------------------------
+%                              8.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Define the \textbf{indivisible goods allocation problem}: items, agents, valuation functions, bundles, complete vs.\ partial allocations.
+  \item Distinguish \textbf{additive} and \textbf{monotone} valuations and explain why indivisibility makes perfect fairness unattainable.
+  \item State and apply relaxed fairness notions: \textbf{EF1} (envy-freeness up to one good) and \textbf{PROP1} (proportionality up to one good).
+  \item Execute the \textbf{round-robin algorithm} for additive valuations and prove it guarantees EF1.
+  \item Execute the \textbf{envy-cycle elimination (ECE) algorithm} for monotone valuations and prove it guarantees EF1.
+  \item Define \textbf{utilitarian}, \textbf{egalitarian}, and \textbf{Nash} welfare; compare their fairness and efficiency properties.
+  \item State that \textbf{maximum Nash welfare} $\Rightarrow$ EF1 $+$ Pareto optimality.
+  \item Define \textbf{EFX} (envy-freeness up to any good) and discuss its existence as an open problem.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+Week~7 covered fair division of \textbf{divisible} resources (cake-cutting). This week moves to the harder setting where goods are \textbf{indivisible}---they cannot be split. Because perfect envy-freeness may be impossible (e.g.\ one item, two agents), we study \textbf{relaxed fairness notions} (EF1, PROP1, EFX) and algorithms that guarantee them. We also explore the tension between \textbf{fairness} and \textbf{efficiency}, culminating in the result that maximising \textbf{Nash welfare} achieves both EF1 and Pareto optimality.
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Trace the \textbf{round-robin algorithm} on a given instance and verify EF1.
+  \item Construct an example where round-robin is \textbf{not Pareto efficient} or \textbf{not strategyproof}.
+  \item Trace the \textbf{envy-cycle elimination algorithm}: build the envy graph, identify cycles, perform reallocations.
+  \item Given an allocation, check whether it is \textbf{EF1}, \textbf{EFX}, or \textbf{Pareto optimal}.
+  \item Compare \textbf{utilitarian}, \textbf{egalitarian}, and \textbf{Nash welfare} on a given instance.
+  \item Explain why \textbf{Nash welfare maximisation} implies EF1 $+$ Pareto optimality.
+  \item Prove that round-robin guarantees each agent $\geq \frac{2}{3}$ of their MMS under certain conditions.
+  \item Argue existence of \textbf{MMS allocations} when $|G| \leq |N| + 1$.
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+%           8.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Indivisible goods: model, valuations, allocations
+  \item Fairness relaxations: EF1 and PROP1
+  \item Round-robin algorithm (additive valuations)
+  \item Envy graph and envy-cycle elimination (monotone valuations)
+  \item Welfare concepts: utilitarian, egalitarian, Nash
+  \item Fairness vs.\ efficiency trade-offs
+  \item Envy-freeness up to any good (EFX)
+\end{enumerate}
+
+\bigseparator
+
+% --- Model ---
+\subsubsection{Indivisible Goods: Model and Applications}
+
+\begin{defbox}[Indivisible Goods Allocation Problem]
+An instance consists of:
+\begin{itemize}
+  \item A set $G = \{g_1, \ldots, g_m\}$ of $m$ \textbf{indivisible goods}.
+  \item A set $N = \{1, \ldots, n\}$ of $n$ \textbf{agents}.
+  \item Each agent $i$ has a \textbf{valuation function} $v_i : 2^G \to \mathbb{R}$ (or $\mathbb{Z}$) with $v_i(\emptyset) = 0$.
+\end{itemize}
+
+An \textbf{allocation} $A = (A_1, \ldots, A_n)$ is a partition of a subset of $G$ into $n$ bundles with $A_i \cap A_j = \emptyset$ for $i \neq j$.
+\begin{itemize}
+  \item \textbf{Complete}: $\bigcup_{i \in N} A_i = G$ (all goods allocated).
+  \item \textbf{Partial}: $\bigcup_{i \in N} A_i \subseteq G$ (some goods unallocated).
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Additive Valuations]
+Valuations are \textbf{additive} if for every agent $i$ and every $S \subseteq G$:
+\[
+  v_i(S) = \sum_{g \in S} v_i(\{g\}).
+\]
+\end{defbox}
+
+\begin{defbox}[Monotone Valuations]
+Valuations are \textbf{monotone} if for every agent $i$ and every $S \subseteq T \subseteq G$:
+\[
+  v_i(S) \leq v_i(T).
+\]
+Adding items never decreases value. Note: additive valuations with non-negative values are always monotone.
+\end{defbox}
+
+\textbf{Applications:} dividing inheritance among heirs, allocating tasks to team members, assigning dormitory rooms to students, distributing computing resources in data centres.
+
+\separator
+
+% --- Fairness relaxations ---
+\subsubsection{Fairness Relaxations: EF1 and PROP1}
+
+Perfect envy-freeness (EF) may not exist for indivisible goods (e.g.\ 1 item, 2 agents). We relax:
+
+\begin{defbox}[Envy-Freeness up to One Good (EF1)]
+An allocation $A$ is \textbf{EF1} if for every pair of agents $i, j \in N$ with $A_j \neq \emptyset$, there exists some item $g \in A_j$ such that:
+\[
+  v_i(A_i) \geq v_i(A_j \setminus \{g\}).
+\]
+Intuition: agent $i$ may envy $j$, but the envy disappears after removing \textbf{some single item} from $j$'s bundle.
+\end{defbox}
+
+\begin{defbox}[Proportionality up to One Good (PROP1)]
+An allocation $A$ is \textbf{PROP1} if for every agent $i$ there exists some $g \in G \setminus A_i$ such that:
+\[
+  v_i(A_i \cup \{g\}) \geq \frac{v_i(G)}{n}.
+\]
+\end{defbox}
+
+\begin{tipbox}[EF1 vs EF vs EFX]
+The strength hierarchy is: $\text{EF} \implies \text{EFX} \implies \text{EF1}$. For indivisible goods, EF may not exist, so EF1 is the standard achievable guarantee.
+\end{tipbox}
+
+\separator
+
+% --- Round-robin ---
+\subsubsection{Round-Robin Algorithm (Additive Valuations)}
+
+\begin{thmbox}[Round-Robin Procedure]
+Fix an ordering of agents $1, 2, \ldots, n$. Agents take turns picking their most preferred remaining item:
+\begin{itemize}
+  \item Agent $i$ picks in rounds $i,\; n + i,\; 2n + i,\; \ldots$
+  \item Each agent always picks the remaining item with highest value to them.
+\end{itemize}
+\textbf{Claim:} Round-robin always produces an \textbf{EF1 allocation} for additive valuations.
+\end{thmbox}
+
+\textbf{Proof sketch.} Consider agents $i$ and $j$:
+\begin{itemize}
+  \item \emph{Case 1: $i$ picks before $j$.} In each round, $i$ picks before $j$, so $i$'s $k$-th item $\geq_i$ $j$'s $k$-th item. By additivity, $v_i(A_i) \geq v_i(A_j)$, so $i$ does not envy $j$ at all.
+  \item \emph{Case 2: $j$ picks before $i$.} $j$'s first pick may beat $i$'s, but from the second round onward, $i$ picks before $j$. So $i$'s first item $\geq_i$ $j$'s second item, $i$'s second item $\geq_i$ $j$'s third item, etc. Removing $j$'s \textbf{first item} eliminates envy. \qed
+\end{itemize}
+
+\begin{exbox}[Round-Robin Trace]
+Three agents, five items. Valuations (additive):
+
+\begin{center}
+\begin{tabular}{lccccc}
+\toprule
+       & $g_1$ & $g_2$ & $g_3$ & $g_4$ & $g_5$ \\
+\midrule
+$a_1$  & 5     & 8     & 4     & 6     & 2 \\
+$a_2$  & 3     & 4     & 7     & 2     & 5 \\
+$a_3$  & 6     & 3     & 5     & 4     & 1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Order: $a_1, a_2, a_3$.
+\begin{itemize}
+  \item Round 1: $a_1$ picks $g_2$ (val 8), $a_2$ picks $g_3$ (val 7), $a_3$ picks $g_1$ (val 6).
+  \item Round 2: $a_1$ picks $g_4$ (val 6), $a_2$ picks $g_5$ (val 5).
+\end{itemize}
+Result: $A_1 = \{g_2, g_4\}$, $A_2 = \{g_3, g_5\}$, $A_3 = \{g_1\}$.
+
+Check EF1: $a_3$ envies $a_1$ ($v_3(A_1) = 7 > 6$), but removing $g_4$: $v_3(\{g_2\}) = 3 \leq 6 = v_3(A_3)$. \checkmark
+\end{exbox}
+
+\separator
+
+\subsubsection{Limitations of Round-Robin}
+
+\textbf{Not Pareto efficient.} Consider two agents, four items:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+       & $g_1$ & $g_2$ & $g_3$ & $g_4$ \\
+\midrule
+$a_1$  & 10    & 9     & 8     & 7 \\
+$a_2$  & 100   & 3     & 2     & 1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Round-robin ($a_1$ first): $A_1 = \{g_1, g_3\}$ (val 18), $A_2 = \{g_2, g_4\}$ (val 4). But swapping $g_1$ for $\{g_2, g_4\}$: $a_1$ gets $\{g_2, g_3, g_4\} \to$ val $24$, $a_2$ gets $\{g_1\} \to$ val $100$. Both strictly improve $\Rightarrow$ Pareto dominated.
+
+\textbf{Not strategyproof.} Two agents, four items:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+       & $g_1$ & $g_2$ & $g_3$ & $g_4$ \\
+\midrule
+$a_1$  & 9     & 8     & 2     & 1 \\
+$a_2$  & 1     & 9     & 2     & 3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Truthful ($a_1$ first): $a_1$ picks $g_1, g_3 \to$ val $11$. But if $a_1$ \emph{misreports} and picks $g_2$ first, then $a_2$ takes $g_4$, and $a_1$ takes $g_1$ in round 2: $a_1$ gets $\{g_1, g_2\} \to$ val $17 > 11$.
+
+\separator
+
+% --- Envy-cycle elimination ---
+\subsubsection{Envy-Cycle Elimination (Monotone Valuations)}
+
+Round-robin requires additive valuations (comparing individual items). For general \textbf{monotone} valuations, we use the \textbf{envy-cycle elimination} (ECE) algorithm.
+
+\begin{defbox}[Envy Graph]
+Given an allocation $A$, the \textbf{envy graph} $\mathcal{G}(A)$ has:
+\begin{itemize}
+  \item Vertices: agents $N$.
+  \item Directed edge $i \to j$ iff $v_i(A_j) > v_i(A_i)$ (agent $i$ envies agent $j$).
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Reallocation Along a Cycle (RAC)]
+If the envy graph contains a directed cycle $i_1 \to i_2 \to \cdots \to i_k \to i_1$, we \textbf{shift bundles along the cycle}: agent $i_1$ receives $A_{i_2}$, agent $i_2$ receives $A_{i_3}$, \ldots, agent $i_k$ receives $A_{i_1}$.
+
+Each agent on the cycle gets a bundle they \textbf{strictly prefer}, so the number of edges in the envy graph strictly decreases.
+\end{defbox}
+
+\begin{thmbox}[ECE Algorithm]
+Starting from the empty allocation, repeat:
+\begin{enumerate}
+  \item While the envy graph has a \textbf{cycle}: perform a RAC step (shift bundles along cycle).
+  \item Once the envy graph is \textbf{acyclic}: find an \textbf{unenvied agent} (a source in the DAG) and give them one unallocated item.
+\end{enumerate}
+\textbf{Terminates} in polynomial time and produces an \textbf{EF1 allocation} for monotone valuations.
+\end{thmbox}
+
+\textbf{Why it works:}
+\begin{itemize}
+  \item An acyclic graph always has a source (unenvied agent). Giving an unallocated item to an unenvied agent preserves EF1 by monotonicity.
+  \item RAC steps preserve EF1 (just permuting bundles; each cycle agent improves).
+  \item \textbf{Potential function:} each agent scores their bundle by $n - \text{rank}(A_i)$. Total score $\in [0, n(n-1)]$, strictly increases with each RAC step $\Rightarrow$ at most $O(n^2)$ RAC steps between item allocations.
+  \item Total: $m$ item-allocation steps $\times O(n^2)$ RAC steps each $\Rightarrow$ polynomial time.
+\end{itemize}
+
+\begin{exbox}[Envy-Cycle Elimination Trace]
+Three agents, allocation: $A_1 = \{g_1, g_5\}$, $A_2 = \{g_2, g_3\}$, $A_3 = \{g_4\}$.
+
+Suppose the envy graph has cycle $a_1 \to a_2 \to a_3 \to a_1$. Perform RAC:
+\begin{itemize}
+  \item $a_1$ gets $A_2 = \{g_2, g_3\}$, \; $a_2$ gets $A_3 = \{g_4\}$, \; $a_3$ gets $A_1 = \{g_1, g_5\}$.
+\end{itemize}
+Each cycle agent now has a bundle they preferred $\Rightarrow$ envy edges within the cycle decrease. Repeat until acyclic, then allocate the next unallocated item to an unenvied agent.
+\end{exbox}
+
+\begin{tipbox}[ECE vs Round-Robin]
+ECE is \textbf{more general} (works for monotone valuations, not just additive). Both guarantee EF1 but neither guarantees Pareto optimality.
+\end{tipbox}
+
+\separator
+
+% --- Welfare concepts ---
+\subsubsection{Concepts of Welfare}
+
+\begin{defbox}[Welfare Objectives]
+Given allocation $A = (A_1, \ldots, A_n)$:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{lll}
+\toprule
+\textbf{Welfare} & \textbf{Formula} & \textbf{Intuition} \\
+\midrule
+Utilitarian & $\displaystyle\sum_{i \in N} v_i(A_i)$ & Maximise total happiness \\
+Egalitarian & $\displaystyle\min_{i \in N} v_i(A_i)$ & Maximise the worst-off agent \\
+Nash        & $\displaystyle\prod_{i \in N} v_i(A_i)$ & Balance total and worst-off \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{defbox}
+
+\begin{exbox}[Welfare Comparison]
+Five items, three agents with uniform per-item values: $v_1(g) = 10$, $v_2(g) = 1$, $v_3(g) = 3$ for all $g$.
+
+\begin{itemize}
+  \item \textbf{Utilitarian max:} give all 5 items to $a_1$ $\Rightarrow$ welfare $= 50$. Highly unfair.
+  \item \textbf{Egalitarian max:} give 3 items to $a_2$, 1 each to $a_1, a_3$ $\Rightarrow$ min utility $= 3$. Not EF1 ($a_1$ envies $a_2$ even after removing any one item from $a_2$).
+  \item \textbf{Nash max:} give 2 items to two agents, 1 to one $\Rightarrow$ product $= 120$ regardless of assignment. Achieves EF1.
+\end{itemize}
+\end{exbox}
+
+\separator
+
+\subsubsection{Fairness vs.\ Efficiency Trade-Offs}
+
+\begin{thmbox}[Utilitarian Welfare $\Rightarrow$ Pareto Optimality]
+Any allocation maximising utilitarian welfare is Pareto optimal. \emph{Proof:} a Pareto improvement would increase the sum, contradicting maximality.
+
+However, utilitarian welfare can be \textbf{highly unfair} (may assign all items to one agent).
+\end{thmbox}
+
+\begin{thmbox}[Egalitarian Welfare: Limitations]
+Maximising egalitarian welfare:
+\begin{itemize}
+  \item Is \textbf{not necessarily EF1}.
+  \item Is \textbf{not necessarily Pareto optimal}. Example: 2 agents, 3 items $a, b, c$. Agent 1: $v_1(a) = v_1(b) = x$, $v_1(c) = 0$. Agent 2: $v_2(a) = v_2(c) = x$, $v_2(b) = 0$. Egalitarian max gives $A_1 = \{a\}$, $A_2 = \{b, c\}$ (min $= x$), but giving $c$ to agent 1 improves them without hurting agent 2.
+\end{itemize}
+\end{thmbox}
+
+\begin{thmbox}[Nash Welfare $\Rightarrow$ EF1 $+$ Pareto Optimality]
+For additive valuations, any allocation maximising the \textbf{Nash welfare} (product of utilities) is both:
+\begin{itemize}
+  \item \textbf{Pareto optimal} (same argument as utilitarian: a Pareto improvement increases the product).
+  \item \textbf{EF1} (proof is non-trivial; beyond the scope of this course).
+\end{itemize}
+This makes Nash welfare the ``best of both worlds'' objective.
+\end{thmbox}
+
+\begin{tipbox}[Nash Welfare and Scaling]
+Nash welfare is \textbf{scale-invariant} per agent: scaling $v_i$ by a constant $c > 0$ does not change the maximiser. This is because $\arg\max \prod c \cdot v_i(A_i) = \arg\max \, c \cdot \prod v_i(A_i) = \arg\max \prod v_i(A_i)$.
+\end{tipbox}
+
+\separator
+
+% --- EFX ---
+\subsubsection{Envy-Freeness up to Any Good (EFX)}
+
+\begin{defbox}[Envy-Freeness up to Any Good (EFX)]
+An allocation $A$ is \textbf{EFX} if for every pair $i, j$ with $A_j \neq \emptyset$ and for \textbf{every} item $g \in A_j$:
+\[
+  v_i(A_i) \geq v_i(A_j \setminus \{g\}).
+\]
+Contrast with EF1: EF1 requires $\exists\, g$; EFX requires $\forall\, g$.
+\end{defbox}
+
+\begin{tipbox}[EFX: What Is Known]
+\begin{itemize}
+  \item \textbf{2 agents}, monotone valuations: EFX exists.
+  \item \textbf{3 agents}, additive valuations: EFX exists.
+  \item \textbf{$\geq 4$ agents}, additive valuations: \textbf{open problem} --- existence is unknown.
+  \item \textbf{Identical additive valuations}: EFX exists and can be computed in polynomial time.
+\end{itemize}
+\end{tipbox}
+
+\begin{thmbox}[EFX for Identical Additive Valuations]
+When all agents share the same additive valuation $v$:
+\begin{enumerate}
+  \item Sort items by decreasing value: $v(g_1) \geq v(g_2) \geq \cdots \geq v(g_m)$.
+  \item Assign each item in turn to the agent with the \textbf{smallest current bundle value}.
+\end{enumerate}
+\textbf{Proof of EFX:} Suppose agent $i$ envies agent $j$, and let $g$ be the \textbf{last item} $j$ received. At the moment $j$ received $g$, agent $i$'s bundle was worth $\geq j$'s bundle (since $i$ was at least as satisfied). So $v(A_i) \geq v(A_j \setminus \{g\})$.
+
+Since $g$ was the \emph{smallest-value} item in $A_j$ (items assigned in decreasing order to the least-satisfied agent), removing \emph{any} item from $A_j$ removes at least as much value as removing $g$. Hence $v(A_i) \geq v(A_j \setminus \{g'\})$ for all $g' \in A_j$. \qed
+\end{thmbox}
+
+\separator
+
+% --- Worked examples from exercises ---
+\subsubsection{Worked Examples from Exercises}
+
+\begin{exbox}[Nash Welfare and Scaling (Exercise 1)]
+\textbf{Problem:} Let $(A_1, \ldots, A_n)$ maximise Nash welfare. Agent $i$'s valuation is scaled: $v'_i(g) = 10 \cdot v_i(g)$, others unchanged. Show the same allocation maximises Nash welfare for the modified instance.
+
+\textbf{Solution:} The Nash welfare of allocation $A$ under the modified instance is:
+\[
+  \text{NW}'(A) = v'_i(A_i) \cdot \prod_{j \neq i} v_j(A_j) = 10 \cdot v_i(A_i) \cdot \prod_{j \neq i} v_j(A_j) = 10 \cdot \text{NW}(A).
+\]
+Since every allocation's Nash welfare is multiplied by the \textbf{same constant} $10$, the maximiser does not change. The allocation that maximised $\text{NW}$ also maximises $\text{NW}' = 10 \cdot \text{NW}$.
+\end{exbox}
+
+\begin{exbox}[MMS Allocation When $|G| \leq |N| + 1$ (Exercise 2)]
+\textbf{Problem:} Show that when $|G| \leq |N| + 1$ and valuations are additive, an MMS allocation always exists.
+
+\textbf{Solution:} Recall that agent $i$'s \textbf{maximin share} $\text{MMS}_i$ is the maximum over all partitions $(B_1, \ldots, B_n)$ of $G$ into $n$ bundles of $\min_k v_i(B_k)$.
+
+With $|G| \leq n + 1$ items and $n$ agents, any partition into $n$ bundles has at most one bundle with 2 items and the rest with $\leq 1$ item each (by pigeonhole).
+
+Consider the MMS-defining partition for agent $i$. The minimum bundle has value $\text{MMS}_i$, and it contains at most 1 item (at most one bundle gets 2 items, so the worst bundle gets $\leq 1$).
+
+Now allocate greedily: repeatedly find an unallocated item worth $\geq \text{MMS}_i$ to some unassigned agent $i$ and assign it. With so few items relative to agents, each agent can receive at least one item meeting their MMS threshold (the details follow from a careful pigeonhole argument on the partition structure).
+
+\emph{Key insight:} When items are scarce ($|G| \leq n+1$), MMS partitions have mostly singletons, making it easy to satisfy each agent's guarantee.
+\end{exbox}
+
+\begin{exbox}[Round-Robin and $\frac{2}{3}$-MMS Guarantee (Exercise 3)]
+\textbf{Problem:} Each agent has additive valuations with $v_i(G) = 1$ and $v_i(\{g\}) \leq \frac{1}{3n}$ for all $g$. Show round-robin guarantees each agent at least $\frac{2}{3} \cdot \text{MMS}_i$.
+
+\textbf{Solution:} Since $v_i(G) = 1$ and valuations are additive, by a pigeonhole/averaging argument, $\text{MMS}_i \leq \frac{1}{n}$ (the best you can guarantee when dividing into $n$ bundles is the average).
+
+In round-robin with $n$ agents, agent $i$ picks in positions $i, n+i, 2n+i, \ldots$ In each of their turns, they pick the most valuable remaining item. Since each item is worth $\leq \frac{1}{3n}$, at most $\frac{1}{3n}$ of value is ``lost'' per pick by other agents in each round.
+
+Agent $i$ picks at least $\lfloor m/n \rfloor$ items. In each round, agent $i$ picks an item at least as valuable as the average remaining item. Across all rounds, the cumulative value agent $i$ collects is at least $\frac{1}{n} - \frac{(n-1)}{3n} \cdot (\text{rounds}) \cdot (\text{max item value})$, which can be bounded below by $\frac{2}{3n} \geq \frac{2}{3} \cdot \text{MMS}_i$.
+
+\emph{Key insight:} The small item-value assumption ($\leq \frac{1}{3n}$) ensures no single item dominates, so round-robin distributes value almost evenly.
+\end{exbox}
+
+\separator
+
+% --- Summary table ---
+\subsubsection{Summary: Algorithms and Guarantees}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{llccc}
+\toprule
+\textbf{Algorithm/Objective} & \textbf{Valuations} & \textbf{EF1} & \textbf{Pareto Opt.} & \textbf{Strategyproof} \\
+\midrule
+Round-Robin          & Additive  & \checkmark & $\times$ & $\times$ \\
+Envy-Cycle Elim.     & Monotone  & \checkmark & $\times$ & $\times$ \\
+Max Utilitarian      & Additive  & $\times$   & \checkmark & --- \\
+Max Egalitarian      & Additive  & $\times$   & $\times$   & --- \\
+Max Nash Welfare     & Additive  & \checkmark & \checkmark & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
