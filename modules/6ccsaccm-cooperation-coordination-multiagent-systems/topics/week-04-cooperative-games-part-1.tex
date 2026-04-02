@@ -1,0 +1,592 @@
+% =============================================================================
+%                    WEEK 4: COOPERATIVE GAMES (PART I)
+% =============================================================================
+\section{Week 4: Cooperative Games (Part I)}
+
+% -----------------------------------------------------------------------------
+%                              4.1 TOPIC SUMMARY
+% -----------------------------------------------------------------------------
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{enumerate}
+  \item Explain the fundamental concepts of cooperative game theory, including \textbf{coalitions}, \textbf{transferable utility}, and the difference from non-cooperative settings.
+  \item Model real-world scenarios as cooperative games, identifying possible coalitions and collective payoff structures.
+  \item Analyse solution concepts such as the \textbf{core}, \textbf{Shapley value}, and \textbf{Banzhaf index}, including their properties and interpretation.
+  \item Determine when stable and fair coalition structures exist, and evaluate conditions for allocations to be in the core.
+  \item Calculate the Shapley value and Banzhaf index using mathematical reasoning.
+  \item Assess the fairness, efficiency, and stability of division outcomes in cooperative environments.
+\end{enumerate}
+\end{keybox}
+
+\separator
+
+\subsubsection*{The Big Picture}
+
+This week shifts from non-cooperative settings (where players act individually) to \textbf{cooperative game theory}, where players can form \textbf{binding agreements} and work in \textbf{coalitions}. The key premise: cooperation is not altruism---it emerges because players find it mutually beneficial to commit to agreements.
+
+Two central questions drive the theory:
+\begin{itemize}
+  \item \textbf{Stability:} Which outcomes are immune to coalitional deviations? $\to$ \textbf{The Core}
+  \item \textbf{Fairness:} How should payoffs reflect each player's contribution? $\to$ \textbf{Shapley Value}, \textbf{Banzhaf Index}
+\end{itemize}
+
+\separator
+
+\subsubsection*{What Examiners Like to Ask}
+
+\begin{itemize}
+  \item Write the \textbf{formal definition} of a TU game $(N, v)$ and explain the characteristic function.
+  \item Given a characteristic function, determine whether the game is \textbf{superadditive}, \textbf{convex}, or \textbf{simple}.
+  \item Compute the \textbf{core} of a game by writing down the constraint system and finding feasible payoff vectors.
+  \item Show that a given game has an \textbf{empty core} (e.g., 3-player majority game).
+  \item Prove that \textbf{convex games} have non-empty cores.
+  \item Prove that a \textbf{simple game} has a non-empty core iff it has a veto player.
+  \item Compute the \textbf{Shapley value} for all players (enumerate permutations, compute marginal contributions).
+  \item Compute the \textbf{Banzhaf index} and compare with the Shapley value.
+  \item State and apply the \textbf{four axiomatic properties} of the Shapley value.
+  \item Identify \textbf{null players} and \textbf{veto players} in simple/weighted voting games.
+\end{itemize}
+
+\separator
+
+% -----------------------------------------------------------------------------
+%           4.2 OVERVIEW + CORE CONCEPTS + EXTENDED THEORY
+% -----------------------------------------------------------------------------
+\subsection{Overview + Core Concepts + Extended Theory}
+
+\subsubsection*{Roadmap}
+\begin{enumerate}
+  \item Cooperative vs.\ non-cooperative games; binding agreements
+  \item TU vs.\ NTU games; characteristic vs.\ partition function games
+  \item Formal definition of TU games: $(N, v)$
+  \item Outcomes, coalition structures, and imputations
+  \item Special classes: simple, superadditive, convex games
+  \item The Core: definition, examples, emptiness
+  \item Core of convex games and simple games
+  \item Relaxations: $\varepsilon$-core, least core, cost of stability
+  \item Shapley value: definition, computation, properties
+  \item Banzhaf index
+\end{enumerate}
+
+\bigseparator
+
+% --- Cooperative Games Introduction ---
+\subsubsection{From Non-Cooperative to Cooperative Games}
+
+\begin{defbox}[Cooperative (Coalitional) Game]
+In \textbf{cooperative games}:
+\begin{itemize}
+  \item Agents can benefit by cooperating
+  \item \textbf{Binding agreements} are possible (unlike Prisoner's Dilemma)
+  \item Actions are taken by \textbf{coalitions} of agents
+  \item Focus shifts from individual strategies to \textit{which coalitions form} and \textit{how payoffs are divided}
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[TU vs.\ NTU Games]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5.5cm} p{5.5cm} @{}}
+\toprule
+ & \textbf{TU (Transferable Utility)} & \textbf{NTU (Non-Transferable Utility)} \\
+\midrule
+Payoff & Given to the group, then divided & Directly to individual members \\
+Side payments & Feasible (money, goods) & Not possible \\
+Example & Farmers splitting profit & Researchers getting promotions \\
+Key question & How to split the surplus? & Which coalitions form? \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{defbox}
+
+\begin{defbox}[CFG vs.\ PFG]
+\begin{itemize}
+  \item \textbf{Characteristic Function Game (CFG):} A coalition's payoff depends \textit{only} on its own composition. Each coalition is identified with a single number $v(C)$.
+  \item \textbf{Partition Function Game (PFG):} A coalition's payoff depends on the \textit{entire partition}---what other coalitions are doing matters (e.g., market competition).
+\end{itemize}
+
+Most classical cooperative game theory (core, Shapley value) was developed for CFGs.
+\end{defbox}
+
+\separator
+
+% --- TU Games Formalised ---
+\subsubsection{Transferable Utility Games: Formal Definition}
+
+\begin{defbox}[TU Game]
+A \textbf{transferable utility game} is a pair $(N, v)$ where:
+\begin{itemize}
+  \item $N = \{1, \ldots, n\}$ is a set of \textbf{players}
+  \item $v: 2^N \to \mathbb{R}$ is the \textbf{characteristic function}
+  \item For each coalition $C \subseteq N$, $v(C)$ is the total payoff the members of $C$ can earn together
+\end{itemize}
+
+\textbf{Standard assumptions:}
+\begin{itemize}
+  \item \textbf{Normalised:} $v(\emptyset) = 0$
+  \item \textbf{Non-negative:} $v(C) \geq 0$ for all $C \subseteq N$
+  \item \textbf{Monotone:} $C \subseteq D \implies v(C) \leq v(D)$
+\end{itemize}
+
+$N$ itself is called the \textbf{grand coalition}.
+\end{defbox}
+
+\begin{defbox}[Outcome of a TU Game]
+An \textbf{outcome} of $(N, v)$ is a pair $(\text{CS}, \mathbf{x})$ where:
+\begin{itemize}
+  \item $\text{CS} = (C_1, \ldots, C_k)$ is a \textbf{coalition structure}---a partition of $N$
+  \item $\mathbf{x} = (x_1, \ldots, x_n)$ is a \textbf{payoff vector} satisfying:
+  \begin{itemize}
+    \item $x_i \geq 0$ for all $i \in N$
+    \item $x(C) = \sum_{i \in C} x_i = v(C)$ for each $C$ in CS
+  \end{itemize}
+\end{itemize}
+
+An outcome is an \textbf{imputation} if it also satisfies \textbf{individual rationality}: $x_i \geq v(\{i\})$ for all $i$.
+\end{defbox}
+
+\begin{exbox}[Running Example: Ice-Cream Game]
+Three children: Charlie ({\pounds}4), Marcy ({\pounds}3), Pattie ({\pounds}2). Ice-cream tubs: 1kg for {\pounds}9, 750g for {\pounds}7, 500g for {\pounds}5. Children value ice-cream, not money.
+
+\textbf{Characteristic function:}
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c c c c c c c @{}}
+\toprule
+Coalition & $\emptyset$ & $\{C\}$ & $\{M\}$ & $\{P\}$ & $\{C,P\}$ & $\{M,P\}$ & $\{C,M\}$ \\
+\midrule
+$v(C)$ & 0 & 0 & 0 & 0 & 500 & 500 & 750 \\
+\bottomrule
+\end{tabular}
+\end{center}
+$v(\{C, M, P\}) = 1000$
+
+\textbf{Some outcomes:}
+\begin{itemize}
+  \item $\text{CS} = \{\{C\}, \{M,P\}\}$; $x = (0, 150, 350)$
+  \item $\text{CS} = \{N\}$; $x = (334, 333, 333)$
+  \item $\text{CS} = \{N\}$; $x = (0, 800, 200)$ \quad (feasible but arguably unfair)
+\end{itemize}
+\end{exbox}
+
+\separator
+
+% --- Examples ---
+\subsubsection{Important Game Types}
+
+\begin{defbox}[Weighted Voting Games (WVG)]
+Players have weights $w_1, \ldots, w_n$ and a quota $q$:
+\[
+v(C) = \begin{cases} 1 & \text{if } w(C) = \sum_{i \in C} w_i \geq q \quad (\text{winning}) \\ 0 & \text{otherwise} \quad (\text{losing}) \end{cases}
+\]
+
+\textbf{Notation:} $\text{WVG}[q;\; w_1, w_2, \ldots, w_n]$
+\end{defbox}
+
+\begin{exbox}[UK Elections as WVGs]
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\textbf{Year} & \textbf{Conservatives} & \textbf{Veto player?} & \textbf{Null players?} \\
+\midrule
+2010 & 306 seats & None & None \\
+2019 & 365 seats & C (veto) & All others (null) \\
+\bottomrule
+\end{tabular}
+\end{center}
+(Quota = 326 in all cases, 650 total seats)
+\end{exbox}
+
+\begin{defbox}[Other Game Types]
+\begin{itemize}
+  \item \textbf{Network flow games:} Players are edges; $v(C) =$ max $s$--$t$ flow through edges in $C$
+  \item \textbf{Graph-induced games:} Players are vertices; $v(C) =$ total weight of internal edges (can be negative)
+\end{itemize}
+\end{defbox}
+
+\bigseparator
+
+% --- Special Classes ---
+\subsubsection{Special Classes of TU Games}
+
+\begin{defbox}[Simple Games]
+A game $(N, v)$ is \textbf{simple} if:
+\begin{itemize}
+  \item $v(C) \in \{0, 1\}$ for all $C \subseteq N$
+  \item $v$ is monotone
+\end{itemize}
+
+Coalitions are \textbf{winning} ($v = 1$) or \textbf{losing} ($v = 0$).
+
+\textbf{Convention:} In simple games, assume the grand coalition forms (outcome = payoff vector).
+\end{defbox}
+
+\begin{defbox}[Null and Veto Players (Simple Games)]
+\begin{itemize}
+  \item Player $i$ is a \textbf{null player} if: $v(C \cup \{i\}) = v(C)$ for all $C \subseteq N \setminus \{i\}$
+
+  (Adding $i$ never changes any coalition's value)
+
+  \item Player $i$ is a \textbf{veto player} if: $v(C) = 0$ for all $C \subseteq N \setminus \{i\}$
+
+  (Equivalently, $v(N \setminus \{i\}) = 0$---without $i$, no coalition can win)
+\end{itemize}
+\end{defbox}
+
+\separator
+
+\begin{defbox}[Superadditive Games]
+A game $(N, v)$ is \textbf{superadditive} if:
+\[
+v(S \cup T) \geq v(S) + v(T) \quad \text{for any disjoint } S, T \subseteq N
+\]
+
+\textbf{Interpretation:} Two coalitions can always merge without losing value $\Rightarrow$ grand coalition always forms.
+
+\textbf{Convention:} In superadditive games, outcomes are identified with payoff vectors $\mathbf{x}$ satisfying $x(N) = v(N)$.
+\end{defbox}
+
+\begin{defbox}[Convex Games (Supermodularity)]
+A function $f: 2^N \to \mathbb{R}$ is \textbf{supermodular} if $f(\emptyset) = 0$ and:
+\[
+f(A \cup B) + f(A \cap B) \geq f(A) + f(B) \quad \text{for all } A, B \subseteq N
+\]
+
+A game $(N, v)$ is \textbf{convex} if $v$ is supermodular.
+
+\textbf{Key property (increasing marginal contributions):}
+If $T \subset S$ and $i \notin S$, then:
+\[
+v(T \cup \{i\}) - v(T) \leq v(S \cup \{i\}) - v(S)
+\]
+
+A player is \textbf{more useful} when joining a \textbf{bigger} coalition.
+
+\textbf{Hierarchy:} Convex $\Rightarrow$ Superadditive (but not vice versa).
+\end{defbox}
+
+\begin{exbox}[Properties of Game Types]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l c c @{}}
+\toprule
+\textbf{Game Type} & \textbf{Superadditive?} & \textbf{Convex?} \\
+\midrule
+Ice-cream & Yes & No \\
+Graph-induced & Iff all edge weights $\geq 0$ & Iff all edge weights $\geq 0$ \\
+Network flow & Yes & Not necessarily \\
+WVG (general) & Not always & Not always \\
+WVG with $q > w(N)/2$ & Yes & Not necessarily \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{WVG counterexample for superadditivity:} $N = \{1,2\}$, $w_1 = w_2 = 1$, $q = 1$. Each singleton wins alone, so $v(\{1\}) + v(\{2\}) = 2 > 1 = v(N)$.
+
+\textbf{WVG counterexample for convexity:} $N = \{1,2,3\}$, $w_i = 1$, $q = 2$. Then $v(\{1,2\}) + v(\{2,3\}) = 2 > 1 = v(\{1,2,3\}) + v(\{2\})$.
+\end{exbox}
+
+\bigseparator
+
+% --- The Core ---
+\subsubsection{The Core}
+
+\begin{defbox}[The Core]
+The \textbf{core} $\mathcal{C}(G)$ of a characteristic function game $G = (N, v)$ is the set of all outcomes $(\text{CS}, \mathbf{x})$ such that:
+\[
+x(C) \geq v(C) \quad \text{for every } C \subseteq N
+\]
+
+\textbf{Interpretation:} No coalition can deviate and earn more on its own---every coalition gets at least what it could guarantee itself.
+
+For \textbf{superadditive} games, the core simplifies to all payoff vectors $\mathbf{x}$ with:
+\begin{itemize}
+  \item $x_i \geq 0$ for all $i$
+  \item $x(N) = v(N)$
+  \item $x(C) \geq v(C)$ for all $C \subseteq N$
+\end{itemize}
+\end{defbox}
+
+\begin{thmbox}[Core Stability Implies Efficiency]
+If $(\text{CS}, \mathbf{x})$ is in the core, then CS maximises social welfare:
+\[
+v(\text{CS}) \geq v(\text{CS}') \quad \text{for every coalition structure CS}' \text{ over } N
+\]
+
+\textbf{Proof sketch:} Suppose $v(\text{CS}) < v(\text{CS}')$. Then $\sum_{C' \in \text{CS}'} x(C') = v(\text{CS}) < v(\text{CS}') = \sum_{C' \in \text{CS}'} v(C')$. But core stability requires $x(C') \geq v(C')$ for each $C'$, giving $\sum x(C') \geq \sum v(C')$---contradiction.
+\end{thmbox}
+
+\begin{exbox}[Core of the Ice-Cream Game]
+Since the game is superadditive, $\text{CS} = \{N\}$. Core constraints:
+\begin{align*}
+x_C \geq 0,\; x_M \geq 0,\; x_P &\geq 0 \\
+x_C + x_M + x_P &= 1000 \\
+x_C + x_M &\geq 750 \\
+x_C + x_P &\geq 500 \\
+x_M + x_P &\geq 500
+\end{align*}
+
+\textbf{Solutions include:} $(400, 400, 200)$, $(500, 400, 100)$, $(500, 500, 0)$.
+
+Note: $(350, 350, 300)$ is \textbf{not} in the core because $x_C + x_M = 700 < 750$.
+\end{exbox}
+
+\begin{exbox}[Empty Core: 3-Player Majority Game]
+$\text{WVG}[2;\; 1, 1, 1]$: $v(C) = 1$ if $|C| \geq 2$; $v(C) = 0$ if $|C| \leq 1$.
+
+\textbf{The core is empty:}
+\begin{itemize}
+  \item If $\text{CS} = \{\{1\},\{2\},\{3\}\}$: grand coalition deviates (all get 0, but $v(N) = 1$)
+  \item If $\text{CS} = \{\{1,2\},\{3\}\}$: one of $\{1,2\}$ gets $< 1$, can deviate with player 3
+  \item If $\text{CS} = \{N\}$: some $x_i > 0$, so $x(N \setminus \{i\}) < 1 = v(N \setminus \{i\})$
+\end{itemize}
+
+No outcome satisfies all core constraints simultaneously.
+\end{exbox}
+
+\separator
+
+% --- Core of Special Classes ---
+\subsubsection{Core of Special Game Classes}
+
+\begin{thmbox}[Core of Convex Games]
+Every \textbf{convex game} has a non-empty core.
+
+\textbf{Constructive proof:} Order players as $1, \ldots, n$. Set:
+\[
+x_i = v(\{1, \ldots, i\}) - v(\{1, \ldots, i-1\})
+\]
+(Pay each player their marginal contribution to the coalition of predecessors.)
+
+Then $\sum x_i = v(N)$ (telescoping). For any $C = \{i, j, \ldots, s\}$ with $i < j < \ldots < s$:
+\[
+v(C) = \sum_{\text{members}} [\text{marginal to predecessors in } C] \leq \sum_{\text{members}} x_k
+\]
+by supermodularity (marginal contribution to a subset $\leq$ marginal contribution to a superset).
+
+\textbf{Complexity:} A core outcome can be constructed in $O(n)$ queries to $v$.
+\end{thmbox}
+
+\begin{thmbox}[Core of Simple Games]
+A simple game has a non-empty core \textbf{if and only if} it has a \textbf{veto player}.
+
+\textbf{Proof ($\Leftarrow$):} If $i$ is a veto player, set $x_i = 1$, $x_k = 0$ for $k \neq i$. For any $C$: if $i \in C$, then $x(C) = 1 \geq v(C)$; if $i \notin C$, then $v(C) = 0$.
+
+\textbf{Proof ($\Rightarrow$):} Suppose no veto player. Take any payoff vector $\mathbf{x}$ with $x(N) = 1$. Then some $x_i > 0$, so $x(N \setminus \{i\}) < 1$. But since $i$ is not a veto player, $v(N \setminus \{i\}) = 1$---core constraint violated.
+\end{thmbox}
+
+\begin{thmbox}[Corollary: Core Characterisation for Simple Games]
+In a simple game, $\mathbf{x}$ is in the core iff $x_i = 0$ for every non-veto player $i$.
+
+Checking core non-emptiness requires a single query: compute $v(N \setminus \{i\})$ for each $i$.
+\end{thmbox}
+
+\begin{tipbox}[Exam Tip: WVG with Coalition Structures]
+If coalition structures (not just grand coalition) are allowed in WVGs, deciding core non-emptiness becomes \textbf{NP-hard} (reduction from PARTITION).
+
+Example: $\text{WVG}[2;\; 1,1,1,1]$---the outcome $(\{\{1,2\},\{3,4\}\}, (\frac{1}{2}, \frac{1}{2}, \frac{1}{2}, \frac{1}{2}))$ is in the core, even though there is no veto player.
+\end{tipbox}
+
+\separator
+
+% --- Core Relaxations ---
+\subsubsection{Core Relaxations}
+
+\begin{defbox}[$\varepsilon$-Core]
+An outcome $\mathbf{x}$ is in the \textbf{$\varepsilon$-core} of a superadditive game $G$ (for $\varepsilon \geq 0$) if:
+\[
+x(C) \geq v(C) - \varepsilon \quad \text{for all } C \subseteq N
+\]
+
+Allows deviations only if the gain exceeds $\varepsilon$ (accounts for deviation costs).
+\end{defbox}
+
+\begin{defbox}[Least Core]
+The \textbf{least core} of $G$ is the $\varepsilon^*$-core where:
+\[
+\varepsilon^*(G) = \inf\{\varepsilon \mid \varepsilon\text{-core of } G \text{ is non-empty}\}
+\]
+
+Can be computed via LP:
+\[
+\min \varepsilon \quad \text{s.t.} \quad x_i \geq 0,\; x(N) = v(N),\; x(C) \geq v(C) - \varepsilon \;\forall C \subseteq N
+\]
+
+The least core is \textbf{always non-empty}.
+\end{defbox}
+
+\begin{defbox}[Cost of Stability]
+The \textbf{cost of stability} of $G = (N, v)$ is the smallest $\Delta \geq 0$ such that the game $G^\Delta = (N, v^\Delta)$ with $v^\Delta(N) = v(N) + \Delta$ and $v^\Delta(C) = v(C)$ for $C \subsetneq N$ has a non-empty core.
+
+Computed via LP: $\min \Delta$ s.t.\ $x_i \geq 0$, $x(N) = v(N) + \Delta$, $x(C) \geq v(C)$ for all $C \subseteq N$.
+\end{defbox}
+
+\bigseparator
+
+% --- Shapley Value ---
+\subsubsection{Shapley Value}
+
+\begin{defbox}[Shapley Value]
+Given a game $G = (N, v)$ with $|N| = n$, the \textbf{Shapley value} of player $i$ is:
+\[
+\phi_i(G) = \frac{1}{n!} \sum_{\pi \in \Pi_N} \Delta^\pi_G(i)
+\]
+
+where $\Pi_N$ is the set of all permutations of $N$, and the \textbf{marginal contribution} of $i$ w.r.t.\ permutation $\pi$ is:
+\[
+\Delta^\pi_G(i) = v(S_\pi(i) \cup \{i\}) - v(S_\pi(i))
+\]
+with $S_\pi(i) = \{j \in N \mid \pi(j) < \pi(i)\}$ (predecessors of $i$ in $\pi$).
+
+\textbf{Probabilistic interpretation:} $\phi_i$ is $i$'s expected marginal contribution when players arrive in a uniformly random order.
+\end{defbox}
+
+\begin{exbox}[Shapley Value: Ice-Cream Game (Pattie)]
+Six permutations of $\{C, M, P\}$:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l l r @{}}
+\toprule
+\textbf{Permutation} & \textbf{Predecessors of $P$} & $\Delta^\pi(P)$ \\
+\midrule
+$CMP$ & $\{C, M\}$ & $v(N) - v(\{C,M\}) = 250$ \\
+$MCP$ & $\{M, C\}$ & $v(N) - v(\{C,M\}) = 250$ \\
+$CPM$ & $\{C\}$ & $v(\{C,P\}) - v(\{C\}) = 500$ \\
+$MPC$ & $\{M\}$ & $v(\{M,P\}) - v(\{M\}) = 500$ \\
+$PCM$ & $\emptyset$ & $v(\{P\}) - v(\emptyset) = 0$ \\
+$PMC$ & $\emptyset$ & $v(\{P\}) - v(\emptyset) = 0$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+$\phi_P = \frac{250 + 250 + 500 + 500 + 0 + 0}{6} = 250$
+\end{exbox}
+
+\begin{exbox}[Shapley Value Using Symmetry]
+Game: $v(N) = 1$, $v(C) = 0$ for all $C \subsetneq N$, with $|N| = n$.
+
+\textbf{Method 1 (direct):} $\Delta^\pi(i) = 1$ only if $i$ is last in $\pi$. There are $(n-1)!$ such permutations.
+$\phi_i = \frac{(n-1)!}{n!} = \frac{1}{n}$
+
+\textbf{Method 2 (properties):} All players are symmetric $\Rightarrow$ equal Shapley values. By efficiency: $n \cdot \phi_i = v(N) = 1 \Rightarrow \phi_i = \frac{1}{n}$.
+\end{exbox}
+
+\separator
+
+% --- Shapley Properties ---
+\subsubsection{Shapley Value: Axiomatic Properties}
+
+\begin{thmbox}[The Four Properties of the Shapley Value]
+The Shapley value is the \textbf{unique} payoff division scheme satisfying:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} c l p{7.5cm} @{}}
+\toprule
+\textbf{\#} & \textbf{Property} & \textbf{Statement} \\
+\midrule
+1 & \textbf{Efficiency} & $\sum_{i \in N} \phi_i(G) = v(N)$ \\
+2 & \textbf{Null (Dummy) player} & If $v(C \cup \{i\}) = v(C)$ for all $C$, then $\phi_i(G) = 0$ \\
+3 & \textbf{Symmetry} & If $v(C \cup \{i\}) = v(C \cup \{j\})$ for all $C \subseteq N \setminus \{i,j\}$, then $\phi_i = \phi_j$ \\
+4 & \textbf{Additivity} & $\phi_i(G_1 + G_2) = \phi_i(G_1) + \phi_i(G_2)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+where $(G_1 + G_2) = (N, v^+)$ with $v^+(C) = v^1(C) + v^2(C)$.
+\end{thmbox}
+
+\begin{tipbox}[Exam Tip: Using Properties to Compute Shapley Value]
+The four properties can simplify computation:
+\begin{enumerate}
+  \item \textbf{Symmetry} reduces distinct computations (symmetric players get equal shares)
+  \item \textbf{Null player} eliminates players with zero contribution
+  \item \textbf{Efficiency} pins down the total
+  \item \textbf{Additivity} lets you decompose complex games into simpler ones
+\end{enumerate}
+\end{tipbox}
+
+\bigseparator
+
+% --- Banzhaf Index ---
+\subsubsection{Banzhaf Index}
+
+\begin{defbox}[Banzhaf Index]
+Given $G = (N, v)$ with $|N| = n$, the \textbf{Banzhaf index} of player $i$ is:
+\[
+\beta_i(G) = \frac{1}{2^{n-1}} \sum_{C \subseteq N \setminus \{i\}} [v(C \cup \{i\}) - v(C)]
+\]
+
+\textbf{Key difference from Shapley:} Averages over all \textbf{coalitions} (of which there are $2^{n-1}$ not containing $i$), rather than all permutations ($n!$).
+\end{defbox}
+
+\begin{defbox}[Banzhaf vs.\ Shapley: Property Comparison]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l c c @{}}
+\toprule
+\textbf{Property} & \textbf{Shapley} & \textbf{Banzhaf} \\
+\midrule
+Efficiency & \checkmark & \texttimes \\
+Null (Dummy) player & \checkmark & \checkmark \\
+Symmetry & \checkmark & \checkmark \\
+Additivity & \checkmark & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The Banzhaf index does \textbf{not} redistribute $v(N)$---the sum $\sum \beta_i$ may differ from $v(N)$.
+\end{defbox}
+
+\begin{exbox}[Banzhaf Index Example]
+Game: $v(N) = 1$, $v(C) = 0$ for $C \subsetneq N$, $|N| = n$.
+
+For player $i$: only $C = N \setminus \{i\}$ gives marginal contribution 1; all other $2^{n-1} - 1$ coalitions give 0.
+
+$\beta_i = \frac{1}{2^{n-1}}$
+
+$\sum_{i \in N} \beta_i = \frac{n}{2^{n-1}}$, which for $n > 2$ is $< 1 = v(N)$.
+\end{exbox}
+
+\begin{defbox}[Normalised Banzhaf Index]
+To ensure efficiency:
+\[
+\nu_i(G) = \frac{\beta_i(G)}{\sum_{j \in N} \beta_j(G)}
+\]
+
+This fixes efficiency but \textbf{breaks additivity}.
+\end{defbox}
+
+\begin{tipbox}[Shapley-Shubik Power Index]
+In \textbf{simple games} (where $v(C) \in \{0,1\}$), the Shapley value and Banzhaf index measure the \textbf{power} of a player---the probability that the player can influence the outcome. The Shapley value in this context is called the \textbf{Shapley-Shubik power index}.
+\end{tipbox}
+
+\bigseparator
+
+% --- Summary Table ---
+\subsubsection{Summary: Key Concepts}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{} l p{9.5cm} @{}}
+\toprule
+\textbf{Concept} & \textbf{Key Fact} \\
+\midrule
+TU game $(N, v)$ & Characteristic function $v: 2^N \to \mathbb{R}$; normalised, non-negative, monotone \\
+Coalition structure & Partition of $N$; payoff vector distributes each coalition's value \\
+Superadditive & Merging never loses value; grand coalition always forms \\
+Convex & Supermodular $v$; increasing marginal contributions; always has non-empty core \\
+Simple game & $v(C) \in \{0,1\}$; non-empty core iff veto player exists \\
+Core & Stable outcomes: no coalition can deviate; implies efficiency \\
+$\varepsilon$-core / least core & Relaxation allowing bounded instability; always non-empty \\
+Shapley value & Unique: efficient + null player + symmetry + additivity \\
+Banzhaf index & Averages over coalitions (not permutations); not efficient \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
