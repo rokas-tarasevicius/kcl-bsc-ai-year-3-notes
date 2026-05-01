@@ -1,0 +1,734 @@
+% =============================================================================
+%             WEEK 10: BIOLOGICAL OBJECT RECOGNITION (HIGH-LEVEL)
+% =============================================================================
+\section{Week 10: Biological Object Recognition (High-Level Vision)}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Distinguish \term{object-based} (3D, object-centred) from \term{image-based} (2D, viewer-centred) theories of object recognition.
+  \item Describe \term{recognition-by-components} (Biederman) and define a \term{geon} and a \term{structural description}.
+  \item Distinguish \term{configural} (global/holistic) from \term{featural} (local) processing and explain the \term{face inversion effect}.
+  \item Compare \term{rules}, \term{prototypes}, and \term{exemplars} as theories of categorisation, and link them to nearest-mean and (k-)nearest-neighbour classifiers.
+  \item Describe the cortical \term{what} (ventral, V1$\rightarrow$IT) and \term{where} (dorsal, V1$\rightarrow$parietal) pathways.
+  \item Explain how RF size, location sensitivity, and stimulus complexity change along the ventral pathway.
+  \item Describe \term{HMAX} and \term{CNN} feed-forward hierarchies, the role of alternating S- and C-layers, and the SUM/MAX operations.
+  \item Distinguish feed-forward from \term{recurrent} models and contrast \term{bottom-up} (stimulus-driven, discriminative) with \term{top-down} (knowledge-driven, generative) processes.
+  \item State \term{Bayes' theorem}, identify posterior/likelihood/prior/evidence in a vision context, and use the posterior ratio to choose between hypotheses.
+\end{itemize}
+\end{keybox}
+
+\textbf{Big Picture.}
+This week tackles \emph{high-level vision} from a biological/cognitive perspective: how does the brain go from a retinal image to an object label? Two big debates frame the field. (1) \term{Object-based vs image-based}: do we store one 3D model per object (recognition by components, geons, structural descriptions) or multiple 2D views (template / multiple-views models)? (2) \term{Configural vs featural}: do we represent objects globally (holistic, e.g.\ upright faces) or locally (independent features, e.g.\ inverted faces)? In categorisation, three psychological accounts---\term{rules}, \term{prototypes}, \term{exemplars}---map onto standard ML classifiers (decision trees, nearest-mean, k-NN). The cortical machinery is hierarchical: along the ventral pathway (V1$\rightarrow$V2$\rightarrow$V4$\rightarrow$IT) RFs grow larger, less location-sensitive and more complex. \term{HMAX} and CNNs make this concrete using alternating \term{simple} (SUM, ``and''-like, increase selectivity) and \term{complex} (MAX, ``or''-like, increase invariance) layers. Pure feed-forward is not enough: \term{recurrent} (lateral + feedback) connections combine bottom-up evidence with top-down priors, formalised by \term{Bayesian inference}: $p(\text{obj}\mid I) \propto p(I\mid \text{obj})\, p(\text{obj})$.
+
+\separator
+
+\textbf{What Examiners Like to Ask:}
+\begin{itemize}
+  \item Define viewer-centred vs object-centred; geon; structural description (LGT Q1, Q2).
+  \item Classify a new feature vector with nearest mean, 1-NN and k-NN; compute distances by hand (LGT Q3).
+  \item State how RF size, location sensitivity, and stimulus complexity change along the ventral pathway (LGT Q4).
+  \item Describe inputs to simple vs complex cells and the operation each performs (LGT Q5, Q6).
+  \item Write Bayes' theorem and interpret each term for vision (LGT Q7).
+  \item Use Bayes / posterior ratio to decide which object an ambiguous image depicts (LGT Q8).
+  \item Compare bottom-up (discriminative) vs top-down (generative); explain why vision is an ill-posed inverse problem.
+  \item Compare HMAX with CNN; explain MAX pooling as biological motivation for CNN sub-sampling.
+\end{itemize}
+
+% =============================================================================
+\subsection{Core Concepts}
+
+\textbf{Roadmap:}
+\begin{enumerate}
+  \item Theories of object recognition: object-based (3D) vs image-based (2D); configural vs featural.
+  \item Theories of categorisation: rules, prototypes, exemplars; mapping to ML classifiers.
+  \item Cortical pathways: what (ventral) vs where (dorsal); hierarchy of receptive fields.
+  \item Feed-forward hierarchical models: HMAX, CNN.
+  \item Recurrent models: lateral + feedback; bottom-up vs top-down.
+  \item Bayesian inference: posterior, likelihood, prior, evidence; priors and ill-posed vision.
+\end{enumerate}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Object-Based vs Image-Based Theories}
+
+\begin{defbox}[Object-based (3D, object-centred)]
+Each object is represented by storing a single 3D model in an \term{object-centred} reference frame (independent of viewpoint). Recognition decomposes the input image into 3D components and matches them against stored 3D descriptions.
+\end{defbox}
+
+\begin{defbox}[Image-based (2D, viewer-centred)]
+Each object is represented by storing multiple 2D \term{views} (images) in a \term{viewer-centred} reference frame. Recognition is template-matching against the stored views (with interpolation for novel viewpoints).
+\end{defbox}
+
+\textbf{Recognition-by-Components} (Biederman). Hypothesis: a small ``alphabet'' of 3D primitives (\term{geons}) and their inter-relations form the building blocks of object recognition---like letters forming words.
+
+\begin{defbox}[Geon]
+A simple, view-invariant 3D shape primitive: cubes, spheres, cylinders, cones, wedges, etc. Geons are chosen to be (i) sufficiently distinct from each other, (ii) robust to noise/partial occlusion, and (iii) view-invariant (look similar from most viewpoints).
+\end{defbox}
+
+\begin{defbox}[Structural Description]
+A representation of an object as a list of its component geons \emph{plus} their relative locations and sizes (e.g.\ ``cube above cylinder''; ``lamp shade left-of, below, larger-than fixture''). Different views of an object share the same set of geons in the same arrangement $\Rightarrow$ \term{viewpoint invariance}.
+\end{defbox}
+
+\textbf{RBC pipeline:} Early image processing $\rightarrow$ part segmentation $\rightarrow$ part modelling (assign each part a geon) $\rightarrow$ build structural description $\rightarrow$ match against stored structural descriptions.
+
+\textbf{Problems with object-based / RBC:}
+\begin{itemize}
+  \item Hard to decompose an image into components (segmentation is ill-posed).
+  \item Many natural objects (a tree, a face, a cloud) have no clean parts-based decomposition.
+  \item Cannot capture \emph{fine} details $\Rightarrow$ cannot discriminate individuals or similar objects (e.g.\ two specific faces).
+\end{itemize}
+
+\separator
+
+\textbf{Image-based variants:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8.5cm} @{}}
+\toprule
+\textbf{Variant} & \textbf{Idea / Status} \\
+\midrule
+Template matching & Early version: store one 2D template per object. Too rigid for the flexibility of human recognition. \\
+Multiple views & Modern version: store multiple stored 2D views per object; novel viewpoints handled by \emph{interpolation} between stored views. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Spot it in a question]
+``Object-centred'', ``single 3D model'', ``geons'', ``structural description'' $\Rightarrow$ object-based. ``Viewer-centred'', ``multiple 2D views'', ``template'', ``interpolation between stored views'' $\Rightarrow$ image-based.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Configural vs Featural Theories}
+
+\begin{defbox}[Featural (local)]
+Features are processed independently; relationships between features are ignored. Local properties dominate.
+\end{defbox}
+
+\begin{defbox}[Configural (global / holistic)]
+Object is processed as a whole; the spatial \emph{configuration} (relationships between features) is critical.
+\end{defbox}
+
+\textbf{Face inversion effect.} Upright faces are processed \term{configurally}; inverted faces are processed \term{featurally}. This explains why we struggle to spot grotesque alterations in upside-down faces (Thatcher illusion): configural processing is disabled, and individual features look fine in isolation.
+
+\textbf{Trade-off.} Local (featural) and global (configural) representations have complementary strengths and weaknesses:
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4cm} p{6cm} @{}}
+\toprule
+\textbf{Representation} & \textbf{Strength} & \textbf{Weakness (failure modes)} \\
+\midrule
+Simple / local (featural) & Robust to occlusion, viewpoint & Many \emph{false positives}: confuses objects with similar features in different arrangements; clutter \\
+Complex / global (configural) & Captures whole-object structure & Many \emph{false negatives}: fragile to occlusion, viewpoint, within-class variation \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Solutions:} (1) use features of \emph{intermediate} complexity, or (2) use a \emph{hierarchy} of features with a range of complexities---which is exactly what cortex appears to do.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Categorisation: Rules, Prototypes, Exemplars}
+
+How are category boundaries defined? How are new stimuli assigned?
+
+\begin{defbox}[Rules]
+Category membership is defined by abstract rules (e.g.\ ``has three sides $\Rightarrow$ triangle''; ``has four legs and barks $\Rightarrow$ dog''). Anything satisfying the rule(s) is in the category.
+\end{defbox}
+\textbf{For:} explains over-extension of rules in language (``goed'', ``mouses''). \textbf{Against:} category membership is graded (a bear is a better mammal than a whale; a pigeon is a better bird than a penguin) which rules cannot capture.
+
+\begin{defbox}[Prototypes]
+Compute the average of all instances per category to form a \term{prototype}. Assign a new stimulus to the category whose prototype is nearest.
+\end{defbox}
+\textbf{For:} prototypical members are accessed faster and learnt more easily. \textbf{Against:} variations within a class cannot be represented (only the mean is stored).
+
+\begin{defbox}[Exemplars]
+Store specific individual instances (\term{exemplars}) of each category. Assign a new stimulus to the category of the nearest stored exemplar.
+\end{defbox}
+\textbf{For:} successfully predicts certain mis-categorisations (e.g.\ a whale as a fish, by similarity). \textbf{Against:} graded membership still tricky to reproduce purely from raw exemplars.
+
+\separator
+
+\textbf{Mapping to machine learning} (these are all supervised: class labels of training points are known):
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Psychology} & \textbf{ML method} & \textbf{Stored} \\
+\midrule
+Rules     & Decision tree                 & A tree of feature thresholds \\
+Prototypes & Nearest mean classifier (NMC) & One mean vector per class \\
+Exemplars  & Nearest neighbour (1-NN)      & All training feature vectors \\
+Exemplars  & K-nearest neighbours (k-NN)   & All training feature vectors \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{defbox}[Nearest Mean Classifier (Prototype)]
+For each class, compute the \term{mean} of the feature vectors of all training points in that class. Assign a new stimulus to the class whose mean is closest. \textbf{Decision boundary is linear} $\Rightarrow$ only suitable when classes are linearly separable.
+\end{defbox}
+
+\begin{defbox}[Nearest Neighbour Classifier (Exemplar, 1-NN)]
+Save all training feature vectors. Assign a new stimulus to the class label of the closest training exemplar. \textbf{Decision boundary is non-linear (piecewise linear)} and forms a \term{Voronoi partitioning} of feature space. Sensitive to outliers.
+\end{defbox}
+
+\begin{defbox}[k-Nearest Neighbours Classifier (k-NN)]
+Save all training feature vectors. Assign a new stimulus to the class label of the \emph{majority} among its $k$ closest training exemplars. \textbf{Decision boundary is non-linear.} $k$ is typically small and \emph{odd} (to break ties); larger $k$ reduces the effect of outliers but smooths fine boundaries.
+\end{defbox}
+
+\textbf{Similarity / distance measures} (used for ``closest''):
+\begin{itemize}
+  \item Minimise distance: Sum of Squared Differences (SSD), Euclidean distance, Sum of Absolute Differences (SAD = Manhattan).
+  \item Maximise similarity: cross-correlation, normalised cross-correlation, correlation coefficient.
+\end{itemize}
+
+\begin{tipbox}[Exam Tip]
+``Linear decision boundary'' or ``mean of each class'' $\Rightarrow$ NMC (prototype). ``Voronoi partitioning'' or ``stores all training points'' $\Rightarrow$ 1-NN (exemplar). ``Majority vote among nearest'' $\Rightarrow$ k-NN. Always state Euclidean distance unless specified otherwise.
+\end{tipbox}
+
+\textbf{Supervised vs unsupervised reminder.} Prototype/exemplar methods are \emph{supervised} (class labels known in training). \term{Clustering} (k-means, agglomerative, graph cuts---seen in segmentation week) is \emph{unsupervised}: labels assigned by similarity alone.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Cortical Visual System: Pathways}
+
+Beyond V1, cortex has two pathways:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Pathway} & \textbf{Route} & \textbf{Function} \\
+\midrule
+\textbf{What} (ventral)   & V1 $\rightarrow$ V2 $\rightarrow$ V4 $\rightarrow$ IT (inferotemporal) & Object identity / category \\
+\textbf{Where / How} (dorsal) & V1 $\rightarrow$ parietal cortex (via MT) & Spatial / motion information \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Both pathways are \term{hierarchically organised}: simple, local RFs at V1; complex, large RFs in higher areas.
+
+\separator
+
+\textbf{Hierarchy of receptive fields (along ventral pathway):}
+
+\begin{thmbox}[Three trends along the ventral pathway]
+As we move from peripheral (V1) toward higher areas (IT):
+\begin{enumerate}
+  \item \textbf{Receptive field size} \emph{increases}.
+  \item \textbf{Sensitivity to stimulus location} \emph{decreases} (greater positional invariance).
+  \item \textbf{Complexity of preferred stimulus} \emph{increases}.
+\end{enumerate}
+\end{thmbox}
+
+\textbf{Concrete cell hierarchy} (LGN to V1, then beyond):
+\begin{center}
+Eye $\rightarrow$ LGN $\rightarrow$ V1: \quad Centre-surround cells $\rightarrow$ Simple cells $\rightarrow$ Complex cells $\rightarrow \cdots$
+\end{center}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8.5cm} @{}}
+\toprule
+\textbf{Cell type} & \textbf{Preferred stimulus} \\
+\midrule
+Centre-surround (LGN) & Isolated spots of contrasting intensity / colour. \\
+Simple (V1)           & Edges/bars at a specific orientation, with specific contrast polarity, at a specific location. \\
+Complex (V1)          & Edges/bars at a specific orientation with \emph{any} polarity at \emph{any} position within a small region. \\
+\vdots                & Increasingly complex feature combinations (corners, junctions, parts, faces). \\
+End of ventral (IT)   & Very complex stimuli (e.g.\ faces, body parts), large RFs, location-invariant. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{How more complex RFs are built.} Each level combines outputs from cells at the previous level with simpler RFs. For example:
+\begin{itemize}
+  \item A \textbf{simple cell} sums multiple co-aligned centre-surround cells $\Rightarrow$ responds when a bar/edge at the right orientation activates them all.
+  \item A \textbf{complex cell} pools several simple cells with the same orientation preference but different positions $\Rightarrow$ responds whenever any one of those simple cells fires (orientation kept, position tolerated).
+\end{itemize}
+
+\begin{tipbox}[Spot it in a question]
+``Multiple co-aligned centre-surround cells'' as input $\Rightarrow$ simple cell. ``Multiple simple cells with the same orientation, slightly different positions'' as input $\Rightarrow$ complex cell. ``Larger RF, more invariance'' is the general direction along the ventral pathway.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Feed-Forward Hierarchical Models: HMAX and CNN}
+
+\textbf{Overall idea.} Image is processed by layers of neurons with progressively more complex RFs at progressively less specific locations. Features at one stage are built from features at earlier stages. Can be thought of as \term{hierarchical template matching}.
+
+\separator
+
+\textbf{HMAX (Riesenhuber \& Poggio).}
+
+\begin{defbox}[HMAX: alternating S- and C-layers]
+Two distinct mathematical operations are needed: one to increase \emph{selectivity} (build more complex RFs), and one to increase \emph{invariance} (tolerate position/scale changes). HMAX therefore alternates two layer types, named after V1 cell types:
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l l @{}}
+\toprule
+\textbf{Unit} & \textbf{Computation} & \textbf{Logical role} & \textbf{Effect} \\
+\midrule
+Simple ``S-cells''  & SUM   & ``and''-like & Increased selectivity \\
+Complex ``C-cells'' & MAX   & ``or''-like  & Increased invariance \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Wiring:}
+\begin{itemize}
+  \item S-cells in one layer respond to \emph{conjunctions} of C-cells in the previous layer (template / ``and'').
+  \item C-cells in one layer respond to \emph{any} S-cell in a small neighbourhood of the previous layer (pooling / ``or'').
+\end{itemize}
+
+\textbf{Two regimes inside HMAX:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Stage} & \textbf{Description} \\
+\midrule
+V1 $\rightarrow$ IT  & Generic, reusable representations of shape components. ``Hard-wired''. \\
+IT $\rightarrow$ PFC & Task-specific. Trained using supervised learning (a classifier on top). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{CNN as a near-equivalent of HMAX.}
+
+\begin{defbox}[CNN as hierarchical model]
+A Convolutional Neural Network alternates two operations:
+\begin{itemize}
+  \item \textbf{Convolution} (with learned filters) -- equivalent to the SUM / ``and'' / S-cell operation.
+  \item \textbf{Sub-sampling / pooling} (often \emph{max} pooling over a small neighbourhood) -- equivalent to the MAX / ``or'' / C-cell operation, reducing location specificity.
+\end{itemize}
+This is the same hierarchical recipe as HMAX, implemented with standard image-processing primitives.
+\end{defbox}
+
+\begin{tipbox}[Confusing CNN vs HMAX naming]
+In CNN literature, ``C layer'' = \emph{convolution} layer (which corresponds to HMAX's \emph{S}-cell layer); ``S layer'' = \emph{sub-sampling} layer (which corresponds to HMAX's \emph{C}-cell layer). The \emph{names} are flipped relative to HMAX. The \emph{operations} (sum vs max) match.
+\end{tipbox}
+
+\textbf{Status.} Both HMAX and CNNs are examples of \emph{purely serial, feed-forward} models of cortical information processing. Deep CNNs achieve state-of-the-art on many vision tasks.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Recurrent Models and Top-Down Processing}
+
+Real cortex is not strictly feed-forward. Two kinds of recurrent connections exist:
+
+\begin{enumerate}
+  \item \textbf{Lateral connections within a region} (excitatory + inhibitory): allow neurons in the same population to interact (basis of the contextual / non-classical RF effects from Week 4---contour integration, surround suppression, pop-out).
+  \item \textbf{Feedback connections from higher to lower areas}: convey information from higher cortical regions back to primary sensory areas; allow bottom-up evidence to interact with top-down knowledge.
+\end{enumerate}
+
+\separator
+
+\begin{defbox}[Bottom-Up vs Top-Down]
+\textbf{Bottom-up:} use the information \emph{in the stimulus itself} to identify what is there. Stimulus-driven; \term{discriminative}.
+
+\textbf{Top-down:} use \term{context}, prior knowledge and expectation to aid identification. Knowledge-driven; \term{generative}.
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Process} & \textbf{Driven by} & \textbf{Models} \\
+\midrule
+Bottom-up & Stimulus & Discriminative (model the posterior directly) \\
+Top-down  & Knowledge / context / priors & Generative (model likelihood and prior) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Recurrent networks combine the two; \term{Bayesian inference} formalises the optimal way to combine them.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Bayesian Inference}
+
+\begin{defbox}[Bayes' Theorem]
+\[
+p(A \mid B) \;=\; \frac{p(B \mid A)\, p(A)}{p(B)}.
+\]
+The bar ``$\mid$'' reads ``given''. The two conditional probabilities $p(A\mid B)$ and $p(B\mid A)$ are \emph{not} equal in general (e.g.\ $p(\text{rain}\mid\text{wet pavement}) < 1$ but $p(\text{wet pavement}\mid\text{rain}) = 1$).
+\end{defbox}
+
+\textbf{Vision is an inverse problem.} We observe an image $I$ (the outcome) and want the object $\text{obj}_j$ (the cause). $p(\text{obj}_j \mid I)$ is hard to compute directly (inverse problem). But $p(I \mid \text{obj}_j)$ is comparatively \emph{easy} -- it follows from the forward image-formation model (project the 3D object, simulate illumination, etc.). Bayes inverts:
+\[
+\boxed{\,p(\text{obj}_j \mid I) \;=\; \frac{p(I \mid \text{obj}_j)\, p(\text{obj}_j)}{p(I)}\,}
+\]
+
+\begin{defbox}[Bayes nomenclature for vision]
+\begin{itemize}
+  \item \textbf{Posterior} $p(\text{obj}_j \mid I)$ -- what we want: probability that object $j$ is present given image $I$.
+  \item \textbf{Likelihood} $p(I \mid \text{obj}_j)$ -- forward model: probability of observing $I$ given that object $j$ is present.
+  \item \textbf{Prior} $p(\text{obj}_j)$ -- prior knowledge: probability that object $j$ is present in this environment, before seeing $I$.
+  \item \textbf{Evidence} $p(I)$ -- the same for all hypotheses about \emph{this} image; can be ignored when comparing them.
+\end{itemize}
+\end{defbox}
+
+If we ignore $p(I)$ (or set $p(I)=1$), then \quad \textbf{posterior $\propto$ likelihood $\times$ prior}.
+
+\separator
+
+\textbf{Posterior ratio (binary hypothesis ``object vs not object'').} Useful when we just want a yes/no decision:
+\[
+\underbrace{\frac{p(\text{obj}_j \mid I)}{p(\neg\text{obj}_j \mid I)}}_{\text{posterior ratio}}
+\;=\;
+\underbrace{\frac{p(I \mid \text{obj}_j)}{p(I \mid \neg\text{obj}_j)}}_{\text{likelihood ratio}}
+\;\cdot\;
+\underbrace{\frac{p(\text{obj}_j)}{p(\neg\text{obj}_j)}}_{\text{prior ratio}}
+\]
+Decide ``object'' iff posterior ratio $> 1$; the evidence $p(I)$ cancels out.
+
+\separator
+
+\textbf{Why priors matter (vision is ill-posed).}
+Multiple causes can produce the same image $\Rightarrow$ likelihood alone is ambiguous. The visual system uses \term{priors} (assumptions / constraints on the world) to choose the most likely interpretation. Examples:
+\begin{itemize}
+  \item Prior: \emph{light comes from above} $\Rightarrow$ infer convex/concave shape from shading.
+  \item Prior: \emph{texture is circular and homogeneous} $\Rightarrow$ infer 3D shape and depth.
+  \item Prior: \emph{faces are convex} $\Rightarrow$ even a concave (hollow) mask appears convex.
+  \item Prior: \emph{size is constant} $\Rightarrow$ infer depth from retinal size (e.g.\ Ponzo illusion).
+  \item Prior: \emph{neighbouring / similar / connected features are related} $\Rightarrow$ Gestalt grouping (Week 4).
+  \item Prior: \emph{strings of letters form words} $\Rightarrow$ infer letter identity from context.
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Big Picture: How Cortex Combines These Ideas}
+
+\textbf{Hierarchy of features at multiple complexities.} Cortex uses a hierarchy of features whose complexity grows with depth, modelled by alternating layers that increase \emph{selectivity} (sum / ``and'') and \emph{invariance} (max / ``or''). This solves the local-vs-global trade-off by spanning all scales of complexity simultaneously.
+
+\textbf{Bottom-up + top-down via recurrence.} Lateral and feedback connections allow stimulus-driven evidence (likelihoods) to combine with knowledge-driven priors. Bayes' theorem describes the optimal combination.
+
+\textbf{Discriminative vs generative.} Bottom-up / discriminative methods directly model the posterior (e.g.\ a CNN classifier output). Top-down / generative methods model the likelihood and prior separately and use Bayes to obtain the posterior.
+
+\bigseparator
+
+% =============================================================================
+\subsection{Worked Examples}
+
+\begin{exbox}[Example 1: Viewer-centred vs object-centred (LGT Q1)]
+\textbf{Q:} What is the difference between the ``viewer-centred'' and ``object-centred'' approaches to object recognition?
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Viewer-centred (image-based):} the 3D object is modelled as a set of 2D images, showing different views of the object.
+  \item \textbf{Object-centred (object-based):} a single 3D model is used to describe the object, independent of viewpoint.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 2: Geon and structural description (LGT Q2)]
+\textbf{Q:} What is a geon? What is a structural description?
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Geon:} a simple three-dimensional shape such as a sphere, cube, cylinder, cone or wedge; chosen to be sufficiently distinct, robust, and view-invariant.
+  \item \textbf{Structural description:} a representation of an object in terms of its component geons \emph{and} their relative locations and sizes (e.g.\ ``cube above cylinder'').
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 3: NMC, 1-NN and 3-NN classification (LGT Q3)]
+\textbf{Q:} Four objects from two classes are encoded as:
+\[
+\begin{array}{cccc}
+\text{Object} & \text{Class} & \text{Feature vector} \\
+1 & A & (7,7) \\
+2 & A & (7,4) \\
+3 & B & (3,4) \\
+4 & B & (1,4)
+\end{array}
+\]
+A new object has feature vector $(3,7)$. Classify it using (1) nearest mean, (2) 1-NN, (3) 3-NN. Use Euclidean distance.
+
+\textbf{A:}
+
+\textbf{(1) Nearest mean (Prototype).}
+Prototypes:
+\[
+\mu_A = \left(\tfrac{7+7}{2},\tfrac{7+4}{2}\right) = (7, 5.5), \quad
+\mu_B = \left(\tfrac{3+1}{2},\tfrac{4+4}{2}\right) = (2, 4).
+\]
+Distances from $(3,7)$:
+\[
+d(\mu_A, (3,7)) = \sqrt{(7-3)^2 + (5.5-7)^2} = \sqrt{16 + 2.25} = \sqrt{18.25} \approx 4.27
+\]
+\[
+d(\mu_B, (3,7)) = \sqrt{(2-3)^2 + (4-7)^2} = \sqrt{1 + 9} = \sqrt{10} \approx 3.16
+\]
+$\mu_B$ is closer $\Rightarrow$ \textbf{class B}.
+
+\textbf{(2) 1-NN (Exemplar).} Distances from $(3,7)$ to each training point:
+\[
+\begin{array}{ccc}
+\text{Object} & \text{Class} & \text{Dist} \\
+1\ (7,7) & A & \sqrt{16+0} = 4 \\
+2\ (7,4) & A & \sqrt{16+9} = 5 \\
+3\ (3,4) & B & \sqrt{0+9} = 3 \\
+4\ (1,4) & B & \sqrt{4+9} \approx 3.6
+\end{array}
+\]
+Closest exemplar is object 3 (class B) $\Rightarrow$ \textbf{class B}.
+
+\textbf{(3) 3-NN.} Three closest are 3 (B), 4 (B), 1 (A). Majority $=$ B $\Rightarrow$ \textbf{class B}.
+\end{exbox}
+
+\begin{exbox}[Example 4: Trends along the ventral pathway (LGT Q4)]
+\textbf{Q:} How do the following properties of cortical neurons change when moving along the ventral pathway from peripheral to higher areas: (1) RF size, (2) sensitivity to stimulus location, (3) complexity of preferred stimulus?
+
+\textbf{A:}
+\begin{itemize}
+  \item (1) RF size \textbf{increases}.
+  \item (2) Sensitivity to stimulus location \textbf{decreases} (greater invariance).
+  \item (3) Complexity of preferred stimulus \textbf{increases}.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 5: Inputs to simple vs complex cells (LGT Q5)]
+\textbf{Q:} Describe the inputs to (a) a simple cell and (b) a complex cell, and explain how these give rise to the observed response properties.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{(a) Simple cell:} input is from several centre-surround cells whose RFs lie on a common line. When a bar/edge at the correct orientation falls on this line, all the centre-surround inputs are activated together, so the simple cell responds. Hence simple cells respond to oriented bars/edges at a specific orientation \emph{and} location.
+  \item \textbf{(b) Complex cell:} input is from several simple cells that share the same orientation preference but are tuned to slightly different positions within a small spatial region. A bar/edge at the right orientation will activate \emph{some} of these simple cells regardless of exact position, so the complex cell responds. Hence complex cells respond to oriented edges with tolerance to exact location (positional invariance).
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 6: HMAX operations (LGT Q6)]
+\textbf{Q:} Describe the mathematical operation performed by neurons in the HMAX model in (1) simple cells, (2) complex cells.
+
+\textbf{A:}
+\begin{itemize}
+  \item (1) Simple cells output the \textbf{SUM} of their inputs (``and''-like; increase \emph{selectivity}).
+  \item (2) Complex cells output the \textbf{MAXIMUM} of their inputs (``or''-like; increase \emph{invariance}).
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 7: Bayes for vision (LGT Q7)]
+\textbf{Q:} Write down Bayes' theorem and explain each term in relation to a computer vision system.
+
+\textbf{A:}
+\[
+p(H \mid E) \;=\; \frac{p(E \mid H)\, p(H)}{p(E)}.
+\]
+\begin{itemize}
+  \item $p(H \mid E)$ -- \textbf{posterior}: probability that hypothesis $H$ (e.g.\ ``object $j$ is present'') is true given the image evidence $E$. This is what the vision system needs to evaluate (we want the most likely $H$).
+  \item $p(E \mid H)$ -- \textbf{likelihood}: probability that, if $H$ were true, the image would contain the observed evidence $E$. Comes from our knowledge of the image-formation process (geometry, illumination, surface properties).
+  \item $p(H)$ -- \textbf{prior}: probability of $H$ before seeing the image; if $H$ is intrinsically improbable, stronger evidence is required.
+  \item $p(E)$ -- \textbf{evidence}: probability of seeing $E$ regardless of whether $H$ is true. The same for all hypotheses about a fixed image, so it cancels when comparing them.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 8: Posterior with priors -- robot sorter (LGT Q8)]
+\textbf{Q:} A production line yields two objects, objA and objB, sorted by a robot. From most viewpoints they are distinguishable, but at orientations oriA and oriB respectively their images are \emph{indistinguishable}. The line produces 3 objA per 1 objB. The probability of objA at oriA is $0.1$; the probability of objB at oriB is $0.2$. Into which bin should the robot sort an indistinguishable image to minimise errors?
+
+\textbf{A:} Class priors: $p(\text{objA}) = 0.75$, $p(\text{objB}) = 0.25$ (3:1 ratio). Likelihoods of observing the indistinguishable image:
+\[
+p(I\mid\text{objA}) = 0.1, \qquad p(I\mid\text{objB}) = 0.2.
+\]
+Posteriors (with $k = 1/p(I)$ a common factor):
+\[
+p(\text{objA}\mid I) = k \cdot 0.1 \cdot 0.75 = 0.075\,k, \quad
+p(\text{objB}\mid I) = k \cdot 0.2 \cdot 0.25 = 0.050\,k.
+\]
+$0.075 > 0.050 \Rightarrow$ \textbf{sort into the objA bin}.
+
+\textbf{(Optional)} Normalising: $p(I) = 0.075 + 0.050 = 0.125$, so $p(\text{objA}\mid I) = 0.6$, $p(\text{objB}\mid I) = 0.4$.
+
+\textbf{Take-away:} the higher likelihood (objB) is overruled by the much higher prior (objA).
+\end{exbox}
+
+\begin{exbox}[Example 9: Posterior ratio -- zebra detector]
+\textbf{Q:} Use the posterior ratio to decide whether each image contains a zebra, given $p(\text{zebra}) = 0.01$ and $p(\neg\text{zebra}) = 0.99$.
+
+\textbf{Image 1:} $p(I\mid\text{zebra}) = 0.07$, $p(I\mid\neg\text{zebra}) = 0.0005$.
+\[
+\frac{p(\text{zebra}\mid I)}{p(\neg\text{zebra}\mid I)}
+= \frac{0.07}{0.0005} \cdot \frac{0.01}{0.99}
+\approx 140 \cdot 0.0101 \approx 1.41 \;>\; 1 \;\Rightarrow\; \textbf{zebra}.
+\]
+
+\textbf{Image 2 (motorcycle):} $p(I\mid\text{zebra}) = 0.003$, $p(I\mid\neg\text{zebra}) = 0.85$.
+\[
+\frac{0.003}{0.85} \cdot \frac{0.01}{0.99}
+\approx 0.00353 \cdot 0.0101 \approx 3.6\times 10^{-5} \;<\; 1 \;\Rightarrow\; \textbf{not zebra}.
+\]
+\textbf{Take-away:} the prior ratio (low for zebras) means strong likelihood evidence is needed to overturn the default ``not a zebra''.
+\end{exbox}
+
+\begin{exbox}[Example 10: HMAX vs CNN]
+\textbf{Q:} (a) What two operations are alternated in HMAX, and what does each achieve? (b) How does a CNN realise the same recipe? (c) State a confusing naming clash.
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) HMAX alternates \textbf{S-cells} (SUM, ``and''-like, increase \emph{selectivity}) and \textbf{C-cells} (MAX, ``or''-like, increase \emph{invariance}).
+  \item (b) A CNN alternates \textbf{convolution} (with learned filters, equivalent to S-cell SUM/conjunction) and \textbf{sub-sampling / max-pooling} (equivalent to C-cell MAX, reducing location specificity).
+  \item (c) In CNN literature, the convolution layer is called the ``C layer'' but matches HMAX's S-cells; the sub-sampling layer is called the ``S layer'' but matches HMAX's C-cells. Names flipped, operations equivalent.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 11: Configural vs featural -- face inversion]
+\textbf{Q:} Why is it harder to spot grotesque alterations in an inverted face than in an upright face?
+
+\textbf{A:} Upright faces are processed \textbf{configurally} (holistically, taking spatial relations between features into account). Inversion disrupts configural processing and forces \textbf{featural} processing, in which each feature is evaluated independently. Local features may look fine on their own even when the configuration is grossly altered (e.g.\ Thatcher illusion).
+\end{exbox}
+
+\begin{exbox}[Example 12: Why purely featural or purely configural fails]
+\textbf{Q:} Explain why simple (local) and complex (global) feature representations each fail in characteristic ways, and how cortex resolves this.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Local / featural} features generate many \emph{false positives}: they fail to distinguish objects with similar features in different arrangements, and fail in clutter.
+  \item \textbf{Global / configural} features generate many \emph{false negatives}: they fail under occlusion, viewpoint changes, and within-class variation.
+  \item \textbf{Cortex's solution:} use a \emph{hierarchy} of features with a range of complexities, modelled by alternating layers that increase selectivity (SUM) and invariance (MAX). This spans both regimes simultaneously.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 13: Coding -- nearest mean and k-NN classifiers]
+\textbf{Q:} Sketch \texttt{nearest\_mean\_classifier} and \texttt{k\_nearest\_neighbors\_classifier} (Euclidean distance, 2D feature vectors).
+
+\textbf{A (key lines):}
+\begin{quote}\ttfamily
+\textbf{nearest\_mean:}\\
+for cls in unique\_classes:\\
+\hspace*{2em}cls\_features = train\_features[train\_labels == cls]\\
+\hspace*{2em}class\_mean = np.mean(cls\_features, axis=0)\\
+\hspace*{2em}dist = euclidean\_distance(new\_stimulus, class\_mean)\\
+\hspace*{2em}if dist < min\_dist: best\_class = cls; min\_dist = dist\\[4pt]
+\textbf{k-NN:}\\
+distances = [(euclidean(new\_stimulus, x), y) for x,y in zip(train\_features, train\_labels)]\\
+distances.sort(key=lambda t: t[0])\\
+k\_nearest = [y for \_,y in distances[:k]]\\
+return Counter(k\_nearest).most\_common(1)[0][0]
+\end{quote}
+\textbf{Take-away:} NMC stores one mean per class (linear boundary); k-NN stores all training points and votes (non-linear, Voronoi-like).
+\end{exbox}
+
+\begin{exbox}[Example 14: Coding -- simulating S- and C-cells]
+\textbf{Q:} Sketch \texttt{simulate\_s\_cell} (Gabor convolution) and \texttt{simulate\_c\_cell} (max pooling).
+
+\textbf{A (key lines):}
+\begin{quote}\ttfamily
+\textbf{S-cell (selectivity, ``and''-like):}\\
+gabor = cv2.getGaborKernel((ksize,ksize), 4.0, theta, 10.0, 0.5, 0, ktype=cv2.CV\_32F)\\
+s\_response = cv2.filter2D(image, cv2.CV\_32F, gabor)\\[4pt]
+\textbf{C-cell (invariance, ``or''-like, MAX):}\\
+c\_response = scipy.ndimage.maximum\_filter(s\_response, size=pool\_size)
+\end{quote}
+\textbf{Take-away:} Gabor convolution gives orientation-selective response (S-cell); spatial max pooling tolerates small position shifts (C-cell). Same structure as a CNN convolution + max-pooling pair.
+\end{exbox}
+
+\begin{exbox}[Example 15: Coding -- posterior ratio]
+\textbf{Q:} Sketch \texttt{calculate\_posterior\_ratio}.
+
+\textbf{A (key lines):}
+\begin{quote}\ttfamily
+likelihood\_ratio = p\_img\_given\_obj / p\_img\_given\_not\_obj\\
+prior\_ratio = p\_obj / p\_not\_obj\\
+posterior\_ratio = likelihood\_ratio * prior\_ratio\\
+is\_recognised = posterior\_ratio > 1.0\\
+return posterior\_ratio, is\_recognised
+\end{quote}
+\textbf{Take-away:} for a binary decision, you never need $p(I)$; multiply likelihood ratio by prior ratio and compare to 1.
+\end{exbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Summary}
+
+\begin{keybox}[Key Takeaways]
+\begin{enumerate}
+  \item \textbf{Object-based vs image-based.} Object-based stores one 3D model per object (RBC, geons, structural descriptions, viewpoint-invariant). Image-based stores multiple 2D views (template / multiple-views, viewer-centred). Each has characteristic failure modes.
+  \item \textbf{Configural vs featural.} Holistic / global processing (upright faces) vs independent-feature processing (inverted faces). Inversion effect demonstrates the distinction.
+  \item \textbf{Categorisation.} Rules (decision trees), Prototypes (NMC, linear boundary), Exemplars (1-NN, k-NN; non-linear, Voronoi). NMC stores one mean per class; (k-)NN stores all training points and votes.
+  \item \textbf{Ventral pathway hierarchy.} V1$\rightarrow$V2$\rightarrow$V4$\rightarrow$IT: RFs grow larger, less location-specific, more complex. Centre-surround $\rightarrow$ simple $\rightarrow$ complex $\rightarrow \cdots \rightarrow$ face cells.
+  \item \textbf{HMAX.} Alternating S-cells (SUM, ``and'', selectivity) and C-cells (MAX, ``or'', invariance). V1$\rightarrow$IT generic + hard-wired; IT$\rightarrow$PFC task-specific + supervised.
+  \item \textbf{CNNs.} Same recipe: convolution (= S/SUM) + max pooling (= C/MAX). The ``C/S'' naming is flipped relative to HMAX.
+  \item \textbf{Recurrent cortex.} Lateral connections within an area + feedback connections from higher to lower areas. Combine bottom-up (stimulus-driven, discriminative) with top-down (knowledge-driven, generative).
+  \item \textbf{Bayes' theorem.} $p(\text{obj}\mid I) \propto p(I\mid\text{obj})\, p(\text{obj})$; posterior $\propto$ likelihood $\times$ prior. Vision is an ill-posed inverse problem; priors disambiguate.
+  \item \textbf{Posterior ratio.} For binary decisions: posterior ratio $=$ likelihood ratio $\times$ prior ratio; choose ``object'' iff $> 1$ (evidence cancels).
+\end{enumerate}
+\end{keybox}
+
+\textbf{Final comparison: theories of object recognition.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.2cm} p{5.5cm} @{}}
+\toprule
+\textbf{Theory} & \textbf{What is stored} & \textbf{Strengths / weaknesses} \\
+\midrule
+Object-based / RBC   & One 3D model per object (geons + relations) & Viewpoint-invariant; struggles with non-decomposable objects and fine within-class differences \\
+Image-based template & One 2D view per object & Too rigid; no flexibility \\
+Image-based multi-view & Multiple 2D views + interpolation & Handles novel viewpoints; viewer-centred \\
+Configural (face area) & Whole-object spatial config & Holistic; broken by inversion \\
+Featural               & Independent local features & Robust to occlusion; many false positives \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Final comparison: psychology $\leftrightarrow$ ML mapping.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l l @{}}
+\toprule
+\textbf{Theory} & \textbf{ML method} & \textbf{Decision boundary} & \textbf{Storage} \\
+\midrule
+Rules      & Decision tree              & Axis-aligned          & Tree of thresholds \\
+Prototypes & Nearest mean classifier    & Linear                & 1 mean / class \\
+Exemplars  & 1-NN                       & Voronoi (piecewise)   & All training points \\
+Exemplars  & k-NN                       & Non-linear, smoother  & All training points + $k$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Final comparison: cortical models.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l p{6cm} @{}}
+\toprule
+\textbf{Model} & \textbf{Connectivity} & \textbf{Computation} \\
+\midrule
+HMAX (feed-forward) & V1$\rightarrow$IT$\rightarrow$PFC, no feedback & Alternate SUM (S, selectivity) and MAX (C, invariance); top classifier supervised \\
+CNN (feed-forward)  & Layers, no feedback                         & Alternate convolution (= S/SUM) and max-pooling (= C/MAX); end-to-end supervised \\
+Recurrent cortex    & Lateral + feedback                          & Combine bottom-up evidence with top-down priors; Bayesian inference \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Final comparison: bottom-up vs top-down.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l l @{}}
+\toprule
+\textbf{Direction} & \textbf{Driven by} & \textbf{Models} & \textbf{Bayes term} \\
+\midrule
+Bottom-up & Stimulus            & Discriminative & Models $p(\text{obj}\mid I)$ directly \\
+Top-down  & Context, priors     & Generative     & Models $p(I\mid\text{obj})$ and $p(\text{obj})$ \\
+\bottomrule
+\end{tabular}
+\end{center}

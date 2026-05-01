@@ -1,0 +1,656 @@
+% =============================================================================
+%                  WEEK 3: LOW-LEVEL VISION (ARTIFICIAL)
+% =============================================================================
+\section{Week 3: Low-Level Vision (Artificial)}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Define and compute 2D \term{convolution} of an image with a mask, including boundary handling and separability.
+  \item Distinguish convolution from cross-correlation and explain why convolution is preferred.
+  \item Construct and apply \term{smoothing} (box, Gaussian) and \term{differencing} (1st/2nd derivative, Laplacian) masks.
+  \item Build edge detectors that combine smoothing and differencing (LoG, DoG, derivative-of-Gaussian, Canny).
+  \item Explain multi-scale feature detection via Gaussian and Laplacian \term{image pyramids}.
+\end{itemize}
+\end{keybox}
+
+\textbf{Big Picture.}
+Low-level vision is image processing applied as a front-end to higher-level CV tasks. The unifying tool is \term{linear filtering}: each output pixel is a weighted sum of input pixels in a neighbourhood, computed by \term{convolution} with a \term{mask} (kernel). Choosing the weights selects what we extract: \textbf{smoothing} masks (positive, sum-to-1) average pixels and suppress noise/high spatial frequencies; \textbf{differencing} masks (mixed sign, sum-to-0) approximate derivatives and respond to intensity changes (edges). Real edge detection \emph{combines both}: smooth at a chosen \term{scale} $\sigma$, then differentiate (LoG/DoG/derivative-of-Gaussian, e.g.\ Canny). To find features without knowing their size, we run a fixed-size mask over a \term{Gaussian image pyramid} (resampling instead of resizing the mask).
+
+\separator
+
+\textbf{What Examiners Like to Ask:}
+\begin{itemize}
+  \item Compute the result of $H \ast I$ by hand (rotate mask, slide, multiply-accumulate; pad with zeros).
+  \item State the convolution formula and contrast with cross-correlation.
+  \item Show a mask is separable: $H = h \ast h^T = h^T \times h$; explain the efficiency gain.
+  \item Write down 1st- and 2nd-derivative masks for $-\partial/\partial x$, $-\partial/\partial y$, $-\partial^2/\partial x^2$, etc., and the Laplacian.
+  \item List the four causes of intensity discontinuities (depth, orientation, reflectance, illumination).
+  \item Explain why edge detection needs both a smoothing and a differencing operator; why LoG/DoG help.
+  \item Describe the Canny pipeline (smooth $\to$ derivative $\to$ magnitude/direction $\to$ NMS $\to$ hysteresis).
+  \item Define aliasing and explain why we Gaussian-smooth before downsampling.
+  \item Describe a Gaussian and a Laplacian pyramid and why pyramids are cheaper than scaling the mask.
+\end{itemize}
+
+% =============================================================================
+\subsection{Core Concepts}
+
+\textbf{Roadmap:}
+\begin{enumerate}
+  \item Convolution (definition, method, separability, weights, boundaries).
+  \item Smoothing (spatial frequency, box, Gaussian).
+  \item Differencing (1st/2nd derivative masks, Laplacian).
+  \item Edge detection (causes, idealised edges, LoG/DoG/derivative-of-Gaussian, Canny).
+  \item Multi-scale feature detection (Gaussian and Laplacian pyramids, aliasing).
+\end{enumerate}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Convolution}
+
+\begin{defbox}[2D Convolution]
+For image $I$ and mask (kernel/template) $H$,
+\[
+I'(i,j) \;=\; (I \ast H)(i,j) \;=\; \sum_{k,l} I(i+k,\,j+l)\, H(-k,\,-l).
+\]
+The minus signs in $H(-k,-l)$ correspond to a 180$^\circ$ rotation of the mask before sliding.
+\end{defbox}
+
+\textbf{Method (by hand):}
+\begin{enumerate}
+  \item \textbf{Rotate} the mask $H$ by 180$^\circ$.
+  \item For each output pixel: \textbf{centre} the rotated mask on the corresponding input pixel.
+  \item \textbf{Multiply} each mask weight by the underlying pixel value.
+  \item \textbf{Sum} the products and write the result into the output pixel.
+\end{enumerate}
+
+\textbf{Two equivalent views:}
+\begin{itemize}
+  \item Slide the rotated mask across the image, filling outputs as you go (sequential).
+  \item Place a copy of the mask at every pixel and superimpose, weighted by intensity (parallel; matches DoG filters in the retina).
+\end{itemize}
+
+\separator
+
+\textbf{Convolution vs Cross-Correlation:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Operation} & \textbf{Formula} & \textbf{Properties} \\
+\midrule
+Convolution $I \ast H$ & $\sum_{k,l} I(i+k,j+l)\, H(-k,-l)$ & Commutative, associative \\
+Cross-correlation $I \otimes H$ & $\sum_{k,l} I(i+k,j+l)\, H(k,l)$ & Neither \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item If the mask is \textbf{symmetric} ($H(k,l) = H(-k,-l)$), then convolution $=$ cross-correlation.
+  \item Convolution is preferred because it is commutative ($I \ast H = H \ast I$) and associative ($(I \ast H) \ast G = I \ast (H \ast G)$); this lets us combine filters and rearrange pipelines safely.
+  \item In CNNs, the ``convolutional'' layer is actually cross-correlation: kernels are \emph{learned}, so the rotation is irrelevant and skipping it is faster.
+\end{itemize}
+
+\separator
+
+\textbf{Mask Properties:}
+
+\textbf{Mask as point-spread function.} Convolving an isolated white dot on a black background with $H$ yields the rotated mask, shifted to the dot's location. Any image is a sum of such points, so the convolution is the superposition of weighted, rotated masks.
+
+\textbf{Mask as template.} Convolution responds maximally where the image patch matches the rotated mask. Hence ``masks are templates'': we choose weights that resemble the feature we want to detect.
+
+\textbf{Two main families of mask weights:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4cm} p{6cm} @{}}
+\toprule
+\textbf{Family} & \textbf{Weights} & \textbf{Effect} \\
+\midrule
+Smoothing & all positive, sum to 1 & Preserves average intensity, blurs (low-pass) \\
+Differencing & mixed sign, sum to 0 & Zero on uniform regions, responds to intensity change \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{Separability:}
+
+\begin{defbox}[Separable Mask]
+A 2D mask $H$ is separable if it can be written as the convolution of two 1D vectors,
+\[
+H \;=\; h_1 \ast h_2^T \;=\; h_2^T \times h_1.
+\]
+Then $I \ast H = (I \ast h_1) \ast h_2^T$: a 2D convolution becomes two 1D convolutions.
+\end{defbox}
+
+\textbf{Why it matters (efficiency):} Convolving an $n \times n$ image with an $m \times n$ mask costs:
+\begin{itemize}
+  \item $m \cdot n$ multiplications per pixel for the 2D mask.
+  \item $m + n$ multiplications per pixel for the two 1D masks.
+\end{itemize}
+\textbf{Useful identity:} the convolution of a row vector with a column vector equals their outer product, $h \ast h^T = h^T \times h$ (helpful in exam questions).
+
+\separator
+
+\textbf{Boundary Handling.} Where the mask falls off the image, the two most common options are:
+\begin{enumerate}
+  \item \textbf{Zero-pad} the input image (the implicit convention used in lectures): output has same size as input.
+  \item \textbf{Shrink} the output: only compute results where the mask fits entirely inside the input.
+\end{enumerate}
+
+\begin{tipbox}[Spot it in a question]
+Phrases like ``produce a result the same size as $I$'' $\Rightarrow$ zero-pad. ``Only at locations where the mask fits entirely inside'' $\Rightarrow$ shrink (output smaller than input).
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Smoothing}
+
+\textbf{Spatial frequency.} Small-scale texture corresponds to \textbf{high} spatial frequency; large smooth regions to \textbf{low} spatial frequency. Smoothing acts as a \term{low-pass} filter: it removes high-frequency content (fine detail and noise).
+
+\separator
+
+\textbf{Box (Mean) Filter:}
+
+\[
+H_{\text{box}} \;=\; \frac{1}{9}\begin{pmatrix} 1 & 1 & 1 \\ 1 & 1 & 1 \\ 1 & 1 & 1 \end{pmatrix}
+\]
+Each pixel is replaced by the mean of itself and its neighbours. Generates a blurred image. Larger box ($9\times 9$, $17 \times 17$, $\dots$) blurs more.
+
+\textbf{Drawback:} the box mask has \emph{sharp edges} (constant inside, zero outside), which produces artefacts in the smoothed image.
+
+\separator
+
+\textbf{Gaussian Filter:}
+
+\begin{defbox}[2D Gaussian]
+\[
+G_\sigma(x,y) \;=\; \frac{1}{2\pi \sigma^2}\, \exp\!\left(-\frac{x^2 + y^2}{2\sigma^2}\right)
+\]
+Falls off gently at the edges; gives more weight to nearby pixels.
+\end{defbox}
+
+\textbf{Effect of the scale parameter $\sigma$:} as $\sigma$ increases:
+\begin{itemize}
+  \item Mask width must increase (rule of thumb: $\geq 6\sigma$).
+  \item More pixels contribute to each average.
+  \item Image gets more blurred (more high frequencies suppressed).
+  \item Noise is more effectively suppressed.
+\end{itemize}
+
+\textbf{Separability of the Gaussian:}
+\[
+G_\sigma(x,y) \;=\; \underbrace{\frac{1}{\sqrt{2\pi}\,\sigma}\exp\!\left(\!-\tfrac{x^2}{2\sigma^2}\right)}_{G_\sigma(x)} \cdot \underbrace{\frac{1}{\sqrt{2\pi}\,\sigma}\exp\!\left(\!-\tfrac{y^2}{2\sigma^2}\right)}_{G_\sigma(y)}
+\]
+i.e.\ a 2D Gaussian is the product of two 1D Gaussians $\Rightarrow$ separable $\Rightarrow$ much cheaper.
+
+\textbf{Useful Gaussian identity (cascade):}
+\[
+G_{\sigma_1} \ast G_{\sigma_2} \;=\; G_{\sqrt{\sigma_1^2 + \sigma_2^2}}
+\]
+e.g.\ $G_\sigma \ast G_\sigma = G_{\sigma\sqrt{2}}$. Used in pyramid construction.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Differencing}
+
+Convolution can also estimate \term{derivatives} (intensity gradients). Smoothing approximates integration; differencing approximates differentiation.
+
+\textbf{1st derivative (forward difference).} Estimate of $\partial I / \partial x$ at a pixel uses neighbours $i_1, i_2$: gradient $\approx i_2 - i_1$. Multiplying by the row $[-1\ \ 1]$ would give $-i_1 + i_2$, but \emph{convolution rotates the mask}, so the actual mask used to compute $-\partial / \partial x$ is
+\[
+\left[\,-1\ \ 1\,\right] \ast I \;\approx\; -\tfrac{\partial I}{\partial x}.
+\]
+
+\textbf{2nd derivative (central difference).} $(i_3 - i_2) - (i_2 - i_1) = i_1 - 2 i_2 + i_3$. The mask $[1\ -2\ \ 1]$ gives $\partial^2/\partial x^2$; convention uses $[-1\ \ 2\ -1]$ to compute $-\partial^2/\partial x^2$.
+
+\separator
+
+\textbf{Standard difference masks (orientations):}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l l @{}}
+\toprule
+\textbf{Operator} & \textbf{Mask} & \textbf{Detects} \\
+\midrule
+$-\partial / \partial y$ & $[\,-1,\ 1\,]^T$ & Horizontal edges (vertical intensity change) \\
+$-\partial / \partial x$ & $[\,-1,\ \ 1\,]$ & Vertical edges (horizontal intensity change) \\
+$-\partial^2 / \partial y^2$ & $[\,-1,\ 2,\ -1\,]^T$ & Horizontal edges (2nd order) \\
+$-\partial^2 / \partial x^2$ & $[\,-1,\ 2,\ -1\,]$ & Vertical edges (2nd order) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Diagonal versions} replace the row/column with the corresponding diagonal pattern (e.g.\ $\begin{psmallmatrix}-1 & 0\\ 0 & 1\end{psmallmatrix}$ for a diagonal 1st derivative).
+
+\separator
+
+\textbf{Laplacian Mask:}
+
+\begin{defbox}[Laplacian]
+The Laplacian combines 2nd derivatives in $x$ and $y$ directions:
+\[
+L \;=\; \begin{pmatrix} -1 & -1 & -1 \\ -1 & 8 & -1 \\ -1 & -1 & -1 \end{pmatrix} \;\approx\; -\frac{\partial^2 I}{\partial x^2} - \frac{\partial^2 I}{\partial y^2}.
+\]
+A simpler 4-neighbour variant is $\begin{psmallmatrix}0 & -1 & 0 \\ -1 & 4 & -1 \\ 0 & -1 & 0\end{psmallmatrix}$. Detects intensity discontinuities at \emph{all} orientations. (Strictly the ``true'' Laplacian is the additive inverse of these masks, but the convention is to use this sign.)
+\end{defbox}
+
+\begin{tipbox}[Spot it in a question]
+``Sum-to-zero'' weights $\Rightarrow$ differencing mask. ``All weights positive, sum to 1'' $\Rightarrow$ smoothing mask. Masks with isotropic (rotationally symmetric) shape detect edges in all orientations (Laplacian, LoG, DoG); separable derivative masks detect a single direction.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Edge Detection}
+
+\begin{defbox}[Edge]
+An image region in which the intensity gradients have a common direction and large magnitudes (in a direction orthogonal to the edge). An edge is an \emph{extended, coherent} intensity discontinuity (not a single noisy pixel).
+\end{defbox}
+
+\textbf{Idealised edges:} \term{step} (light $\to$ dark transition), \term{bar} (thin strip at different intensity than its surroundings).
+
+\separator
+
+\textbf{Causes of intensity discontinuities (D--O--R--I):}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Cause} & \textbf{Description} \\
+\midrule
+\textbf{D}epth & Surfaces at different distances (object boundary in front of background) \\
+\textbf{O}rientation & Two surfaces meeting at an angle \\
+\textbf{R}eflectance & Same surface, different material/colour properties \\
+\textbf{I}llumination & Lighting changes (e.g.\ shadow boundaries); usually \emph{not} useful for recognition \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{The Edge--Noise Trade-off:}
+
+\begin{thmbox}[Why we need both smoothing and differencing]
+\begin{itemize}
+  \item Differencing alone: enhances edges, but also enhances noise (a single bright pixel produces the same local response as a real bar edge).
+  \item Smoothing alone: removes noise, but blurs edges (and so weakens differencing responses).
+\end{itemize}
+Edge detection therefore needs:
+\begin{enumerate}
+  \item a \textbf{smoothing} operator (Gaussian) that establishes a \term{spatial scale} via $\sigma$;
+  \item a \textbf{differencing} operator that finds significant intensity changes \emph{at that scale}.
+\end{enumerate}
+\end{thmbox}
+
+\textbf{Two equivalent pipelines (by associativity of convolution):}
+\[
+\bigl((I \ast G_\sigma) \ast \partial\bigr) \;=\; I \ast (G_\sigma \ast \partial)
+\]
+The right-hand side combines smoothing and differencing into a \emph{single} edge-detection mask, which is more efficient than applying them sequentially.
+
+\separator
+
+\textbf{Edge-detection masks:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.5cm} p{5.5cm} @{}}
+\toprule
+\textbf{Mask} & \textbf{Construction} & \textbf{Detects} \\
+\midrule
+Laplacian (no smoothing) & 2nd derivative, all directions & Edges + lots of noise \\
+Laplacian of Gaussian (LoG) & $\nabla^2 G_\sigma$ (Gaussian then Laplacian) & Edges at scale $\sigma$, all directions \\
+Difference of Gaussians (DoG) & $G_{\sigma_1} - G_{\sigma_2}$, $\sigma_2 > \sigma_1$ & Approximates LoG (centre-surround / Mexican hat) \\
+Derivative of Gaussian (1st) & $\partial G_\sigma / \partial x$, $\partial G_\sigma / \partial y$ & Oriented edges; combine via magnitude \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{defbox}[Laplacian of Gaussian (LoG)]
+A Gaussian smoothes; a Laplacian differentiates. Combined into one mask:
+\[
+\text{LoG}_\sigma(x,y) \;=\; \nabla^2 G_\sigma(x,y) \;\approx\; -\frac{\partial^2 G_\sigma}{\partial x^2} - \frac{\partial^2 G_\sigma}{\partial y^2}.
+\]
+Looks like a centre-surround / ``Mexican hat'' (positive centre, negative ring).
+\end{defbox}
+
+\begin{defbox}[Difference of Gaussians (DoG)]
+\[
+\text{DoG}(x,y) \;=\; \frac{1}{2\pi\sigma_1^2}\exp\!\left(\!-\tfrac{x^2+y^2}{2\sigma_1^2}\right) \;-\; \frac{1}{2\pi\sigma_2^2}\exp\!\left(\!-\tfrac{x^2+y^2}{2\sigma_2^2}\right), \quad \sigma_2 > \sigma_1.
+\]
+Cheap, separable approximation to the LoG. Same role as centre-surround retinal ganglion cells.
+\end{defbox}
+
+\textbf{Derivative-of-Gaussian magnitude.} Convolve image with $\partial G_\sigma/\partial x$ and $\partial G_\sigma/\partial y$ to get $I_x, I_y$, then
+\[
+M \;=\; \sqrt{I_x^2 + I_y^2}, \qquad D \;=\; \arctan\!\left(\frac{I_y}{I_x}\right).
+\]
+Tends to give the \emph{least noisy} result among the three families and is the basis of Canny.
+
+\separator
+
+\textbf{Effect of scale $\sigma$.} Choosing $\sigma$ chooses which edges survive. Small $\sigma$: fine detail, more noise. Large $\sigma$: only coarse edges, fine details smoothed away. Different $\sigma$ values can produce completely different edge maps for the same image.
+
+\separator
+
+\textbf{The Canny Edge Detector:}
+
+\begin{thmbox}[Canny pipeline]
+\begin{enumerate}
+  \item \textbf{Smooth + differentiate}: convolve $I$ with $\partial G_\sigma / \partial x$ and $\partial G_\sigma / \partial y$ to get $I_x, I_y$.
+  \item \textbf{Magnitude and direction}: $M = \sqrt{I_x^2 + I_y^2}$, $D = \arctan(I_y / I_x)$.
+  \item \textbf{Non-maximum suppression (NMS)}: thin multi-pixel ridges to a single pixel by removing a pixel if a neighbour \emph{perpendicular to the edge direction} has higher magnitude.
+  \item \textbf{Hysteresis thresholding (recursive)}: with a high $T_h$ and low $T_l$:
+  \begin{itemize}
+    \item $M > T_h$ $\Rightarrow$ accept (edge $= 1$).
+    \item $M < T_l$ $\Rightarrow$ reject (edge $= 0$).
+    \item $T_l \leq M \leq T_h$ $\Rightarrow$ accept iff connected (recursively) to an accepted pixel.
+  \end{itemize}
+\end{enumerate}
+\end{thmbox}
+
+\textbf{Three Canny parameters:} $\sigma$, $T_l$, $T_h$. Results are highly parameter-dependent; values that work for one image often fail on another.
+
+\textbf{Limitations:}
+\begin{itemize}
+  \item Edge detection finds intensity discontinuities, not only ``meaningful'' edges. Reflectance / illumination edges are detected just like object boundaries.
+  \item Cannot tell which detected edges correspond to true object contours.
+\end{itemize}
+
+\begin{tipbox}[Exam Tip: Canny answer pattern]
+A common exam question is: ``Describe the steps of the Canny edge detector.'' Use the four-step pipeline above. Mention that step 1 \emph{combines} smoothing and differencing (derivative-of-Gaussian) thanks to convolution being associative.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Multi-Scale Feature Detection}
+
+\textbf{General feature-detection algorithm:}
+\begin{enumerate}
+  \item Convolve the image with a mask shaped like the (rotated) feature template.
+  \item Choose a threshold.
+  \item Mark the feature wherever the convolved image exceeds the threshold.
+\end{enumerate}
+
+\textbf{Problem.} The feature scale is unknown (depends on imaging parameters). Two strategies:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.5cm} p{5cm} @{}}
+\toprule
+\textbf{Strategy} & \textbf{Idea} & \textbf{Verdict} \\
+\midrule
+(1) Vary mask size & Many big masks on the original image & Expensive (mask cost grows with size) \\
+(2) Vary image size & One small mask on resized images & \textbf{Preferred} -- cheaper. This is an \term{image pyramid}. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Cost comparison} (an $n \times n$ image with an $m \times m$ mask costs $m^2 n^2$ multiplies):
+\begin{itemize}
+  \item Method (1) at double scale: $100\times 100$ image with $6\times 6$ mask $= 360{,}000$ multiplies.
+  \item Method (2) at double scale: $50\times 50$ image with $3\times 3$ mask $= 22{,}500$ multiplies (16$\times$ cheaper).
+\end{itemize}
+
+\separator
+
+\textbf{Down-sampling:}
+
+\begin{defbox}[Down-sample by factor $s$]
+\[
+{\downarrow}_s(I)(i,j) \;=\; I(s\, i,\, s\, j)
+\]
+Take every $s$-th pixel of the original image.
+\end{defbox}
+
+\textbf{Aliasing.} Naive down-sampling (just picking every $s$-th pixel) creates \term{aliasing}: a single pixel may not be representative of the region it samples (e.g.\ chess-board patterns become unrecognisable).
+
+\textbf{Anti-aliasing solution.} Smooth with a Gaussian \emph{before} down-sampling: the smoothed pixel reflects a larger region. Larger $\sigma$ $\Rightarrow$ less aliasing.
+
+\separator
+
+\begin{defbox}[Gaussian Image Pyramid]
+A multi-scale representation of one image, built by iteratively Gaussian-smoothing then down-sampling:
+\[
+I_i \;=\; {\downarrow}_2 \bigl( I_{i-1} \ast G_\sigma \bigr), \qquad I_0 = I.
+\]
+Same fixed mask can then be applied at each level to detect features at different scales.
+\end{defbox}
+
+Using the cascade identity $G_\sigma \ast G_\sigma = G_{\sigma\sqrt{2}}$, each successive level effectively smooths the original by a wider Gaussian, so each level corresponds to a different physical scale.
+
+\begin{defbox}[Laplacian Image Pyramid]
+A multi-scale representation of \emph{intensity discontinuities}, built by subtracting consecutive Gaussian-smoothed images:
+\[
+L_i \;=\; I_i - (I_i \ast G_\sigma) \;=\; \text{DoG response at level } i.
+\]
+Each $L_i$ behaves like a DoG/LoG response and highlights edges at the corresponding scale.
+\end{defbox}
+
+\textbf{Pyramid construction (recursive):} Gaussian level $i$ is built by smoothing-and-downsampling Gaussian level $i-1$. The Laplacian level $i$ is the difference between Gaussian level $i$ and its smoothed version.
+
+\begin{tipbox}[Spot it in a question]
+``Multi-scale representation of intensity discontinuities'' $\Rightarrow$ \textbf{Laplacian} pyramid.
+``Multi-scale representation of an image'' $\Rightarrow$ \textbf{Gaussian} pyramid.
+``How is aliasing avoided when down-sampling?'' $\Rightarrow$ \textbf{Smooth with a Gaussian first.}
+\end{tipbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Worked Examples}
+
+\begin{exbox}[Example 1: Convolution by hand (no padding)]
+\textbf{Q:} Compute $H \ast I_1$ using only locations where the mask fits entirely inside the image, where
+\[
+H = \begin{pmatrix} 1 & 0 \\ 1 & 1 \end{pmatrix}, \qquad I_1 = \begin{pmatrix} 0 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 0 \end{pmatrix}.
+\]
+
+\textbf{A:} Rotate $H$ by 180$^\circ$:
+\[
+H_{\text{rot}} = \begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}.
+\]
+The mask fits at four valid output locations. Centring the rotated mask (top-left aligned with each valid position) and computing the multiply-accumulate gives
+\[
+H \ast I_1 = \begin{pmatrix} 1 & 0 \\ 1 & 1 \end{pmatrix}.
+\]
+(Each non-zero output corresponds to one element of $H_{\text{rot}}$ aligning with the single $1$ in $I_1$.)
+\end{exbox}
+
+\begin{exbox}[Example 2: Zero-padded convolution, output same size as $I$]
+\textbf{Q:} With
+\[
+H = \begin{pmatrix} 0 & 0 & 0 \\ 0 & 0 & 1 \\ 0 & 0 & 0 \end{pmatrix}, \quad I = \begin{pmatrix} 0.25 & 1 & 0.8 \\ 0.75 & 1 & 1 \\ 0 & 1 & 0.4 \end{pmatrix},
+\]
+compute $H \ast I$ by zero-padding $I$.
+
+\textbf{A:} Rotate $H$ to put the $1$ in the middle-left position. Convolving with this rotated mask shifts $I$ one column to the right; the leftmost column becomes zero (padding):
+\[
+H \ast I = \begin{pmatrix} 0 & 0.25 & 1 \\ 0 & 0.75 & 1 \\ 0 & 0 & 1 \end{pmatrix}.
+\]
+\textbf{Insight:} a single off-centre 1 in a mask just shifts the image; the rotation in convolution flips the direction of that shift.
+\end{exbox}
+
+\begin{exbox}[Example 3: Separable mask via outer product]
+\textbf{Q:} For $h = [1,\ 0.5,\ 0.1]$, compute $h \ast h^T$ and verify it equals $h^T \times h$. Hence find $I \ast H$ when $I$ is the all-ones $3 \times 3$ image.
+
+\textbf{A:} The convolution of a row vector with a column vector equals their outer product:
+\[
+h \ast h^T \;=\; h^T \times h \;=\; \begin{pmatrix} 1 \\ 0.5 \\ 0.1 \end{pmatrix} [1\ \ 0.5\ \ 0.1] = \begin{pmatrix} 1 & 0.5 & 0.1 \\ 0.5 & 0.25 & 0.05 \\ 0.1 & 0.05 & 0.01 \end{pmatrix} = H.
+\]
+By associativity, $I \ast H = (I \ast h) \ast h^T$. Computing the two 1D steps with zero-padding gives
+\[
+I \ast h = \begin{pmatrix} 1.5 & 1.6 & 0.6 \\ 1.5 & 1.6 & 0.6 \\ 1.5 & 1.6 & 0.6 \end{pmatrix}, \quad
+(I \ast h) \ast h^T = \begin{pmatrix} 2.25 & 2.4 & 0.9 \\ 2.4 & 2.56 & 0.96 \\ 0.9 & 0.96 & 0.36 \end{pmatrix}.
+\]
+\textbf{Take-away:} a separable $3 \times 3$ filter needs $3+3=6$ multiplies/pixel instead of $9$.
+\end{exbox}
+
+\begin{exbox}[Example 4: Causes of intensity discontinuities]
+\textbf{Q:} List the categories of image features that can produce intensity-level discontinuities.
+
+\textbf{A:} \textbf{D--O--R--I}:
+\begin{itemize}
+  \item \textbf{Depth} discontinuities (surfaces at different distances).
+  \item \textbf{Orientation} discontinuities (surfaces meeting at an angle).
+  \item \textbf{Reflectance} discontinuities (different surface materials/colours).
+  \item \textbf{Illumination} discontinuities (e.g.\ shadow boundaries; usually not useful for recognition).
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 5: Derivative masks]
+\textbf{Q:} Write down convolution masks that approximate (a) $-\partial/\partial x$, (b) $-\partial/\partial y$, (c) $-\partial^2/\partial x^2$, (d) $-\partial^2/\partial y^2$, (e) $-\partial^2/\partial x^2 - \partial^2/\partial y^2$ (Laplacian).
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) $[-1\ \ 1]$ \quad (b) $\begin{pmatrix} -1 \\ \phantom{-}1 \end{pmatrix}$
+  \item (c) $[-1\ \ 2\ -1]$ \quad (d) $\begin{pmatrix} -1 \\ \phantom{-}2 \\ -1 \end{pmatrix}$
+  \item (e) Laplacian: $\begin{pmatrix} -1 & -1 & -1 \\ -1 & 8 & -1 \\ -1 & -1 & -1 \end{pmatrix}$ or $\begin{pmatrix} 0 & -1 & 0 \\ -1 & 4 & -1 \\ 0 & -1 & 0 \end{pmatrix}$.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 6: Convolving a derivative mask with itself]
+\textbf{Q:} Convolve $[-1\ \ 1]$ with itself to produce a 3-pixel result; interpret.
+
+\textbf{A:} Pad to $[0\ -1\ \ 1\ \ 0]$; rotated mask is $[1\ -1]$. The output is
+\[
+[\,(0)(1) + (-1)(-1),\ \ (-1)(1) + (1)(-1),\ \ (1)(1) + (0)(-1)\,] \;=\; [1,\ -2,\ 1].
+\]
+Hence $\bigl(-\partial/\partial x\bigr) \ast \bigl(-\partial/\partial x\bigr) = \partial^2/\partial x^2$: applying the 1st-derivative mask twice gives the 2nd-derivative mask.
+\end{exbox}
+
+\begin{exbox}[Example 7: Modified Laplacian preserves the input]
+\textbf{Q:} Let $L = \begin{psmallmatrix}-1&-1&-1\\-1&8&-1\\-1&-1&-1\end{psmallmatrix}$ and $L_1 = \begin{psmallmatrix}-1&-1&-1\\-1&9&-1\\-1&-1&-1\end{psmallmatrix}$. (a) Express $I \ast L$ in derivatives. (b) Hence express $I \ast L_1$.
+
+\textbf{A:} (a) $I \ast L \approx -\bigl(\partial^2 I/\partial x^2 + \partial^2 I/\partial y^2\bigr)$.
+
+(b) Note $L_1 = L + L_2$ where $L_2$ is the identity mask (a 1 at the centre, zeros elsewhere). Using $h_1 \ast I + h_2 \ast I = (h_1 + h_2) \ast I$:
+\[
+I \ast L_1 \;=\; I \ast L_2 + I \ast L \;\approx\; I \;-\; \left(\frac{\partial^2 I}{\partial x^2} + \frac{\partial^2 I}{\partial y^2}\right).
+\]
+This is the original image \emph{enhanced} by adding edge information (a sharpening filter). The version with $1/8$ weights and centre $1$ gives the same form with a different scale of the Laplacian term.
+\end{exbox}
+
+\begin{exbox}[Example 8: 3$\times$3 Gaussian numerical approximation]
+\textbf{Q:} Build a $3 \times 3$ Gaussian mask with $\sigma = 0.46$ pixels using $G(x,y) = \frac{1}{2\pi\sigma^2}\exp\!\left(-\tfrac{x^2+y^2}{2\sigma^2}\right)$, rounded to 2 d.p.
+
+\textbf{A:} Evaluate at offsets $(x,y) \in \{-1,0,1\}^2$. With $\sigma^2 = 0.2116$ and $2\pi\sigma^2 \approx 1.329$:
+\begin{itemize}
+  \item Centre $(0,0)$: $G \approx 0.7522 \to 0.75$.
+  \item Edges $(\pm 1, 0)$ and $(0, \pm 1)$: $G \approx 0.0708 \to 0.07$.
+  \item Corners $(\pm 1, \pm 1)$: $G \approx 0.0067 \to 0.01$.
+\end{itemize}
+\[
+H \;=\; \begin{pmatrix} 0.01 & 0.07 & 0.01 \\ 0.07 & 0.75 & 0.07 \\ 0.01 & 0.07 & 0.01 \end{pmatrix}.
+\]
+\end{exbox}
+
+\begin{exbox}[Example 9: Down-sample by 2 (no smoothing)]
+\textbf{Q:} Down-sample
+\[
+I = \begin{pmatrix}
+0.3 & 0.2 & 0.1 & 0.5 & 0.5 & 0.4 \\
+0.4 & 0.1 & 0.3 & 0.6 & 0.2 & 1 \\
+0.6 & 0.3 & 0.8 & 0.2 & 0.5 & 0 \\
+0.3 & 0.3 & 0   & 0.5 & 0.6 & 0.9 \\
+0.6 & 0.4 & 0.9 & 1   & 0.7 & 0.9 \\
+0.7 & 0.5 & 0.7 & 0.5 & 0.4 & 0.8
+\end{pmatrix}
+\]
+by a factor of 2.
+
+\textbf{A:} Take every 2nd pixel (rows/columns indexed $0, 2, 4$):
+\[
+{\downarrow}_2(I) \;=\; \begin{pmatrix} 0.1 & 0.6 & 1 \\ 0.3 & 0.5 & 0.9 \\ 0.5 & 0.5 & 0.8 \end{pmatrix}.
+\]
+\textbf{Pitfall:} this is naive sub-sampling and \emph{will} alias. In a Gaussian pyramid we Gaussian-smooth \emph{before} this step.
+\end{exbox}
+
+\begin{exbox}[Example 10: LoG vs DoG]
+\textbf{Q:} (a) How are a Laplacian and a Gaussian ``combined'' to make an LoG? (b) Why is this advantageous for edge detection? (c) What other function approximates an LoG?
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) By \textbf{convolution}: $\text{LoG}_\sigma = G_\sigma \ast L = \nabla^2 G_\sigma$.
+  \item (b) The Laplacian alone is sensitive to noise as well as real edges; the Gaussian suppresses noise; convolving them yields a single mask sensitive to genuine intensity discontinuities at scale $\sigma$, not single-pixel noise.
+  \item (c) A \textbf{Difference of Gaussians} (DoG) with $\sigma_2 > \sigma_1$ approximates an LoG.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 11: Aliasing and pyramids]
+\textbf{Q:} What is aliasing and how is it avoided when down-sampling images to create an image pyramid?
+
+\textbf{A:} \textbf{Aliasing} is the distortion or misrepresentation that arises when sampling an image too coarsely (a single pixel is not representative of its neighbourhood). It is avoided by \textbf{Gaussian-smoothing the image before down-sampling}, so each retained pixel summarises a wider region.
+\end{exbox}
+
+\begin{exbox}[Example 12: Gaussian vs Laplacian pyramid]
+\textbf{Q:} Briefly describe (a) a Gaussian image pyramid and (b) a Laplacian image pyramid.
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) A multi-scale representation of a single image at different resolutions, built by iteratively Gaussian-smoothing and down-sampling.
+  \item (b) A multi-scale representation of \emph{intensity discontinuities}, built by iteratively Gaussian-smoothing, subtracting the smoothed image from the previous level (DoG response), and down-sampling the smoothed image.
+\end{itemize}
+\end{exbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Summary}
+
+\begin{keybox}[Key Takeaways]
+\begin{enumerate}
+  \item \textbf{Convolution} $I'(i,j) = \sum_{k,l} I(i+k, j+l)\, H(-k,-l)$: rotate mask, slide, multiply-accumulate. Commutative and associative; preferred over cross-correlation.
+  \item \textbf{Mask families:} smoothing (positive, sum-to-1) vs differencing (mixed sign, sum-to-0).
+  \item \textbf{Separability:} $H = h \ast h^T$ turns one 2D convolution into two 1D convolutions; the Gaussian is separable.
+  \item \textbf{Edge detection requires both} a smoothing operator (Gaussian, scale $\sigma$) and a differencing operator (1st or 2nd derivative).
+  \item \textbf{LoG/DoG/Derivative-of-Gaussian} are the three standard edge masks; derivative-of-Gaussian is the cleanest (used by Canny).
+  \item \textbf{Canny pipeline:} smooth $\to$ derivative $\to$ magnitude/direction $\to$ NMS $\to$ recursive hysteresis thresholding.
+  \item \textbf{Causes of edges (D--O--R--I):} depth, orientation, reflectance, illumination.
+  \item \textbf{Pyramids:} fix the mask, resize the image. Gaussian smoothing before down-sampling avoids aliasing. Laplacian pyramid $=$ difference of Gaussian-pyramid levels.
+\end{enumerate}
+\end{keybox}
+
+\textbf{Final comparison: filters and what they do.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l l @{}}
+\toprule
+\textbf{Mask} & \textbf{Type} & \textbf{Sum} & \textbf{Effect} \\
+\midrule
+Box $\frac{1}{9}\mathbf{1}_{3\times 3}$ & Smoothing & 1 & Mean filter; blurs; sharp mask edges \\
+Gaussian $G_\sigma$ & Smoothing & 1 & Gentle blur, separable, scale $= \sigma$ \\
+$[-1\ \ 1]$ & 1st derivative ($-\partial/\partial x$) & 0 & Vertical-edge response \\
+$[-1\ \ 2\ -1]$ & 2nd derivative ($-\partial^2/\partial x^2$) & 0 & Vertical-edge response (zero-crossings) \\
+Laplacian (8-neighbour) & 2nd derivative, all dirs & 0 & Edges in any orientation; noise-prone \\
+LoG $= \nabla^2 G_\sigma$ & Smoothed Laplacian & 0 & Edges at scale $\sigma$, all dirs \\
+DoG $= G_{\sigma_1} - G_{\sigma_2}$ & Centre-surround & 0 & Cheap LoG approximation \\
+$\partial G_\sigma / \partial x,\ \partial G_\sigma / \partial y$ & Derivative of Gaussian & 0 & Oriented edges; basis of Canny \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Final comparison: pyramids.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.5cm} p{5.5cm} @{}}
+\toprule
+\textbf{Pyramid} & \textbf{Construction} & \textbf{What it represents} \\
+\midrule
+Gaussian & Iterate: Gaussian-smooth, down-sample by 2 & Multi-scale image (low-pass) \\
+Laplacian & Subtract consecutive Gaussian-pyramid levels (DoG) & Multi-scale intensity discontinuities (band-pass) \\
+\bottomrule
+\end{tabular}
+\end{center}

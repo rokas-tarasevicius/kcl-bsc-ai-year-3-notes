@@ -1,0 +1,626 @@
+% =============================================================================
+%               WEEK 4: LOW- AND MID-LEVEL BIOLOGICAL VISION
+% =============================================================================
+\section{Week 4: Low- and Mid-Level Biological Vision}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Describe the pathway from retina to V1 via the LGN, and the ``what/where'' streams beyond V1.
+  \item Identify the stimulus selectivities of V1 cells (colour, orientation, motion, frequency, eye of origin, disparity, position).
+  \item Distinguish simple, complex, and hyper-complex cells, and describe the hypercolumn organisation of V1.
+  \item Define the 2D Gabor function, list its 5 parameters, and explain how it models simple/complex cell responses.
+  \item Explain why Gabors arise as the components of natural images under a sparsity constraint and link this to efficient coding.
+  \item Distinguish classical and non-classical receptive fields and explain contextual effects (collinear facilitation, surround suppression, pop-out, texture segmentation).
+  \item Distinguish low-, mid- and high-level vision; define grouping/segmentation; compare top-down and bottom-up influences.
+  \item State and recognise the Gestalt laws of grouping.
+  \item Define border ownership and explain the role of V2 lateral connections.
+\end{itemize}
+\end{keybox}
+
+\textbf{Big Picture.}
+This week steps through the \term{biological visual pipeline}: light reaches the retina, retinal ganglion cells project via the LGN to primary visual cortex (V1), where neurons compute richer features (orientation, motion, disparity). \term{Gabor functions} provide a clean mathematical model of V1 simple-cell receptive fields and---under a sparsity prior---turn out to be the natural-image dictionary the cortex has learned. We then move beyond the \term{classical receptive field}: lateral connections in V1 produce \term{contextual effects} (contour integration, pop-out, texture segmentation) that drive bottom-up grouping. Finally, \term{mid-level vision} groups image elements into objects: \term{Gestalt laws} describe bottom-up grouping principles, and \term{border ownership} (computed in V2) decides which side of an edge is foreground.
+
+\separator
+
+\textbf{What Examiners Like to Ask:}
+\begin{itemize}
+  \item List the image properties to which V1 cells are selective (Q1).
+  \item Define a hypercolumn and compute neuron counts inside one (Q2, Q15).
+  \item Distinguish simple vs complex (vs hyper-complex) cells; model them with convolution + Gabor (Q3, Q4, Q5).
+  \item Compute Gabor values at $(0,0)$ and complex-cell energy responses (Q14).
+  \item State the sparsity constraint and link it to efficient coding (Q6, Q16).
+  \item Define cRF vs ncRF; describe the association field (Q7, Q8).
+  \item Explain how lateral connections give rise to contour integration, pop-out, texture segmentation (Q9, Q12).
+  \item Compare top-down vs bottom-up grouping (Q10).
+  \item Identify Gestalt laws from images (Q11).
+  \item Define border ownership (Q13).
+\end{itemize}
+
+% =============================================================================
+\subsection{Core Concepts}
+
+\textbf{Roadmap:}
+\begin{enumerate}
+  \item Biological visual system: retina $\rightarrow$ LGN $\rightarrow$ V1; what/where pathways.
+  \item V1 physiology: selectivities, simple/complex/hyper-complex cells, hypercolumns, retinotopy.
+  \item Gabor functions: definition, parameters, modelling simple/complex cells, efficient coding.
+  \item Non-classical receptive fields: association field, contextual effects.
+  \item Mid-level vision: grouping vs segmentation, top-down vs bottom-up.
+  \item Gestalt laws of bottom-up grouping.
+  \item Border ownership and V2.
+\end{enumerate}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{The Biological Visual System}
+
+\textbf{From eye to cortex:}
+\begin{center}
+Retina $\rightarrow$ Optic nerve $\rightarrow$ Optic chiasm $\rightarrow$ \term{LGN} (thalamus) $\rightarrow$ Primary visual cortex \term{V1}
+\end{center}
+
+\begin{defbox}[Lateral Geniculate Nucleus (LGN)]
+A thalamic relay station between retina and V1. LGN cells have centre-surround RFs, like retinal ganglion cells. Traditionally viewed as a passive relay, but recent evidence suggests it does more---exact computation unknown.
+\end{defbox}
+
+\textbf{Visual field $\rightarrow$ cortex routing:}
+\begin{itemize}
+  \item The \textbf{right visual field (RVF)} (as seen by \emph{both} eyes) projects to the \textbf{left LGN} and then to the \textbf{left V1} (and vice versa).
+  \item Ganglion cells from the left side of \emph{either} retina project to the left LGN; those from the right side of the right eye \term{cross over} at the \textbf{optic chiasm}.
+  \item It is \emph{not} the case that one eye projects to one hemisphere---each hemisphere sees the opposite visual field.
+\end{itemize}
+
+\begin{tipbox}[Exam Tip: RVF $\rightarrow$ Left V1]
+A common error is to write ``right eye $\rightarrow$ left V1''. The correct statement is ``right \emph{visual field} (seen by both eyes) $\rightarrow$ left V1''.
+\end{tipbox}
+
+\separator
+
+\textbf{Cerebral cortex basic facts:}
+\begin{itemize}
+  \item Folded sheet $\sim 1.7$\,mm thick, area $\sim 0.25$\,m$^2$.
+  \item $\sim 10^{10}$ neurons ($\sim 10^5$ neurons/mm$^3$), $\sim 4\times 10^{13}$ synapses.
+  \item $\sim 2\%$ of body mass, $\sim 20\%$ of energy consumption.
+  \item $\sim 50\%$ of cortex is devoted to vision; $\sim 30$ distinct visual areas.
+\end{itemize}
+
+\separator
+
+\textbf{What and Where pathways:}
+
+Beyond V1 the cortical visual system is hierarchical (simple/local RFs $\rightarrow$ complex/large RFs) and splits into two streams:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Pathway} & \textbf{Route} & \textbf{Function} \\
+\midrule
+\textbf{Where (How)} & V1 $\rightarrow$ Parietal cortex & Spatial / motion information \\
+\textbf{What} & V1 $\rightarrow$ Inferotemporal cortex & Identity / category information \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Primary Visual Cortex (V1)}
+
+V1 (a.k.a.\ \term{striate cortex} / \term{area 17}) performs the initial low-level processing of visual input. It contains a wider range of RF types than retina/LGN.
+
+\begin{defbox}[V1 Cell Selectivities]
+V1 cells have receptive fields selective for:
+\begin{itemize}
+  \item Colour
+  \item Orientation
+  \item Direction of motion
+  \item Spatial frequency
+  \item Eye of origin
+  \item Binocular disparity
+  \item Position (always---stimulus must fall in the cell's RF)
+\end{itemize}
+Colour, eye-of-origin, position appear in retina/LGN too. Orientation, direction of motion, and binocular disparity appear \emph{first} in V1.
+\end{defbox}
+
+\separator
+
+\textbf{Centre-surround / colour cells (also seen in retina/LGN):}
+\begin{itemize}
+  \item \textbf{Broad-band centre-surround}: detect intensity changes (DoG-like).
+  \item \textbf{Colour-opponent centre-surround}: e.g.\ R+/G$-$.
+  \item \textbf{Colour-opponent centre-only}.
+  \item \textbf{Double-opponent (DO) cells}---first appear in V1: e.g.\ R+G$-$ centre with G+R$-$ surround. Detect places where colour itself changes (red object on green background). Larger RF than simple opponent cells.
+\end{itemize}
+
+\separator
+
+\textbf{Orientation-selective cells:}
+
+V1 cells (unlike retinal/LGN cells) are sharply tuned to a preferred orientation: response falls to zero when a line is tilted $\pm 15$--$30^\circ$ off the preferred angle.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.5cm} p{6cm} @{}}
+\toprule
+\textbf{Cell type} & \textbf{Optimum response} & \textbf{Function} \\
+\midrule
+Simple & Correctly oriented stimulus, \emph{specific contrast polarity}, at a \emph{specific position} in the RF & Edge / bar detector at fixed phase \\
+Complex & Correctly oriented stimulus, \emph{any contrast polarity}, \emph{anywhere} in the RF & Edge / bar detector with positional and phase invariance; often direction-selective \\
+Hyper-complex (end-stopped) & Correct orientation \emph{and} length matched to RF width & Bar / corner / end-of-line detector \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Exam Tip: Simple vs Complex in One Line]
+``Simple = position- and contrast-locked; Complex = position- and contrast-invariant; Hyper-complex = also length-tuned (end-stopping).''
+\end{tipbox}
+
+\separator
+
+\textbf{Spatial frequency tuning:} V1 cells have a preferred spatial frequency (cycles/degree) and respond more weakly to gratings above and below it.
+
+\textbf{Eye of origin and disparity:}
+\begin{itemize}
+  \item \textbf{Monocular cells}: receive input from one eye only (retina, LGN, and V1 cells driven by LGN).
+  \item \textbf{Binocular cells} (in V1): two matched RFs (one per eye). Same orientation/direction preference, both simple or both complex.
+  \item \textbf{Disparity-tuned cells}: respond maximally when the same stimulus appears with a specific offset between the two eyes---encodes \term{depth} via binocular disparity (near vs far via crossed/uncrossed disparity).
+\end{itemize}
+
+\textbf{Conjunctions:} most cells are selective for \emph{several} properties simultaneously (e.g.\ orientation $+$ direction of motion $+$ position).
+
+\separator
+
+\textbf{V1 organisation:}
+
+\begin{defbox}[Hypercolumn]
+A $\sim$1\,mm$^2$ patch of V1 containing the full range of RF types (orientations, frequencies, eye of origin, etc.) for one retinal location. Contains the neural machinery to analyse \emph{all} attributes of an image at one localised position.
+\end{defbox}
+
+\begin{defbox}[Retinotopic Organisation]
+Adjacent hypercolumns process adjacent retinal locations: V1 preserves the topological layout of the retina. The map is distorted by \term{cortical magnification}---more cortex is devoted to the fovea than to the periphery.
+\end{defbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Gabor Functions}
+
+\begin{defbox}[2D Gabor Function]
+A Gaussian envelope multiplied by a sinusoid:
+\[
+G(x,y) = \exp\!\left(-\frac{x'^2 + \gamma^2 y'^2}{2\sigma^2}\right)\cos(2\pi f x' + \psi)
+\]
+where the rotated coordinates are
+\[
+x' = x\cos\theta + y\sin\theta, \qquad y' = -x\sin\theta + y\cos\theta.
+\]
+\end{defbox}
+
+\textbf{The 5 parameters:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l p{8cm} @{}}
+\toprule
+\textbf{Symbol} & \textbf{Name} & \textbf{Effect} \\
+\midrule
+$\sigma$ & Std.\ dev.\ of Gaussian & Spatial extent of the RF \\
+$f$ & Frequency of sinusoid & Preferred spatial frequency \\
+$\psi$ & Phase of sinusoid & Even-symmetric ($\psi=0$) vs odd-symmetric ($\psi=\pi/2$) \\
+$\theta$ & Orientation & Preferred edge/bar angle \\
+$\gamma$ & Spatial aspect ratio & Elongation of envelope along the bar \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Exam Tip: Why Gabors?]
+Real V1 simple-cell RFs (mapped experimentally) look like oriented Gaussian-windowed sinusoids. Gabors are the standard mathematical model: simple, two ``parts'' (Gaussian + sinusoid), and they fit the data well.
+\end{tipbox}
+
+\separator
+
+\textbf{Modelling V1 cells with convolution:}
+
+\begin{thmbox}[Simple Cell Model]
+The response of all simple cells with the same parameters $(\sigma, f, \psi, \theta, \gamma)$, across all hypercolumns, is approximated by convolving the image with a Gabor mask $G$:
+\[
+R_{\text{simple}}(x,y) = (I * G)(x,y).
+\]
+Repeating with different $(\sigma, f, \psi, \theta, \gamma)$ simulates the rest of V1's simple cells.
+\end{thmbox}
+
+\begin{thmbox}[Complex Cell Energy Model]
+Pool the outputs of a \term{quadrature pair} of Gabors with the same parameters except $\psi$ differs by $\pi/2$:
+\[
+R_{\text{complex}}(x,y) = \sqrt{(I * G_{\psi=0})^2 + (I * G_{\psi=\pi/2})^2}.
+\]
+Result is approximately \emph{phase-invariant} (and hence contrast-polarity-invariant), like real complex cells.
+\end{thmbox}
+
+\textbf{Multi-orientation edge detection:} sum complex-cell outputs across multiple $\theta$ to detect edges of any orientation.
+
+\textbf{Multi-scale (wavelet transform):} a family of Gabors with different $(f, \sigma)$ behaves like a continuous wavelet transform. V1 simple cells $\approx$ a biological wavelet transform.
+
+\separator
+
+\textbf{Gabors as image components:}
+
+Represent an image $\mathbf{x}$ (vectorised) as a linear combination of components (columns of $A$):
+\[
+A\,\mathbf{y} \approx \mathbf{x}
+\]
+where $A$ is $m\times n$ (components in columns), $\mathbf{y}$ is $n\times 1$ (activations), $\mathbf{x}$ is $m\times 1$ (pixel values). For a dataset of images: $A\,Y \approx X$.
+
+Finding $A$ and $Y$ is \term{ill-posed}---additional constraints pick out particular factorisations (PCA, ICA, NMF, $\ldots$).
+
+\begin{thmbox}[Gabors from Sparsity]
+Take random natural-image patches as columns of $X$ and find $A,Y$ subject to:
+\begin{enumerate}
+  \item \textbf{Reconstruction}: $\|X - AY\|$ minimised.
+  \item \textbf{Sparsity}: minimise the number of non-zero entries per column of $Y$.
+\end{enumerate}
+The resulting components (columns of $A$) look like Gabor functions: Gabors capture the intrinsic structure of natural images.
+\end{thmbox}
+
+\begin{defbox}[Sparsity Constraint]
+Each image is represented using as few active components as possible. If components are encoded by neurons, this means \emph{few neurons fire per image}---an \term{efficient code} (low energy, low bandwidth).
+\end{defbox}
+
+\separator
+
+\textbf{Computer-vision applications of image-component models:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Application} & \textbf{Idea} \\
+\midrule
+Compression (JPEG) & Reconstruct each patch from a fixed dictionary (cosines, not Gabors); store quantised activations $\mathbf{y}$ instead of $\mathbf{x}$ \\
+Denoising & Reconstruct noisy patches with a Gabor (or curvelet/wedgelet) dictionary; reconstruction is smoother and less noisy \\
+Inpainting & Learn $A$ from non-corrupted parts; find activations $\mathbf{y}$ that minimise $\|\mathbf{x}-A\mathbf{y}\|$ over visible pixels; use $A\mathbf{y}$ to fill in the missing pixels \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Non-Classical Receptive Fields}
+
+\begin{defbox}[Classical vs Non-classical RF]
+\begin{itemize}
+  \item \textbf{Classical RF (cRF)}: region of visual space (or stimulus property set) that can elicit a response from the neuron on its own.
+  \item \textbf{Non-classical RF (ncRF)}: region/properties that \emph{modulate} the response but cannot drive it alone---requires concurrent input to the cRF.
+\end{itemize}
+\end{defbox}
+
+\begin{defbox}[Association Field]
+The pattern of long-range lateral (and feedback) connections received by an orientation-selective V1 neuron---the neural substrate of its ncRF.
+\begin{itemize}
+  \item \textbf{Excitation} from neighbours that are \term{collinear} or \term{co-circular} with the same orientation preference (continuation along smooth contours).
+  \item \textbf{Inhibition} from nearby \term{iso-oriented} parallel neighbours (similar but not aligned).
+\end{itemize}
+\end{defbox}
+
+\textbf{Three rules of thumb:}
+\begin{enumerate}
+  \item Context has \emph{no effect in isolation} (ncRF cannot drive the cell).
+  \item Context can \emph{enhance} the response (excitation).
+  \item Context can \emph{reduce} the response (inhibition).
+\end{enumerate}
+
+\separator
+
+\textbf{Contextual effects driven by lateral connections:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l p{7cm} @{}}
+\toprule
+\textbf{Effect} & \textbf{Mechanism} & \textbf{Perceptual consequence} \\
+\midrule
+Collinear facilitation & Excitation between collinear iso-oriented cells & Aligned Gabor patches are easier to see \\
+Contour integration & Excitation among co-circular/collinear cells & Smooth contours pop out of noise \\
+Surround suppression & Inhibition between iso-oriented neighbours & Targets among similar distractors are harder to see \\
+Pop-out (feature search) & Inhibition between similar-feature cells & Dissimilar element among similar distractors stands out \\
+Texture segmentation & Inhibition within uniform texture regions & Boundary cells get less inhibition $\rightarrow$ relatively higher response $\rightarrow$ visible border \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Exam Tip: One-Word Mnemonic]
+\textbf{Excitation $\rightarrow$ contours} (continuity, similarity-of-alignment).\\
+\textbf{Inhibition $\rightarrow$ boundaries} (pop-out, texture segmentation, similarity-based grouping).
+\end{tipbox}
+
+Pure convolution-based edge detectors (e.g.\ Canny applied alone) detect \emph{all} edges including texture noise. ncRF-style operations are needed to select \emph{meaningful} edges (object boundaries).
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Introduction to Mid-Level Vision}
+
+\begin{defbox}[Mid-Level Vision]
+The set of processes that bridge low-level vision (noise suppression, edge enhancement, feature extraction, efficient coding) and high-level vision (object recognition, classification, localisation, scene understanding). Its central job is to \term{group} elements that ``belong together'' and \term{segment} them from everything else.
+\end{defbox}
+
+\textbf{Elements (or tokens)} can be anything we need to group: pixel intensities, pixel colours, edges, features.
+
+\begin{thmbox}[Two Sides of the Same Coin]
+\textbf{Grouping} (assemble pieces of one object) and \textbf{segmentation} (separate one object from another) are dual: doing one implies the other. The terms are used interchangeably.
+\end{thmbox}
+
+\textbf{Other names for the same process:}
+image parsing, perceptual organisation, binding, perceptual grouping. \term{Figure-ground segmentation} is the restricted case where we segment one object (the figure) from everything else (the ground).
+
+\separator
+
+\textbf{Two complementary approaches:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Approach} & \textbf{Cue source} \\
+\midrule
+\textbf{Top-down} & Internal knowledge / prior experience: elements belong together because they lie on the same \emph{known} object (familiarity, expectation, meaningfulness). \\
+\textbf{Bottom-up} & Image properties: elements belong together because they are \emph{similar} or \emph{locally coherent} (Gestalt laws). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These approaches are \emph{not} mutually exclusive. General-purpose segmentation requires \emph{both}.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Gestalt Laws (Bottom-up Grouping Principles)}
+
+\begin{defbox}[Gestalt Laws]
+Bottom-up heuristics (``rules of thumb,'' not strict laws) describing which image elements humans tend to group together. Proposed by Gestalt psychologists in the early 20th century; extended by later work.
+\end{defbox}
+
+\textbf{Original Gestalt laws:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Law} & \textbf{Tendency} \\
+\midrule
+Proximity & Nearby elements are grouped together. \\
+Similarity & Similar elements are grouped (similarity in shape, orientation, size, colour, luminance, motion, $\ldots$). \\
+Closure & Elements that form a closed boundary group; even \emph{potential} closure suffices. \\
+Continuity (good continuation) & Elements forming straight or smoothly curving lines/surfaces group; can produce \term{illusory contours}. \\
+Common fate & Elements moving coherently are grouped (Similarity for motion). \\
+Symmetry & Symmetric configurations are grouped. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Later additions (not strictly Gestalt):}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Law} & \textbf{Tendency} \\
+\midrule
+Common region & Elements inside the same closed region are grouped. \\
+Connectivity & Elements joined by another element are grouped. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Exam Tip: Overlapping Laws]
+Several laws overlap: proximity = similarity-of-location; common fate = similarity-of-motion. There are no strict rules for resolving conflicts between laws (e.g.\ proximity vs similarity).
+\end{tipbox}
+
+\separator
+
+\textbf{Neural implementation via V1 lateral connections:}
+
+\begin{itemize}
+  \item \textbf{Similarity} (for orientation, frequency, etc.): mutual lateral \emph{inhibition} between cells representing similar elements. At borders between dissimilar regions inhibition is reduced, so the border ``pops out''.
+  \item \textbf{Continuity}: mutual lateral \emph{excitation} between cells with collinear/co-circular orientation preferences enhances responses to elements on smooth contours.
+\end{itemize}
+
+This is exactly the association field of Section\,\textit{Non-Classical Receptive Fields}---the same mechanism explains both contextual modulation \emph{and} the bottom-up Gestalt biases.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Border Ownership}
+
+\begin{defbox}[Border Ownership]
+The boundary between two image regions is perceived as belonging to \emph{one} of them (the foreground / figure). The foreground region acquires a definite shape; the background appears \emph{borderless and shapeless} and seems to continue behind the figure.
+\end{defbox}
+
+\textbf{Examples:}
+\begin{itemize}
+  \item Tennis player's leg has a border; the grass does not---the grass appears to continue behind the leg.
+  \item FedEx logo: the arrow between ``E'' and ``x'' is invisible because the border is owned by the letters; the white region (which contains the arrow) has no shape.
+  \item Bistable fish/birds figure: alternates---only the currently-perceived figure ``owns'' the borders.
+  \item Rubin face/vase: which side owns the border determines whether you see two faces or a vase.
+\end{itemize}
+
+\separator
+
+\textbf{V2 border-ownership cells:}
+
+\begin{itemize}
+  \item V2 is the next cortical area after V1 in the visual hierarchy.
+  \item Some V2 cells are \emph{orientation-selective and side-selective}: they respond strongly only when the figure is on a specific side of the edge in the cell's RF.
+  \item In experiments where the local stimulus inside the cRF is \emph{identical} but the wider context flips foreground/background, the response changes---so border ownership is an \term{ncRF effect}.
+\end{itemize}
+
+\textbf{Mechanistic model (V2 lateral connections):}
+At every location and orientation V2 contains a \emph{pair} of border-ownership cells preferring opposite figure sides. They compete via lateral connections:
+\begin{itemize}
+  \item \textbf{Excitatory} connections link cells encoding edge segments \emph{consistent} with a probable single object.
+  \item \textbf{Inhibitory} connections link cells encoding segments \emph{inconsistent} with a single object.
+\end{itemize}
+The network settles into a globally consistent assignment of borders to objects.
+
+\begin{tipbox}[Exam Tip: Border Ownership Cues]
+Border-ownership decisions use cues from \emph{outside} the classical RF: convexity, surroundedness, symmetry, T-junctions, occlusion patterns, familiarity. The local edge alone does not determine which side is figure.
+\end{tipbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Worked Examples}
+
+\begin{exbox}[Example 1 (LGT Q1, Q2, Q3): V1 Selectivities, Hypercolumns, Cell Types]
+\textbf{Q:} (a) List the image properties to which V1 cells are selective. (b) What is a hypercolumn? (c) Give the stimulus selectivities of simple and complex cells.
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) Colour, orientation, direction of motion, spatial frequency, eye of origin, binocular disparity, position.
+  \item (b) A hypercolumn is a $\sim$1\,mm$^2$ region of V1 containing neurons covering the full range of RF types for a single spatial location on the retina.
+  \item (c) Simple cell: optimum response to an appropriately oriented stimulus, of the right contrast polarity, at a specific position in its RF. Complex cell: optimum response to an appropriately oriented stimulus, with \emph{any} contrast polarity, anywhere in its RF.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 2 (LGT Q4, Q5): Modelling V1 Cells with Convolution]
+\textbf{Q:} How can simple- and complex-cell responses be modelled using convolution?
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Simple cells}: each simple-cell RF is well approximated by a Gabor function. Convolving the image with a Gabor mask simulates the response of all simple cells with that parameter set across all hypercolumns. Repeating with different Gabor parameters (orientation, frequency, phase, aspect ratio) simulates the full population.
+  \item \textbf{Complex cells} (energy model): convolve with a \term{quadrature pair} of Gabors (same parameters but $\psi$ differing by $\pi/2$); take $\sqrt{R_1^2 + R_2^2}$. The result is approximately phase-invariant, matching the contrast-polarity invariance of real complex cells.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 3 (LGT Q14): Gabor at the Origin and Energy Response]
+\textbf{Q:} Compute $G(0,0)$ for a Gabor with $\theta=0$, $\psi=0$, $\sigma=2$, $f=0.5$, $\gamma=0.5$. Then compute the energy response of a quadrature pair $(\psi=0,\,\pi/2)$ at $(0,0)$.
+
+\textbf{A:} At $(0,0)$, $x'=y'=0$, so:
+\[
+\text{Gaussian} = \exp(0) = 1, \qquad \cos(2\pi f \cdot 0 + \psi) = \cos(\psi).
+\]
+\begin{itemize}
+  \item Filter 1 ($\psi=0$): $G_1 = 1\cdot \cos(0) = 1$.
+  \item Filter 2 ($\psi=\pi/2$): $G_2 = 1\cdot \cos(\pi/2) = 0$.
+  \item Energy: $\sqrt{G_1^2 + G_2^2} = \sqrt{1 + 0} = 1.0$.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 4 (LGT Q15): Neurons per Hypercolumn]
+\textbf{Q:} The cortex is $\sim 1.7$\,mm thick with neuron density $\sim 10^5$\,neurons/mm$^3$, and a hypercolumn covers $\sim 1$\,mm$^2$. (a) How many neurons are in one hypercolumn? (b) If a hypercolumn must encode 6 orientations $\times$ 2 directions of motion $\times$ 4 spatial frequencies $\times$ 2 ocular dominance columns, how many neurons per feature combination?
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) Volume $= 1\,\text{mm}^2 \times 1.7\,\text{mm} = 1.7\,\text{mm}^3$. Neurons $= 1.7 \times 10^5 = 170{,}000$.
+  \item (b) Feature combinations $= 6\times 2\times 4\times 2 = 96$. Neurons per combination $\approx 170{,}000 / 96 \approx 1{,}770$.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 5 (LGT Q6, Q16): Sparsity, Efficient Coding, Dictionary Sizes]
+\textbf{Q:} (a) State the sparsity constraint and link it to efficient coding. (b) For $8\times 8$ image patches, give the dimensions of $A$ for a complete and a $4\times$ overcomplete dictionary. (c) With the overcomplete dictionary and a 10\% sparsity constraint, how many components are active per patch?
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) Sparsity = use the minimum number of non-zero activations per image. If components are encoded by neurons, only a few neurons need to fire to represent any image $\Rightarrow$ efficient (low-energy, low-bandwidth) code.
+  \item (b) $m = 8\times 8 = 64$ pixels. Complete: $A$ is $64\times 64$. Overcomplete: $n = 4\times 64 = 256$, so $A$ is $64\times 256$.
+  \item (c) Active components $= 0.1 \times 256 = 25.6 \approx 26$.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 6 (LGT Q7, Q8): Classical RF, Non-classical RF, Association Field]
+\textbf{Q:} Briefly define the classical RF (cRF) and non-classical RF (ncRF). What is an association field, and what does it look like for an orientation-selective V1 cell?
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{cRF}: region of visual space (or stimulus properties) that can elicit a response from the neuron.
+  \item \textbf{ncRF}: region/properties that can \emph{modulate} the cRF response but cannot generate a response in the absence of cRF input.
+  \item \textbf{Association field}: pattern of long-range lateral connections received by an orientation-selective V1 cell---it defines the ncRF. The cell receives lateral \emph{excitation} from neighbours with similar orientation preferences that are \term{collinear} or \term{co-circular} with it, and lateral \emph{inhibition} from other (parallel iso-oriented) neighbours with similar preferences.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 7 (LGT Q9, Q12): Lateral Connections and Contextual Effects]
+\textbf{Q:} How do lateral connections in V1 give rise to (a) contour integration, (b) pop-out, (c) texture segmentation? Then explain similarity and continuity Gestalt biases.
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) \textbf{Contour integration}: lateral \emph{excitation} between cells with collinear/co-circular orientation preferences mutually enhances responses; smooth contours become more visible than the noise around them.
+  \item (b) \textbf{Pop-out}: lateral \emph{inhibition} between cells with similar feature preferences mutually suppresses similar elements; the dissimilar element receives less inhibition and stands out.
+  \item (c) \textbf{Texture segmentation}: cells inside a uniform-texture region inhibit each other and are damped; cells along the boundary between two textures receive inhibition from only one side and are relatively more active---the boundary becomes visible.
+  \item \textbf{Similarity}: lateral inhibition mutually suppresses similar elements; borders between dissimilar elements receive less inhibition and are enhanced.
+  \item \textbf{Continuity}: lateral excitation enhances elements forming continuous (collinear/co-circular) contours.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 8 (LGT Q10, Q11, Q13): Top-down vs Bottom-up, Identifying Gestalt Laws, Border Ownership]
+\textbf{Q:} (a) Compare top-down and bottom-up grouping. (b) Identify Gestalt laws for example images: (i) similar shapes group, (ii) elements inside the same enclosure group, (iii) close-together elements group, (iv) elements joined by a line group, (v) elements forming a closed shape group, (vi) elements on a smooth curve group. (c) Define border ownership.
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) Top-down: comes from prior knowledge and experience---elements grouped because of expectations about what belongs to the same object. Bottom-up: comes from image properties---elements grouped because they are similar or locally coherent.
+  \item (b) (i) Similarity, (ii) Common region, (iii) Proximity, (iv) Connectivity, (v) Closure, (vi) Continuity.
+  \item (c) Border ownership: the boundary between two image regions is perceived as belonging to one region (the foreground) and not the other (the background). The foreground has a defined shape (delineated by the border); the background appears shapeless and seems to continue behind the figure. Implemented in V2 via cells whose response depends on which side of the edge the figure is on (an ncRF effect).
+\end{itemize}
+\end{exbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Summary}
+
+\begin{keybox}[Key Takeaways]
+\begin{enumerate}
+  \item \textbf{Pathway}: Retina $\rightarrow$ LGN (centre-surround relay) $\rightarrow$ V1 (striate cortex). RVF $\rightarrow$ left V1 (and vice versa). Beyond V1: \emph{What} (ventral, identity) and \emph{Where} (dorsal, spatial/motion) streams.
+  \item \textbf{V1 selectivities}: colour, orientation, direction of motion, spatial frequency, eye of origin, binocular disparity, position. Orientation/disparity/motion direction first appear in V1.
+  \item \textbf{Cell types}: simple (position- and contrast-locked) $\rightarrow$ complex (phase-/contrast-invariant) $\rightarrow$ hyper-complex (also length-tuned, end-stopped).
+  \item \textbf{Organisation}: hypercolumn ($\sim$1\,mm$^2$, full RF range for one retinal location) $\times$ retinotopic map (cortically magnified for fovea).
+  \item \textbf{Gabor model}: Gaussian $\times$ sinusoid with parameters $\sigma, f, \psi, \theta, \gamma$. Simple cell $=$ Gabor convolution; complex cell $=$ energy of a quadrature pair; multi-orientation $\times$ multi-scale $=$ wavelet transform.
+  \item \textbf{Sparsity}: Gabors are the components of natural images under a sparsity prior $\Rightarrow$ efficient code (few active neurons per image).
+  \item \textbf{cRF vs ncRF}: ncRF cannot drive the cell alone but modulates its response. The \emph{association field} (excitation along collinear/co-circular axis, inhibition between iso-oriented parallel neighbours) explains contour integration, pop-out, texture segmentation.
+  \item \textbf{Mid-level vision}: grouping/segmentation. \emph{Top-down} (knowledge) + \emph{bottom-up} (image properties) are both needed.
+  \item \textbf{Gestalt laws}: proximity, similarity, closure, continuity, common fate, symmetry (+ common region, connectivity). Mostly heuristics; can conflict.
+  \item \textbf{Border ownership}: which side of an edge is foreground. Computed in V2 via lateral connections (excitation among consistent edge segments, inhibition among inconsistent ones).
+\end{enumerate}
+\end{keybox}
+
+\textbf{Summary table: V1 cell types and their model.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.2cm} p{6.2cm} @{}}
+\toprule
+\textbf{Cell type} & \textbf{Selectivity} & \textbf{Model} \\
+\midrule
+Centre-surround (broad-band) & Intensity changes & Difference of Gaussians (DoG) \\
+Centre-surround (colour-opponent) & Colour edges & DoG on opponent channels (R$+$G$-$ etc.) \\
+Double-opponent (V1 only) & Local change in colour & Larger RF; opponent both in centre and surround \\
+Simple cell & Orientation $+$ phase $+$ position & Single Gabor $G(\sigma,f,\psi,\theta,\gamma)$ \\
+Complex cell & Orientation, position-/phase-invariant & Energy of quadrature pair: $\sqrt{R_{\psi=0}^2 + R_{\psi=\pi/2}^2}$ \\
+Hyper-complex (end-stopped) & Orientation $+$ length & Difference of complex-cell responses across length \\
+Disparity-tuned (binocular) & Depth via L/R RF offset & Pair of matched RFs across the two eyes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{Summary table: contextual effects and their mechanism.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Effect} & \textbf{Connection} & \textbf{Gestalt counterpart} \\
+\midrule
+Collinear facilitation / contour integration & Lateral excitation (collinear/co-circular) & Continuity \\
+Surround suppression / pop-out & Lateral inhibition (iso-oriented similar) & Similarity (boundaries enhanced) \\
+Texture segmentation & Lateral inhibition (within texture) & Similarity (border) \\
+Border ownership (V2) & Excitation between consistent segments; inhibition between inconsistent ones & Figure-ground assignment \\
+\bottomrule
+\end{tabular}
+\end{center}

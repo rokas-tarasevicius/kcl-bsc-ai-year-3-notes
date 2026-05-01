@@ -1,0 +1,599 @@
+% =============================================================================
+%                    WEEK 8: MOTION AND TRACKING
+% =============================================================================
+\section{Week 8: Motion and Tracking}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Distinguish the \term{motion field} from \term{optic flow} and explain when they differ.
+  \item State the \term{brightness constancy} assumption and derive the \term{optic flow constraint equation} $I_x u + I_y v + I_t = 0$.
+  \item Explain the \term{aperture problem} and describe how it can be overcome.
+  \item Compute depth, time-to-collision, ego-motion direction, and segmentation from optic flow.
+  \item Compare direct, dense methods (Lucas--Kanade, Horn--Schunck) with feature-based and block-matching methods.
+  \item Segment moving objects via \term{image differencing} and \term{background subtraction} (offline / moving average).
+  \item Define object \term{tracking}, contrast tracking-by-detection with model-based tracking, and describe the \term{predict--update} cycle.
+  \item Outline the \term{Kalman filter}, \term{particle filter}, \term{mean-shift}, and \term{KLT} trackers, including their assumptions and failure modes.
+\end{itemize}
+\end{keybox}
+
+\textbf{Big Picture.}
+A video is a sequence of images $I(x,y,t)$ acquired at discrete times $t_k = t_0 + k\Delta t$. Two new things become possible compared with stereo: we can infer \emph{self}/object \term{motion}, and we can \term{segment} moving objects without recovering depth. The unifying object is the \term{optic flow field} $(u,v)$: the image-plane motion of each scene point. Optic flow is only an \emph{approximation} to the true motion field (uniform rotating sphere $\Rightarrow$ MF $\neq 0$, OF $=0$); but since the motion field cannot be observed, we estimate it by tracking brightness patterns. From $(u,v)$ we recover depth, time-to-collision, ego-motion, and segmentation. When high-level features (objects) are followed across many frames we call this \term{tracking}, which adds a \term{predict--update} (Bayesian) loop on top of detection: Kalman (linear--Gaussian), particle filter (multimodal/non-linear), mean-shift (mode-seek on appearance), and KLT (sparse feature optic flow).
+
+\separator
+
+\textbf{What Examiners Like to Ask:}
+\begin{itemize}
+  \item ``Define optic flow and motion field; give a case where they differ.''
+  \item ``State and explain the aperture problem; how is it overcome?''
+  \item ``List constraints for the video correspondence problem and when they fail.''
+  \item Numerical: depth from $Z = -V_x x_1 / \dot{x}$ (perpendicular motion) or $Z_2 = V_z x_1 / \dot{x}$ (along optical axis); time-to-collision $= x_1 / \dot{x}$.
+  \item Apply image differencing or moving-average background subtraction to a 1D pixel patch over several frames with threshold $T$.
+  \item Derive the optic flow constraint equation from $I(x,y,t) = I(x+u\,dt,\,y+v\,dt,\,t+dt)$.
+  \item Describe Lucas--Kanade vs Horn--Schunck (local vs global; assumptions; output dense?).
+  \item ``What is tracking? Why predict before measure?'' Compare tracking-by-detection with model-based tracking.
+  \item Sketch the Kalman predict--update equations and state when they apply.
+\end{itemize}
+
+% =============================================================================
+\subsection{Core Concepts}
+
+\textbf{Roadmap:}
+\begin{enumerate}
+  \item Motion: video, motion field vs optic flow, brightness constancy, optic flow constraint, aperture problem.
+  \item Estimating optic flow: feature-based, Lucas--Kanade, Horn--Schunck, block matching.
+  \item Applications of optic flow: depth, time-to-collision, ego-motion, motion segmentation.
+  \item Motion segmentation: image differencing and background subtraction.
+  \item Tracking: definition, predict--update cycle, tracking-by-detection vs model-based.
+  \item Trackers: Kalman filter, particle filter, mean-shift, KLT; occlusion handling.
+\end{enumerate}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Video, Motion Field, and Optic Flow}
+
+\begin{defbox}[Video]
+A series of $N$ images (frames) acquired at discrete times $t_k = t_0 + k\Delta t$, $k = 0,1,\dots,N-1$, with fixed time interval $\Delta t$. A pixel intensity is a function of both space and time: $I(x,y,t)$.
+\end{defbox}
+
+\textbf{Stereo vs video.} Both deal with $\geq 2$ images. Stereo $=$ multiple cameras at one time. Video $=$ one camera at multiple times. Video additionally enables: (i) inference of 3D structure (as with stereo); (ii) segmentation of objects from background \emph{without} recovering depth; (iii) inference of self- and object-motion.
+
+\separator
+
+\begin{defbox}[Motion Field (MF)]
+The true image motion of a scene point: the actual 2D projection on the image plane of the relative 3D motion between camera and scene. Cannot be observed directly.
+\end{defbox}
+
+\begin{defbox}[Optic Flow (OF)]
+The apparent image motion of a scene point, inferred from changes in image brightness. The \term{optic flow field} is the collection of all OF vectors (\term{sparse} if only at features, \term{dense} if everywhere).
+\end{defbox}
+
+\textbf{MF $\neq$ OF in general.} Optic flow only approximates the motion field. Three classical counter-examples:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l l @{}}
+\toprule
+\textbf{Scene} & \textbf{MF} & \textbf{OF} & \textbf{Why} \\
+\midrule
+Rotating uniform Lambertian sphere & $\neq 0$ & $= 0$ & Surface moves but image is constant \\
+Stationary specular sphere, moving light & $= 0$ & $\neq 0$ & Highlight moves but surface does not \\
+Rotating barber's pole & horizontal & vertical & Aperture problem on the stripes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Despite this, MF cannot be observed, so we always \emph{estimate} MF by computing OF.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Brightness Constancy and the Optic Flow Constraint}
+
+\begin{defbox}[Brightness Constancy Assumption]
+The intensity of a scene point does not change between consecutive frames as it moves: if a point at $(x,y)$ at time $t$ moves to $(x+u\,dt,\,y+v\,dt)$ at time $t+dt$, then
+\[
+I(x,y,t) \;=\; I(x + u\,dt,\, y + v\,dt,\, t + dt).
+\]
+\end{defbox}
+
+\textbf{Derivation of the OFCE.} Taylor-expand the right-hand side and keep first-order terms:
+\[
+I(x,y,t) \;=\; I(x,y,t) + I_x\, u\,dt + I_y\, v\,dt + I_t\,dt + O(dt^2).
+\]
+Cancelling and dividing by $dt$ gives:
+
+\begin{thmbox}[Optic Flow Constraint Equation (OFCE)]
+\[
+I_x\, u \;+\; I_y\, v \;+\; I_t \;=\; 0,
+\qquad \text{i.e.}\qquad \nabla I \cdot (u,v)^T \;=\; -I_t.
+\]
+$I_x, I_y$ are spatial derivatives, $I_t$ is the temporal derivative, $(u,v)$ is the unknown flow.
+\end{thmbox}
+
+\textbf{Assumptions:} (1) brightness constancy, (2) small motion (so the linearisation is accurate), (3) image is differentiable in space and time.
+
+\begin{tipbox}[Spot it in a question]
+``One equation, two unknowns'' $\Rightarrow$ \emph{one OFCE per pixel cannot determine $(u,v)$}: this \emph{is} the aperture problem in equation form. We can only recover the component of flow \emph{parallel to $\nabla I$} (the \term{normal flow}); the component perpendicular to $\nabla I$ (along the edge) is undetermined.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{The Aperture Problem}
+
+\begin{defbox}[Aperture Problem]
+Through a small ``aperture'' (image patch) the direction of motion of an extended edge is ambiguous: only the component of motion \emph{perpendicular} to the edge is recoverable; any component \emph{parallel} to the edge is invisible because the intensity does not change along the edge.
+\end{defbox}
+
+\textbf{Why we ``see'' perpendicular motion.} Among all consistent motions, the perpendicular one (i) is the average of all possibilities and (ii) predicts the slowest movement; the brain (and many algorithms) defaults to it.
+
+\textbf{Two strategies for solving it:}
+\begin{enumerate}
+  \item \textbf{Integrate} local measurements across space (combine many edge patches with different orientations).
+  \item \textbf{Restrict} measurements to image locations where the structure is unambiguous: \term{corners}. SIFT / Harris detectors are good both for stereo and for video correspondence (the basis of KLT).
+\end{enumerate}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{The Video Correspondence Problem}
+
+\textbf{To measure OF, find corresponding points across frames.} Two families of methods:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.8cm} p{5.5cm} @{}}
+\toprule
+\textbf{Family} & \textbf{Idea} & \textbf{Verdict} \\
+\midrule
+Feature-based & Extract descriptors at interest points; match to next frame & Sparse OF; works for \emph{large} motion \\
+Direct (differential) & Recover motion from $I_x,I_y,I_t$ via OFCE / spatio-temporal filters & Dense OF; sensitive to appearance change; needs \emph{small} motion \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Constraints used to find correspondences:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{6.5cm} p{4cm} @{}}
+\toprule
+\textbf{Constraint} & \textbf{Statement} & \textbf{Fails when} \\
+\midrule
+Spatial coherence & Neighbouring flow vectors are similar (smooth surfaces) & Depth/motion discontinuities \\
+Small motion & Flow magnitude is small relative to image size & Fast motion or low frame rate \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Estimating Optic Flow}
+
+The OFCE gives one equation per pixel and two unknowns. We need additional constraints. Three classical strategies:
+
+\textbf{(1) Lucas--Kanade (local windowed least squares).}
+
+\begin{thmbox}[Lucas--Kanade]
+Assume the flow $(u,v)$ is \emph{constant} over a small window $W$ around a pixel. Stack one OFCE per pixel in $W$:
+\[
+\underbrace{\begin{pmatrix} I_{x,1} & I_{y,1} \\ \vdots & \vdots \\ I_{x,n} & I_{y,n} \end{pmatrix}}_{A} \begin{pmatrix} u \\ v \end{pmatrix} = \underbrace{\begin{pmatrix} -I_{t,1} \\ \vdots \\ -I_{t,n} \end{pmatrix}}_{b}.
+\]
+Solve in least squares:
+\[
+\begin{pmatrix} u \\ v \end{pmatrix} = (A^T A)^{-1} A^T b, \qquad A^T A = \begin{pmatrix} \sum I_x^2 & \sum I_x I_y \\ \sum I_x I_y & \sum I_y^2 \end{pmatrix}.
+\]
+\end{thmbox}
+
+\textbf{Conditions / pitfalls:} $A^T A$ must be invertible and well-conditioned, i.e.\ the window must contain enough \emph{texture in two different directions}. This is exactly the \term{Harris corner} criterion: LK works well at corners, fails on flat regions and along edges (aperture problem returns).
+
+\textbf{(2) Horn--Schunck (global smoothness).}
+
+\begin{thmbox}[Horn--Schunck]
+Solve a global energy minimisation:
+\[
+E(u,v) = \int \! \underbrace{(I_x u + I_y v + I_t)^2}_{\text{data: OFCE}} + \alpha^2 \underbrace{\bigl(\|\nabla u\|^2 + \|\nabla v\|^2\bigr)}_{\text{smoothness regulariser}} \,dx\,dy.
+\]
+$\alpha$ trades off data fit against smoothness. Solved iteratively (Jacobi/Gauss--Seidel).
+\end{thmbox}
+
+\textbf{Output:} dense flow field. \textbf{Pitfalls:} oversmooths real motion discontinuities (object boundaries); slower than LK.
+
+\textbf{(3) Block matching (feature/correlation).} For each block in frame $t$, search a window in frame $t+1$ for the best-matching block (SSD / SAD / NCC). The displacement vector is the OF for that block. Used in MPEG video coding and for large displacements where differential methods fail.
+
+\separator
+
+\textbf{Comparison.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l l l @{}}
+\toprule
+\textbf{Method} & \textbf{Density} & \textbf{Constraint} & \textbf{Best for} & \textbf{Weakness} \\
+\midrule
+Lucas--Kanade & Sparse (at corners) & Local constancy & Small motion at corners & Fails on flat / edges \\
+Horn--Schunck & Dense & Global smoothness & Smooth flow fields & Blurs at boundaries \\
+Block matching & Sparse--dense & Patch similarity & Large displacements & Aperture, expensive \\
+Feature-based & Sparse & Descriptor match & Wide baselines & Requires distinctive features \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Applications of Optic Flow}
+
+\textbf{Depth from OF, known ego-motion (case 1: motion $\perp$ optical axis).} If camera moves with velocity $V_x$ along the camera $x$-axis,
+\[
+Z \;=\; -\,\frac{V_x\, x_1}{\dot{x}}, \qquad \dot{x} = \frac{x_2 - x_1}{\Delta t}.
+\]
+\textbf{Case 2: motion along optical axis $V_z$.}
+\[
+Z_2 \;=\; \frac{V_z\, x_1}{\dot{x}}.
+\]
+Image coordinates here are measured \emph{from the principal point}, not the corner of the image.
+
+\separator
+
+\textbf{Time-to-collision (Vz unknown).} Eliminating $V_z$ from the case-2 equation:
+\[
+\boxed{\;\tau \;=\; \frac{x_1}{\dot{x}} \;=\; \frac{\alpha}{\dot{\alpha}} \;=\; \frac{2 A}{\dot{A}}\;}
+\]
+where $\alpha$ is the angle subtended by the object and $A$ its image area. Computable from image alone --- no knowledge of camera speed, object size, or distance. Used by birds and insects for landing.
+
+\separator
+
+\textbf{Ego-motion patterns.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5.5cm} p{4.5cm} @{}}
+\toprule
+\textbf{Field} & \textbf{Pattern} & \textbf{Camera motion} \\
+\midrule
+Parallel ($V_z = 0$) & All vectors parallel; OF opposite to camera direction; speed $\propto |\mathbf{v}|$ & Pure translation perpendicular to optical axis (turn/translate left/right) \\
+Radial ($V_z \neq 0$) & Vectors point to/away from a vanishing point (FOE/FOC) & Move forward (FOE) / backward (FOC); FOE $=$ destination \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Relative depth.} In a parallel field, depth $\propto 1/|\mathbf{v}|$ (motion parallax with fixation at infinity). In a radial field, depth of point $p \propto 1/(|\mathbf{v}| \cdot \text{distance from FOE})$.
+
+\separator
+
+\textbf{Segmentation from OF.} Discontinuities in the OF field indicate different depths and hence different objects. Useful even when stereo depth is unavailable.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Motion Segmentation: Image Differencing and Background Subtraction}
+
+\textbf{(1) Image differencing (static camera).} For consecutive frames,
+\[
+\delta(x,y,t) = |I(x,y,t) - I(x,y,t-1)| > T \;\Rightarrow\; \text{moving pixel}.
+\]
+\textbf{Pitfall (\term{double-view problem}):} the largest changes occur where background is replaced by object (or vice versa); pixels covered by the object in \emph{both} frames may not change. The output looks like a hollow ``ghost'' / double silhouette.
+
+\separator
+
+\textbf{(2) Background subtraction.} Maintain a background model $B(x,y)$ and threshold $|I(x,y,t) - B(x,y)| > T$. Three ways to learn $B$:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l p{6.5cm} @{}}
+\toprule
+\textbf{Method} & \textbf{Update} & \textbf{Properties} \\
+\midrule
+Adjacent frame difference & $B(x,y) = I(x,y,t-1)$ & Same as image differencing; double-view bug \\
+Offline average (mean+threshold) & $B(x,y) = \tfrac{1}{N}\sum_{t=1}^{N} I(x,y,t)$ & Needs a clean training phase; static \\
+Moving (running) average & $B(x,y) \leftarrow (1-\beta) B(x,y) + \beta I(x,y,t)$ & Adapts to slow illumination changes; \emph{most common} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Typical algorithm (per frame $t$):}
+\begin{enumerate}
+  \item Update background: $B \leftarrow (1-\beta) B + \beta I_t$.
+  \item Compute $\delta(x,y,t) = \|I(x,y,t) - B(x,y)\|$.
+  \item Threshold: $\delta_T(x,y,t) = \delta(x,y,t) > T$.
+  \item Noise removal: $\delta_T \leftarrow \mathrm{close}(\delta_T)$ (morphological dilation+erosion).
+\end{enumerate}
+Foreground pixels are where $\delta_T \neq 0$.
+
+\textbf{What a good background model should do:} \emph{exclude} interesting changes (objects, even if temporarily stopped); \emph{incorporate} uninteresting changes (illumination drift, swaying trees, sun/clouds, lights on/off).
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Tracking}
+
+\begin{defbox}[Tracking]
+Matching high-level features (typically objects) across many frames of a video. Differs from optic flow in scope: trackers carry an explicit \emph{state} (location, velocity, appearance) for each tracked object and refine it over time.
+\end{defbox}
+
+\textbf{Predict--update cycle.} Tracking algorithms use previous frames to \emph{predict} the location of the object in the next frame, then \emph{update} (correct) the prediction with a measurement.
+\begin{enumerate}
+  \item \textbf{Predict.} From the previous state and a motion model, compute a prior estimate of where the object will be next.
+  \item \textbf{Measure.} Detect the object in the predicted region (smaller search $\Rightarrow$ less work, less ambiguity).
+  \item \textbf{Update.} Combine prediction and measurement into the new state, weighting each by its uncertainty.
+\end{enumerate}
+\textbf{Why predict first?} (i) restrict the search region (faster, fewer false matches); (ii) average out measurement noise across frames.
+
+\separator
+
+\textbf{Two paradigms:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5.5cm} p{4.8cm} @{}}
+\toprule
+\textbf{Paradigm} & \textbf{Idea} & \textbf{Pros / Cons} \\
+\midrule
+Tracking-by-detection & Run a detector on each frame; associate detections across frames (e.g.\ via a Kalman/particle filter) & Robust to drift; relies on a strong detector; data association is hard \\
+Model-based tracking & Maintain a target appearance/shape model and search for it next frame (KLT, mean-shift, correlation filters) & Cheaper per frame; can drift; struggles with occlusion/appearance change \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Trackers: Kalman, Particle, Mean-Shift, KLT}
+
+\textbf{Kalman filter.}
+
+\begin{thmbox}[Kalman Filter (linear Gaussian)]
+State $\mathbf{x}_t$, measurement $\mathbf{z}_t$. Linear model:
+\[
+\mathbf{x}_t = F \mathbf{x}_{t-1} + \mathbf{w}_t, \quad \mathbf{w}_t \sim \mathcal{N}(0, Q); \qquad \mathbf{z}_t = H \mathbf{x}_t + \mathbf{v}_t, \quad \mathbf{v}_t \sim \mathcal{N}(0, R).
+\]
+\textbf{Predict:} $\hat{\mathbf{x}}_{t|t-1} = F \hat{\mathbf{x}}_{t-1|t-1}$, $P_{t|t-1} = F P_{t-1|t-1} F^T + Q$.
+
+\textbf{Update:} Kalman gain $K_t = P_{t|t-1} H^T (H P_{t|t-1} H^T + R)^{-1}$; state $\hat{\mathbf{x}}_{t|t} = \hat{\mathbf{x}}_{t|t-1} + K_t (\mathbf{z}_t - H \hat{\mathbf{x}}_{t|t-1})$; covariance $P_{t|t} = (I - K_t H) P_{t|t-1}$.
+\end{thmbox}
+
+\textbf{Assumptions:} linear dynamics, linear measurement, Gaussian noise. \textbf{Strengths:} closed-form, optimal in the MMSE sense under those assumptions, very cheap. \textbf{Failure:} non-linear motion (use EKF/UKF) or multimodal posteriors (target hidden behind another).
+
+\textbf{Particle filter (sequential Monte Carlo).}
+
+\begin{thmbox}[Particle Filter]
+Represent the posterior $p(\mathbf{x}_t \mid \mathbf{z}_{1:t})$ by $N$ weighted samples (\term{particles}) $\{(\mathbf{x}_t^{(i)}, w_t^{(i)})\}$.
+\begin{enumerate}
+  \item \textbf{Predict (sample):} draw $\mathbf{x}_t^{(i)} \sim p(\mathbf{x}_t \mid \mathbf{x}_{t-1}^{(i)})$ from the motion model.
+  \item \textbf{Update (weight):} $w_t^{(i)} \propto w_{t-1}^{(i)} \, p(\mathbf{z}_t \mid \mathbf{x}_t^{(i)})$ (likelihood of observation).
+  \item \textbf{Resample:} draw $N$ new particles in proportion to weights to avoid degeneracy.
+\end{enumerate}
+\end{thmbox}
+
+\textbf{Strengths:} arbitrary non-linear, non-Gaussian, \emph{multimodal} posteriors (handles ambiguity, e.g.\ tracking through clutter). \textbf{Cost:} $O(N)$ particles per frame; needs many in high dimensions (curse of dimensionality).
+
+\separator
+
+\textbf{Mean-shift tracking.} Build an appearance model (typically a colour histogram) of the target. At each frame, start at the previous location and iteratively move the search window to the local \emph{mode} of the back-projected likelihood (a histogram-based density). \textbf{Pros:} simple, real-time, deals with non-rigid deformation. \textbf{Cons:} fixed window scale (CamShift fixes this); fails if the target leaves the window or the colour distribution overlaps the background.
+
+\textbf{KLT tracker (Kanade--Lucas--Tomasi).} Sparse model-based tracker:
+\begin{enumerate}
+  \item Detect ``good features to track'' (corners with two strong eigenvalues of $A^T A$ from the LK system).
+  \item Track each feature into the next frame with Lucas--Kanade (small window, brightness constancy, small motion).
+  \item Drop features that fail a residual / dissimilarity test; redetect periodically.
+\end{enumerate}
+KLT is essentially LK + corner selection + bookkeeping over many frames. It assumes \emph{small} motion, so for fast motion it is run at multiple scales (a Gaussian pyramid: see Week 3).
+
+\separator
+
+\textbf{Comparison.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l p{4.5cm} @{}}
+\toprule
+\textbf{Tracker} & \textbf{State} & \textbf{Posterior} & \textbf{Best when} \\
+\midrule
+Kalman & Linear (e.g.\ pos $+$ vel) & Gaussian (unimodal) & Smooth linear motion, low noise \\
+Particle filter & Arbitrary & Arbitrary, multimodal & Clutter, non-linear, ambiguous \\
+Mean-shift & Window position & Mode of appearance & Distinctive colour, non-rigid target \\
+KLT & Sparse feature locations & Implicit (LK) & Textured target, small motion, short videos \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{Occlusion handling.} The predict--update view also tells you what to do during occlusion: when no measurement is available (or the likelihood is poor), \emph{skip the update} and keep \emph{predicting} forward, letting the covariance grow until the target reappears. Long occlusions are typically resolved by a re-detection step (tracking-by-detection) or by maintaining multiple hypotheses (particle filter).
+
+\bigseparator
+
+% =============================================================================
+\subsection{Worked Examples}
+
+\begin{exbox}[Example 1: Constraints on the video correspondence problem]
+\textbf{Q:} List the constraints typically applied to solving the video correspondence problem and note when they fail.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Spatial coherence} (neighbouring points have similar flow). Fails at depth/motion discontinuities (object boundaries, two surfaces moving differently).
+  \item \textbf{Small motion} (flow magnitude is small). Fails when relative motion is fast or the frame rate is low.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 2: Aperture problem]
+\textbf{Q:} Define the aperture problem and suggest how it can be overcome.
+
+\textbf{A:} The direction of motion of an extended edge seen through a small aperture is ambiguous: only the component of motion \emph{perpendicular} to the edge is recoverable; the parallel component cannot be determined because the intensity does not change along the edge. Overcome by (1) integrating local motion measurements across many image patches with different orientations, or (2) restricting measurements to image locations where the structure is unambiguous (\term{corners}, e.g.\ Harris/SIFT interest points).
+\end{exbox}
+
+\begin{exbox}[Example 3: Barber's pole]
+\textbf{Q:} A traditional barber's pole rotates about its vertical axis. (a) In what direction is the motion field? (b) The optic flow? (c) Explain via the aperture problem.
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) MF is \textbf{horizontal} (the painted surface rotates around the vertical axis).
+  \item (b) OF is \textbf{(predominantly) vertical}.
+  \item (c) The diagonal stripes are extended edges, so locally only the perpendicular component is recoverable. Corners exist only at the top/bottom (small horizontal component) and at the sides (large vertical component). Either by averaging local cues or by relying on unambiguous corner cues, the aggregate motion is seen as vertical.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 4: Depth from perpendicular ego-motion]
+\textbf{Q:} Frames at $t$ and $t+1$\,s. Point $(50,50,t)$ matches $(25,50,t+1)$. Camera moves at $V_x = 0.1$\,m/s along the camera $x$-axis. Focal length $f = 35$\,mm, pixel size $0.1$\,mm/pixel. Find depth $Z$.
+
+\textbf{A:} Use $Z = -V_x x_1 / \dot{x}$.
+
+Image-point velocity: $\dot{x} = (25 - 50)/1 = -25$\,pixels/s $= -25 \times 10^{-4}$\,m/s $= -0.0025$\,m/s.
+
+Convert $x_1 = 50$\,pixels $\to 50 \times 0.1$\,mm $= 5$\,mm $= 0.005$\,m. (In the slide solution this is left as the focal-length-scaled coordinate $f x_1 = 0.035 \times 0.1$\,m\,$\cdot$\,pix.) Plugging in:
+\[
+Z \;=\; -\,\frac{0.035 \times 0.1}{-0.0025} \;=\; 1.4 \text{\,m}.
+\]
+\end{exbox}
+
+\begin{exbox}[Example 5: Depth from along-axis ego-motion]
+\textbf{Q:} Point $(50,70,t) \to (45,63,t+1)$, $V_z = 0.1$\,m/s along the optical axis, image centre at $(100,140)$. Find depth.
+
+\textbf{A:} Re-express coordinates relative to the principal point: $(-50,-70) \to (-55,-77)$. Use $Z_2 = V_z x_1 / \dot{x}$.
+
+$\dot{x} = (-55 - (-50))/1 = -5$\,pixels/s. So
+\[
+Z_2 \;=\; \frac{0.1 \times (-50)}{-5} \;=\; 1\text{\,m}.
+\]
+Cross-check with $y$: $\dot{y} = -7$\,pix/s, $Z_2 = (0.1 \times -70)/(-7) = 1$\,m. \checkmark
+\end{exbox}
+
+\begin{exbox}[Example 6: Time-to-collision]
+\textbf{Q:} Give an equation for time-to-collision that does not require depth, and apply it to the previous question.
+
+\textbf{A:} $\tau = x_1 / \dot{x}$. For the previous point: $\tau = -50 / -5 = 10$\,s.
+
+\textbf{Sanity check:} the camera was 1\,m away moving at $0.1$\,m/s, which gives the same answer.
+\end{exbox}
+
+\begin{exbox}[Example 7: Image differencing on a 1D patch]
+\textbf{Q:} Four frames of a $1 \times 5$ patch:
+\[
+I_{t_1}=[190,200,90,110,90], \quad I_{t_2}=[110,170,160,70,70],
+\]
+\[
+I_{t_3}=[100,60,170,200,90], \quad I_{t_4}=[90,100,100,190,190].
+\]
+Apply image differencing with threshold $T = 50$.
+
+\textbf{A:} Compute $|I_{t_{k+1}} - I_{t_k}|$ then threshold:
+\begin{itemize}
+  \item $|I_{t_1} - I_{t_2}| = [80,30,70,40,20] \;\to\; [1,0,1,0,0]$.
+  \item $|I_{t_2} - I_{t_3}| = [10,110,10,130,20] \;\to\; [0,1,0,1,0]$.
+  \item $|I_{t_3} - I_{t_4}| = [10,40,70,10,100] \;\to\; [0,0,1,0,1]$.
+\end{itemize}
+\textbf{Note} the double-view artefact: a single moving feature lights up two pixels per pair of frames.
+\end{exbox}
+
+\begin{exbox}[Example 8: Moving-average background subtraction]
+\textbf{Q:} Same 4 frames. Use moving-average $B \leftarrow (1-\beta) B + \beta I_t$ with $\beta = 0.5$, $B$ initialised to zero, threshold $T=50$.
+
+\textbf{A:} (Update $B$ \emph{then} compare to $I_t$.)
+\begin{itemize}
+  \item $t_1$: $B = 0.5 I_{t_1} = [95,100,45,55,45]$. $|I_{t_1} - B| = [95,100,45,55,45] \to [1,1,0,1,0]$.
+  \item $t_2$: $B = 0.5 B + 0.5 I_{t_2} = [102.5,135,102.5,62.5,57.5]$. $|I_{t_2} - B| = [7.5,35,57.5,7.5,12.5] \to [0,0,1,0,0]$.
+  \item $t_3$: $B = [101.25,97.5,136.25,131.25,73.75]$. $|I_{t_3} - B| = [1.25,37.5,33.75,68.75,16.25] \to [0,0,0,1,0]$.
+  \item $t_4$: $B = [95.625,98.75,118.125,160.625,131.875]$. $|I_{t_4} - B| = [5.625,1.25,18.125,29.375,58.125] \to [0,0,0,0,1]$.
+\end{itemize}
+\textbf{Take-away:} initialising $B$ to zero makes the first frame mostly foreground (cold start); steady state takes a few frames depending on $\beta$.
+\end{exbox}
+
+\begin{exbox}[Example 9: Coding -- moving-average tracker (LGT skeleton)]
+\textbf{Q:} Sketch the body of \code{process\_video\_live(video\_path, alpha=0.05, threshold=30, min\_area=500)} that does (i) moving-average background subtraction; (ii) contour-based bounding-box tracking.
+
+\textbf{A:} Pseudo-code:
+\begin{enumerate}
+  \item Read first frame $\to$ \code{gray}; init \code{background = gray.astype(float32)}.
+  \item Each subsequent frame: \code{gray = grayscale(frame)}.
+  \item \code{diff = abs(gray - background)} (in float32 to avoid overflow).
+  \item \code{fg\_mask = (diff > threshold) * 255} (uint8 binary mask).
+  \item \code{background = (1 - alpha) * background + alpha * gray}.
+  \item Find external contours of \code{fg\_mask}; for each contour with area $>$ \code{min\_area}, draw \code{boundingRect} on a copy of the frame.
+\end{enumerate}
+\textbf{Pitfalls (exam-relevant):} use \code{float32} (uint8 wraps around at 255); update background \emph{after} computing \code{diff}, otherwise the moving target gets baked into $B$; \code{RETR\_EXTERNAL} avoids nested holes producing duplicate boxes; \code{min\_area} suppresses noise.
+\end{exbox}
+
+\begin{exbox}[Example 10: Why predict before measure?]
+\textbf{Q:} Tracking algorithms predict the next location before measuring it. Give two reasons.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Restrict the search.} Less work per frame and fewer false matches in the surrounding clutter.
+  \item \textbf{Average measurement noise.} The state estimate combines many noisy measurements through the dynamics, so the trajectory is smoother and more accurate than per-frame detection.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 11: Choosing a tracker]
+\textbf{Q:} For each scenario, pick Kalman, particle filter, mean-shift, or KLT, and justify.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Radar-style point target moving smoothly:} Kalman --- linear dynamics, Gaussian noise, single mode.
+  \item \textbf{Pedestrian in cluttered crowd, frequently occluded:} particle filter --- multimodal posterior, non-linear motion, occlusion handled by predicting through gaps.
+  \item \textbf{Distinct-coloured ball on uniform background:} mean-shift --- colour histogram is highly discriminative; cheap.
+  \item \textbf{Textured rigid object in a short clip with small motion:} KLT --- corners give unambiguous flow; LK works because motion is small.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 12: Lucas--Kanade derivation in one line]
+\textbf{Q:} Why does Lucas--Kanade fail along an edge?
+
+\textbf{A:} On an edge, $I_x$ and $I_y$ are nearly parallel within the window, so the rows of $A$ are nearly collinear and $A^T A$ is rank-deficient (one small eigenvalue). The least-squares solution is unstable and recovers only the normal flow --- the aperture problem in matrix form. LK fails on textureless regions for the same reason ($\nabla I \approx 0$).
+\end{exbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Summary}
+
+\begin{keybox}[Key Takeaways]
+\begin{enumerate}
+  \item \textbf{Motion field $\neq$ optic flow}: MF is the true projected motion (unobservable); OF is what we infer from brightness changes. Counter-examples: rotating Lambertian sphere, specular sphere with moving light, barber's pole.
+  \item \textbf{Brightness constancy} $\Rightarrow$ \textbf{OFCE} $I_x u + I_y v + I_t = 0$. One equation, two unknowns $\Rightarrow$ \textbf{aperture problem}: only normal flow recoverable.
+  \item \textbf{Solve OF} by adding constraints: Lucas--Kanade (local constancy + LSQ), Horn--Schunck (global smoothness), block matching, feature matching.
+  \item \textbf{Aperture problem solutions:} integrate across patches OR use corners (LK, KLT).
+  \item \textbf{Applications of OF:} depth (with ego-motion), time-to-collision $\tau = x_1/\dot{x}$ (no depth needed), ego-motion direction (FOE/FOC), motion segmentation.
+  \item \textbf{Motion segmentation:} image differencing (double-view artefact) vs background subtraction (offline mean / moving average $B \leftarrow (1-\beta)B + \beta I_t$).
+  \item \textbf{Tracking $=$ predict + update}; tracking-by-detection (detect + associate) vs model-based (KLT, mean-shift).
+  \item \textbf{Trackers}: Kalman (linear--Gaussian, unimodal), particle filter (non-linear, multimodal), mean-shift (mode of colour histogram), KLT (corners + LK).
+  \item \textbf{Occlusion}: keep predicting, skip update; growing covariance signals lost track.
+\end{enumerate}
+\end{keybox}
+
+\textbf{Final comparison: optic flow methods.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l p{4.5cm} @{}}
+\toprule
+\textbf{Method} & \textbf{Density} & \textbf{Extra constraint} & \textbf{Failure mode} \\
+\midrule
+Lucas--Kanade & Sparse (corners) & Local constant flow over window & Flat / edge regions \\
+Horn--Schunck & Dense & Global smoothness $\alpha^2 \|\nabla u\|^2$ & Blurs motion boundaries \\
+Block matching & Sparse-dense & Best patch match (SSD/NCC) & Aperture, expensive \\
+Feature-based & Sparse & Descriptor distance & Few/repetitive features \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Final comparison: trackers.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l p{4.5cm} @{}}
+\toprule
+\textbf{Tracker} & \textbf{Posterior} & \textbf{Motion model} & \textbf{Best for} \\
+\midrule
+Kalman & Gaussian (unimodal) & Linear & Smooth, predictable trajectories \\
+Particle filter & Arbitrary, multimodal & Any & Clutter, occlusion, ambiguity \\
+Mean-shift & Mode of histogram & None (greedy) & Distinctive colour, deformable \\
+KLT & Implicit (LK) & Small motion & Textured rigid targets \\
+\bottomrule
+\end{tabular}
+\end{center}

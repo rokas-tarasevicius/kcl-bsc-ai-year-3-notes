@@ -1,0 +1,774 @@
+% =============================================================================
+%                         WEEK 6: FEATURE MATCHING
+% =============================================================================
+\section{Week 6: Feature Matching}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item State the \term{correspondence problem} and the scenarios in which it arises.
+  \item Compare \term{correlation-based} and \term{feature-based} matching: methodology, similarity measures, advantages, disadvantages.
+  \item Compute SSD, SAD, normalised cross-correlation and the correlation coefficient by hand.
+  \item Describe the \term{Harris corner detector} pipeline and compute its response $R$ from $I_x, I_y$.
+  \item Explain why Harris is not scale-invariant; describe \term{Harris-Laplacian} and the \term{SIFT} pipeline (DoG scale-space, keypoint localisation, orientation assignment, descriptor).
+  \item Apply \term{RANSAC} to reject outliers and recover the underlying geometric transformation.
+\end{itemize}
+\end{keybox}
+
+\textbf{Big Picture.}
+The \term{correspondence problem} is the unifying mid-level vision task of finding matching image elements across multiple images. It underpins stereo (different cameras), motion/tracking (same camera at different times) and object recognition (test image vs.\ training image). All algorithms answer four questions: \emph{which} elements to match, \emph{where} to search, \emph{what} similarity measure to use, and \emph{how} to discard wrong matches. \textbf{Correlation-based} methods slide a window and compare raw intensities (dense, simple, but illumination-/viewpoint-fragile and slow). \textbf{Feature-based} methods first detect a sparse set of distinctive interest points (corners or scale-space blobs), build invariant \term{descriptors} around each, and match descriptors with a vector distance (sparse, fast, far more robust). Whichever route is taken, the resulting \emph{putative} matches contain outliers, so geometric verification with \term{RANSAC} is required to recover the true transformation between views.
+
+\separator
+
+\textbf{What Examiners Like to Ask:}
+\begin{itemize}
+  \item Define the correspondence problem; give three scenarios where it arises.
+  \item Contrast correlation- and feature-based methods (methodology + pros/cons).
+  \item Define ``detector'' and ``descriptor''.
+  \item Compute SAD/SSD between feature vectors and pick best matches.
+  \item Calculate the Harris response $R = \det(H) - k\,(\mathrm{tr}(H))^2$ from given $I_x, I_y$ over a $3\times 3$ window.
+  \item Interpret values of $R$ ($R\approx 0$, $R<0$, $R>0$).
+  \item Write pseudo-code for RANSAC; apply it to a translation model with given samples and threshold $t$.
+  \item Explain what makes SIFT scale-, rotation-, illumination-invariant (and what Harris is/is not invariant to).
+\end{itemize}
+
+% =============================================================================
+\subsection{Core Concepts}
+
+\textbf{Roadmap:}
+\begin{enumerate}
+  \item The correspondence problem (sources, requirements, problems, two solution classes).
+  \item Correlation-based methods (window, search area, similarity measures).
+  \item Feature-based methods: interest-point detectors (Harris, Harris-Laplacian, SIFT/DoG).
+  \item Feature descriptors (Harris window, SIFT 128-d vector) and their invariance.
+  \item The matching problem: putative matches and outlier rejection with RANSAC.
+\end{enumerate}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{The Correspondence Problem}
+
+\begin{defbox}[Correspondence Problem]
+For each selected element in one image, find the corresponding element (i.e.\ the projection of the same 3D scene point) in the other image. It is fundamentally a \emph{search} problem.
+\end{defbox}
+
+\textbf{Three scenarios in which it arises:}
+\begin{itemize}
+  \item \textbf{Stereo} (multiple cameras at the same time) $\Rightarrow$ recover 3D structure from disparity.
+  \item \textbf{Video / motion tracking} (same camera at different times) $\Rightarrow$ estimate camera/object motion.
+  \item \textbf{Object recognition} (current image vs.\ stored training images) $\Rightarrow$ judge similarity / identity.
+\end{itemize}
+
+\textbf{Three design decisions for any algorithm:}
+\begin{enumerate}
+  \item \emph{Which} elements to match (intensities, edges, corners, descriptors).
+  \item \emph{How} to search for matches (exhaustive, restricted by task knowledge).
+  \item \emph{How} to compare elements (similarity measure / distance metric).
+\end{enumerate}
+
+\textbf{Basic requirements:} most scene points must be visible in both images, and corresponding regions must look ``similar''.
+
+\separator
+
+\textbf{Why correspondence is hard:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Problem} & \textbf{Cause} \\
+\midrule
+Occlusion & Self-occlusion, occlusion by other objects, or out-of-shot $\Rightarrow$ no match exists. \\
+False matches & Many regions look similar; only one is the true match. \\
+Changing appearance & Lighting changes intensities; viewpoint changes size/shape (foreshortening). \\
+Large search space & Each element has many candidate matches in the other image. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Methods often add task-specific assumptions (e.g.\ epipolar geometry in stereo) to constrain the search.
+
+\separator
+
+\textbf{Two classes of solutions:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{5cm} p{5.2cm} @{}}
+\toprule
+\textbf{Class} & \textbf{Starts from} & \textbf{Compares using} \\
+\midrule
+Correlation-based & Raw image intensities (a window per pixel) & Similarity measure on intensity values (NCC, SSD, SAD) \\
+Feature-based & Sparse interest points + descriptors & Distance between descriptor vectors \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Correlation-Based Methods}
+
+\textbf{Algorithm (template matching by sliding window):}
+\begin{enumerate}
+  \item For each window $I_1$ in image one (the template),
+  \item For each window $I_2$ of the same size in a search area of image two,
+  \item Compute a similarity between $I_1$ and $I_2$.
+  \item The corresponding point is the centre of the window in image two with the highest similarity (or lowest difference).
+\end{enumerate}
+
+\textbf{Three design choices:}
+\begin{enumerate}
+  \item \textbf{Window size.}
+  \begin{itemize}
+    \item Too small: insufficient structure, noise-sensitive, many false matches.
+    \item Too large: imprecise (blurs the correspondence map), less tolerant to viewpoint changes.
+  \end{itemize}
+  \item \textbf{Search-area size.} Full correlation over the whole image is expensive; usually constrained around the source pixel or by task knowledge (e.g.\ epipolar lines in stereo).
+  \item \textbf{Similarity measure} (next).
+\end{enumerate}
+
+\separator
+
+\textbf{Similarity measures.} Let $I_1, I_2$ be the two windows (vectors over pixel positions $(i,j)$).
+
+\begin{defbox}[Maximise these (similarity)]
+\begin{align*}
+\text{Cross-correlation:} \quad & \sum_{i,j} I_1(i,j)\, I_2(i,j) \;=\; I_1 \cdot I_2 \;=\; \|I_1\|\, \|I_2\| \cos\theta \\
+\text{Normalised cross-correlation (NCC):} \quad & \frac{\sum_{i,j} I_1(i,j)\, I_2(i,j)}{\sqrt{\sum I_1^2}\, \sqrt{\sum I_2^2}} \;=\; \frac{I_1 \cdot I_2}{\|I_1\|\,\|I_2\|} \;=\; \cos\theta \\
+\text{Correlation coefficient:} \quad & \frac{\sum (I_1 - \bar{I_1})(I_2 - \bar{I_2})}{\sqrt{\sum (I_1 - \bar{I_1})^2}\, \sqrt{\sum (I_2 - \bar{I_2})^2}}
+\end{align*}
+\end{defbox}
+
+\begin{defbox}[Minimise these (dissimilarity)]
+\begin{align*}
+\text{Sum of Squared Differences (SSD):} \quad & \sum_{i,j} \bigl(I_1(i,j) - I_2(i,j)\bigr)^2 \\
+\text{Euclidean distance:} \quad & \sqrt{\textstyle\sum_{i,j} \bigl(I_1(i,j) - I_2(i,j)\bigr)^2} \;=\; \sqrt{\text{SSD}} \\
+\text{Sum of Absolute Differences (SAD):} \quad & \sum_{i,j} |I_1(i,j) - I_2(i,j)|
+\end{align*}
+\end{defbox}
+
+\textbf{Properties (exam-relevant):}
+\begin{itemize}
+  \item Cross-correlation is the \term{dot product} of $I_1, I_2$ viewed as vectors; NCC is the \term{cosine} of the angle between them.
+  \item NCC equals the correlation coefficient when both windows have zero mean.
+  \item SSD$=$ Euclidean distance squared.
+  \item SAD is the cheapest and most popular in practice; the extra cost of NCC/SSD is usually not justified by performance.
+\end{itemize}
+
+\begin{tipbox}[Spot it in a question]
+``Maximise'' similarity $\Rightarrow$ cross-correlation/NCC. ``Minimise'' difference $\Rightarrow$ SSD or SAD. ``Cosine of the angle between intensity vectors'' $\Rightarrow$ NCC.
+\end{tipbox}
+
+\separator
+
+\textbf{Performance.}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Aspect} & \textbf{Detail} \\
+\midrule
+{[+]} Implementation & Easy to implement (sliding-window inner products). \\
+{[+]} Density & Provides a \emph{dense} correspondence map (every pixel). \\
+{[--]} Cost & Computationally expensive (correlation at every pixel). \\
+{[--]} Texture & Needs lots of distinct intensity patterns; constant/repetitive regions $\Rightarrow$ many false matches. \\
+{[--]} Viewpoint & Fails when viewpoints differ (illumination changes intensities; foreshortening changes window size/shape). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Feature-Based Methods: Detector + Descriptor}
+
+\textbf{Pipeline:}
+\begin{enumerate}
+  \item Detect \term{interest points} in both images (ideally the \emph{same} 3D points, despite scale/rotation/illumination changes).
+  \item Build a \term{descriptor} for each interest point.
+  \item For each interest point in image one, find the interest point in image two that maximises the similarity (minimises the descriptor distance).
+\end{enumerate}
+
+\begin{defbox}[Detector vs.\ Descriptor]
+\begin{itemize}
+  \item \textbf{Detector}: the method that locates image features / interest points suitable for matching.
+  \item \textbf{Descriptor}: an array of feature values associated with each interest point. Descriptors are compared (by distance) to decide which points match.
+\end{itemize}
+\end{defbox}
+
+\textbf{Two requirements:}
+\begin{itemize}
+  \item \textbf{Repeatable detector}: detects the same 3D point in both images, despite scale, rotation, translation, illumination changes.
+  \item \textbf{Distinctive descriptor}: complex enough to disambiguate corresponding points with high probability.
+\end{itemize}
+
+\textbf{Performance summary.}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{10cm} @{}}
+\toprule
+\textbf{Aspect} & \textbf{Detail} \\
+\midrule
+{[+]} Robustness & Relatively insensitive to illumination and size changes (with good descriptors). \\
+{[+]} Cost & Cheaper than correlation-based (only matches at selected locations). \\
+{[--]} Density & Sparse correspondence map; intermediate locations need interpolation. \\
+{[--]} Texture & Only works where ``good'' interest points exist; fails on textured/random regions. \\
+{[--]} Detector choice & Choice of interest points strongly affects results. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{What makes a \emph{good} interest point?}
+\begin{itemize}
+  \item \textbf{Easy to localise}: the response is a sharp peak (think corner), not a flat plateau or a ridge.
+  \item \textbf{High information content}: the local neighbourhood is distinctive.
+\end{itemize}
+A flat region has little information; an edge has high information \emph{across} the edge but is hard to localise \emph{along} the edge; a corner has both.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Corner Detection: Harris}
+
+\textbf{Why corners?} Around a corner, the intensity gradient is large in \emph{two} directions. This makes corners easy to localise and information-rich.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8.5cm} @{}}
+\toprule
+\textbf{Region type} & \textbf{Gradient pattern} \\
+\midrule
+Flat & No gradient in any direction. \\
+Edge & Strong gradient in one direction (across edge); none along the edge. \\
+Corner & Strong gradients in two (orthogonal) directions. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\begin{defbox}[Harris matrix $H$ (a.k.a.\ second-moment / structure tensor)]
+Compute $I_x, I_y$ by convolving $I$ with derivative-of-Gaussian masks. Sum products of derivatives over a small (Gaussian or equally weighted) window:
+\[
+H \;=\; \begin{pmatrix} \sum I_x^2 & \sum I_x I_y \\ \sum I_x I_y & \sum I_y^2 \end{pmatrix}.
+\]
+The eigenvalues $\lambda_1, \lambda_2$ of $H$ are the maximum slope of the intensity gradient along two orthogonal directions.
+\end{defbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l p{6cm} @{}}
+\toprule
+\textbf{Region} & \textbf{Eigenvalues} & \textbf{Interpretation} \\
+\midrule
+Flat & $\lambda_1, \lambda_2$ both small & No structure. \\
+Edge & $\lambda_2 \gg \lambda_1$ (or vice versa) & One dominant direction. \\
+Corner & $\lambda_1, \lambda_2$ both large, $\lambda_1/\lambda_2 \approx 1$ & Two strong directions. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Naive criterion:} corner $\Leftrightarrow \min(\lambda_1, \lambda_2) > $ threshold. But computing eigenvalues for every pixel is expensive.
+
+\separator
+
+\begin{thmbox}[Harris response $R$]
+Avoids eigen-decomposition by using $\det H$ and $\mathrm{tr}\, H$:
+\[
+R \;=\; \det(H) - k\,\bigl(\mathrm{tr}(H)\bigr)^2 \;=\; \Bigl(\!\textstyle\sum I_x^2 \sum I_y^2 - (\sum I_x I_y)^2\!\Bigr) - k\,\Bigl(\!\textstyle\sum I_x^2 + \sum I_y^2\!\Bigr)^2,
+\]
+with $k \approx 0.04$--$0.06$ (empirical).
+\end{thmbox}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Value of $R$} & \textbf{Region type} \\
+\midrule
+$|R|$ small / $R \approx 0$ & Flat (intensity unchanging). \\
+$R < 0$ (large magnitude) & Edge. \\
+$R > 0$ (large) & Corner. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Algorithm:}
+\begin{enumerate}
+  \item Compute $I_x, I_y$ via derivative-of-Gaussian masks.
+  \item For each pixel form $H$ by summing $I_x^2,\ I_y^2,\ I_x I_y$ over the chosen window.
+  \item Compute $R$.
+  \item Threshold: keep pixels with $R > $ threshold.
+  \item Apply \term{non-maximum suppression}: if any neighbour has a larger $R$, set this pixel's $R$ to 0.
+  \item Surviving local maxima are the interest points.
+\end{enumerate}
+
+\begin{tipbox}[Spot it in a question]
+``Avoids calculating eigenvalues'' $\Rightarrow$ Harris $R$. ``Why non-maximum suppression?'' $\Rightarrow$ to keep only the strongest corner per neighbourhood and avoid duplicate detections (NMS is a generic CV trick---also used in Canny, object detection, etc.).
+\end{tipbox}
+
+\separator
+
+\textbf{Invariance of the Harris detector:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l p{6cm} @{}}
+\toprule
+\textbf{Transformation} & \textbf{Invariant?} & \textbf{Why} \\
+\midrule
+Translation & Yes & $H$ depends only on relative gradients. \\
+Rotation & Yes & Eigenvalues (and hence $R$) are unchanged; eigenvectors rotate. \\
+Illumination & Partial & Affected by overall intensity scaling/offsets. \\
+Viewpoint & Partial & Small viewpoint changes only. \\
+Scale & \textbf{No} & Points classed as edges at fine scale become corners at coarse scale. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Scale-Invariant Detectors: Harris-Laplacian and SIFT}
+
+\textbf{Idea.} To get scale invariance, run the detector across an \term{image pyramid} and find local maxima in \emph{both} space and scale.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.8cm} p{5.5cm} @{}}
+\toprule
+\textbf{Detector} & \textbf{Spatial response} & \textbf{Scale selection} \\
+\midrule
+Harris & Harris $R$ & Single fixed scale (no scale invariance). \\
+Harris-Laplacian & Harris $R$ over scale-space & Local maxima of LoG over scale. \\
+SIFT & DoG response over scale-space & Local extrema of DoG in $3\times 3 \times 3$ scale-space neighbourhood. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{SIFT detector pipeline (Scale Invariant Feature Transform):}
+\begin{enumerate}
+  \item \textbf{Build a Laplacian/DoG pyramid}: convolve image with DoG masks at several resolutions (a Laplacian image pyramid).
+  \item \textbf{Detect scale-space extrema}: for each candidate pixel, check if its DoG response is larger or smaller than \emph{all 26 neighbours} in the $3 \times 3 \times 3$ neighbourhood (8 same-scale + 9 above + 9 below).
+  \item \textbf{Keypoint localisation / filtering}:
+  \begin{itemize}
+    \item \textbf{Contrast threshold}: discard low-contrast points (e.g.\ from $832 \to 729$ candidates).
+    \item \textbf{Edge response test}: discard points lying on edges (poor localisation along edge). Use the ratio
+    \[
+    \frac{(\mathrm{tr}\, H)^2}{\det H} < \frac{(r+1)^2}{r}, \qquad r \approx 10,
+    \]
+    which is large when one eigenvalue dominates (an edge). Same idea as Harris but expressed via the trace/det ratio.
+  \end{itemize}
+\end{enumerate}
+
+The output is a set of keypoints, each with a $(x,y)$ location \emph{and} a scale.
+
+\begin{tipbox}[Common confusion]
+A SIFT keypoint is \emph{not} a single pixel; it is a small region whose size is given by the detected scale.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Feature Descriptors}
+
+A descriptor turns a neighbourhood into a vector that other points can be compared against.
+
+\textbf{Harris descriptor (simplest):}
+\begin{itemize}
+  \item Just a small window of pixel intensities around the interest point.
+  \item Similarity: Euclidean / SSD / SAD between intensity vectors.
+  \item \textbf{Robust to translation only}---not to rotation, scale, illumination or viewpoint.
+\end{itemize}
+
+\textbf{SIFT descriptor (the workhorse):} a 128-D vector built from gradient orientations.
+
+\begin{thmbox}[SIFT descriptor: three steps]
+Work in the Gaussian-smoothed image \emph{at the scale of the keypoint}.
+\begin{enumerate}
+  \item \textbf{Gradient field}: for every pixel surrounding the keypoint, compute approximate gradient magnitude and orientation via pixel differences:
+  \[
+  \mathrm{mag} \;=\; \sqrt{(I_{x_1}-I_{x_2})^2 + (I_{y_1}-I_{y_2})^2}, \quad
+  \mathrm{ori} \;=\; \tan^{-1}\!\frac{I_{y_1}-I_{y_2}}{I_{x_1}-I_{x_2}}.
+  \]
+  \item \textbf{Dominant orientation}: build a histogram of orientations around the keypoint, weighting each sample by gradient magnitude $\times$ a Gaussian centred on the keypoint. Take the peak as the dominant orientation; \emph{rotate} all gradients so the dominant orientation points up. (This is what gives rotation invariance.)
+  \item \textbf{Spatial histograms}: split the keypoint neighbourhood into $4\times 4$ sub-windows. In each sub-window, build an 8-bin orientation histogram (samples again weighted by magnitude and a Gaussian on the keypoint). Concatenate $\Rightarrow$ $4 \times 4 \times 8 = 128$-D vector. Normalise to unit length (illumination invariance).
+\end{enumerate}
+\end{thmbox}
+
+\textbf{Matching:} Euclidean distance between 128-D descriptors.
+
+\textbf{Invariance summary:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l c c c c c @{}}
+\toprule
+\textbf{Descriptor} & \textbf{Translation} & \textbf{Rotation} & \textbf{Scale} & \textbf{Illumination} & \textbf{Viewpoint} \\
+\midrule
+Harris (intensity window) & yes & no & no & no & no \\
+SIFT (128-D) & yes & yes & yes & yes & partial \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Why each step matters]
+The \emph{scale} of the keypoint $\Rightarrow$ scale invariance. Step 2 (rotate to dominant orientation) $\Rightarrow$ rotation invariance. Step 3's normalisation $\Rightarrow$ illumination invariance. The Gaussian weighting de-emphasises far-from-centre samples (more robust to small localisation errors).
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{The Matching Problem: Outliers and RANSAC}
+
+\textbf{Putative matches.} Whatever method is used (correlation- or feature-based), the search returns the most-similar candidates; some are correct (\term{inliers}) and others wrong (\term{outliers}).
+
+\textbf{Goal.} Recover the underlying geometric transformation between images despite outliers.
+
+\textbf{High-level pipeline:}
+\begin{enumerate}
+  \item (Optional) Extract features (if feature-based).
+  \item Compute putative matches (best-similarity pairing).
+  \item Find the most likely transformation (\emph{most inliers, fewest outliers}) using \term{RANSAC}.
+\end{enumerate}
+
+\separator
+
+\begin{defbox}[RANSAC: RANdom SAmpling and Consensus]
+A robust model-fitting procedure for data containing outliers. Requires (i) data $=$ inliers $+$ outliers and (ii) a parametric model that explains the inliers.
+\end{defbox}
+
+\begin{thmbox}[RANSAC procedure]
+\begin{enumerate}
+  \item Randomly choose a \emph{minimal} subset (sample) of data points needed to fit the model.
+  \item Fit the model to that subset.
+  \item Test all the other data points; mark those within distance $t$ of the model's prediction as \term{inliers}.
+  \item Count inliers: that count is the model's \term{support} (the size of the \term{consensus set}).
+  \item Repeat from step 1 for $N$ trials.
+\end{enumerate}
+After $N$ trials, pick the model with the largest support and \emph{re-estimate} the model using \emph{all} points in that consensus set.
+\end{thmbox}
+
+\textbf{Sample size by model:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l c p{6cm} @{}}
+\toprule
+\textbf{Model} & \textbf{Min.\ sample size} & \textbf{Use case} \\
+\midrule
+2-D translation & 1 pair & Pure $(\Delta x, \Delta y)$ between views. \\
+2-D similarity (translation $+$ rotation $+$ scale) & 2 pairs & Planar object, rotated camera. \\
+Affine & 3 pairs & Far-away planar surfaces. \\
+Homography & 4 pairs & General planar scenes / perspective. \\
+Line in 2-D & 2 points & Geometric fitting / segmentation. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Pros and cons:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{9cm} @{}}
+\toprule
+\textbf{Aspect} & \textbf{Detail} \\
+\midrule
+{[+]} & Simple and effective; general for many fitting problems (segmentation, stereo geometry, motion). \\
+{[+]} & Tolerates a high outlier ratio. \\
+{[--]} & Many iterations needed if outlier fraction is large. \\
+{[--]} & Several parameters to tune ($N$ trials, threshold $t$, sample size, success criterion). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Spot it in a question]
+RANSAC questions almost always boil down to: (1) write the five-step procedure, (2) given a list of putative matches and a sample, compute the model, predict each non-sample match, and \emph{count inliers within $t$}. The model with the largest consensus wins.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Putting It All Together}
+
+The course's five-question summary of the correspondence pipeline:
+\begin{enumerate}
+  \item \textbf{Which image locations to match}: all (correlation) or selected interest points (Harris, SIFT).
+  \item \textbf{What properties to match}: image intensities or a descriptor (SIFT 128-D).
+  \item \textbf{Where to look}: exhaustive search or restricted (e.g.\ epipolar lines).
+  \item \textbf{How to evaluate matches}: similarity (NCC, correlation coefficient) or distance (SSD, Euclidean, SAD).
+  \item \textbf{How to find the true correspondence (eliminate false matches)}: \textbf{RANSAC}.
+\end{enumerate}
+
+\textbf{Correspondence vs.\ grouping (Week 5).} Both look for similar elements, but:
+\begin{itemize}
+  \item \textbf{Grouping}: similar elements \emph{within a single image}.
+  \item \textbf{Correspondence}: the \emph{same} elements \emph{across multiple images}.
+\end{itemize}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Worked Examples}
+
+\begin{exbox}[Example 1: Definition + scenarios]
+\textbf{Q:} Describe the correspondence problem and three scenarios where it arises.
+
+\textbf{A:} It is the problem of finding the same 3D location in two or more images. It arises:
+\begin{enumerate}
+  \item Multiple cameras (stereo) of one scene from different locations $\Rightarrow$ recover 3D structure.
+  \item One camera at different times (video/motion) $\Rightarrow$ estimate camera/object motion.
+  \item Comparing an image to stored images $\Rightarrow$ measure similarity for object recognition.
+\end{enumerate}
+\end{exbox}
+
+\begin{exbox}[Example 2: Correlation-based vs.\ feature-based methodology]
+\textbf{Q:} Briefly describe both methodologies.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Correlation-based}: establish a correspondence \emph{for every pixel} by matching image intensities in a window around each pixel.
+  \item \textbf{Feature-based}: establish a correspondence at a \emph{sparse} set of locations (usually corners), using a feature descriptor extracted from around each.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 3: Detector vs.\ descriptor]
+\textbf{Q:} For feature-based methods, what is a ``detector'' and a ``descriptor''?
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Detector}: the method that locates image features / interest points suitable for matching.
+  \item \textbf{Descriptor}: an array of feature values associated with each interest point. Descriptors are compared (by distance) to decide which points match.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 4: SAD matching by hand]
+\textbf{Q:} Five interest points in the left and right images have feature vectors:
+
+\begin{center}
+\begin{tabular}{@{} l c l c @{}}
+\toprule
+\textbf{L} & \textbf{Feat.} & \textbf{R} & \textbf{Feat.} \\
+\midrule
+$L_1$ & $(10, 4)$ & $R_1$ & $(3, 7)$ \\
+$L_2$ & $(3, 8)$  & $R_2$ & $(1, 1)$ \\
+$L_3$ & $(0, 2)$  & $R_3$ & $(5, 7)$ \\
+$L_4$ & $(6, 9)$  & $R_4$ & $(8, 0)$ \\
+$L_5$ & $(9, 1)$  & $R_5$ & $(1, 2)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+For each $L_i$, find the best match by SAD.
+
+\textbf{A:} SAD$(a,b) = |a_1-b_1| + |a_2-b_2|$. Compute each row and pick the minimum:
+\begin{itemize}
+  \item $L_1{:}$ $R_1{=}10,\ R_2{=}12,\ R_3{=}8,\ R_4{=}\mathbf{6},\ R_5{=}11 \Rightarrow R_4$.
+  \item $L_2{:}$ $R_1{=}\mathbf{1},\ R_2{=}9,\ R_3{=}3,\ R_4{=}13,\ R_5{=}8 \Rightarrow R_1$.
+  \item $L_3{:}$ $R_1{=}8,\ R_2{=}2,\ R_3{=}10,\ R_4{=}10,\ R_5{=}\mathbf{1} \Rightarrow R_5$.
+  \item $L_4{:}$ $R_1{=}5,\ R_2{=}13,\ R_3{=}\mathbf{3},\ R_4{=}11,\ R_5{=}12 \Rightarrow R_3$.
+  \item $L_5{:}$ $R_1{=}12,\ R_2{=}8,\ R_3{=}10,\ R_4{=}\mathbf{2},\ R_5{=}9 \Rightarrow R_4$.
+\end{itemize}
+Note $L_1$ and $L_5$ both claim $R_4$: at most one is correct---this is what RANSAC will sort out.
+\end{exbox}
+
+\begin{exbox}[Example 5: Disparity = right $\to$ left translation]
+\textbf{Q:} Coordinates for the matched pairs from Example 4 are:
+
+\begin{center}
+\begin{tabular}{@{} l c l c @{}}
+\toprule
+\textbf{L} & \textbf{Coord.} & \textbf{R} & \textbf{Coord.} \\
+\midrule
+$L_1$ & $(187, 168)$ & $R_1$ & $(101, 394)$ \\
+$L_2$ & $(203, 290)$ & $R_2$ & $(115, 186)$ \\
+$L_3$ & $(215,  87)$ & $R_3$ & $(135, 128)$ \\
+$L_4$ & $(234,  28)$ & $R_4$ & $(269, 243)$ \\
+$L_5$ & $(366, 142)$ & $R_5$ & $(336, 178)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+With coplanar image planes, disparity equals the right-to-left translation $L - R$. Compute it.
+
+\textbf{A:}
+\begin{itemize}
+  \item $L_1 - R_4 = (187,168) - (269,243) = (-82, -75)$.
+  \item $L_2 - R_1 = (203,290) - (101,394) = (102, -104)$.
+  \item $L_3 - R_5 = (215, 87) - (336,178) = (-121, -91)$.
+  \item $L_4 - R_3 = (234, 28) - (135,128) = (99, -100)$.
+  \item $L_5 - R_4 = (366,142) - (269,243) = (97, -101)$.
+\end{itemize}
+\textbf{Inspection:} the disparities cluster around $(\approx 100,\ \approx -100)$; the two outliers are $L_1{-}R_4$ and $L_3{-}R_5$. RANSAC will recover the cluster.
+\end{exbox}
+
+\begin{exbox}[Example 6: RANSAC pseudo-code]
+\textbf{Q:} Write pseudo-code for RANSAC.
+
+\textbf{A:}
+\begin{enumerate}
+  \item Randomly choose a minimal subset (sample) of data points necessary to fit the model.
+  \item Fit the model to this subset.
+  \item Test all other data points: a point is an inlier iff it lies within distance $t$ of the model's prediction.
+  \item Count inliers $\Rightarrow$ consensus set; size $=$ model's support.
+  \item Repeat from step 1 for $N$ trials.
+\end{enumerate}
+After $N$ trials, select the model with the highest support and re-estimate it using \emph{all} points in that consensus set.
+\end{exbox}
+
+\begin{exbox}[Example 7: RANSAC by hand on the matches above]
+\textbf{Q:} Apply RANSAC to the matches in Example 5. Model $=$ pure 2-D translation, $t = 20$ pixels, three trials with samples $L_1, L_2, L_3$ in order (not random). Which trial wins?
+
+\textbf{A:} Sample size $=$ 1 (one match defines the translation).
+
+\textbf{Trial 1: take $L_1{-}R_4 = (-82, -75)$.} Predict each other left point as $L_i - (-82,-75)$ and compare to its actual match.
+\begin{itemize}
+  \item $L_2$: predicted $(285, 365)$, actual $R_1 = (101, 394)$. Distance large $\Rightarrow$ outlier.
+  \item $L_3$: predicted $(297, 162)$, actual $R_5 = (336, 178)$. Outlier.
+  \item $L_4$: predicted $(316, 103)$, actual $R_3 = (135, 128)$. Outlier.
+  \item $L_5$: predicted $(448, 217)$, actual $R_4 = (269, 243)$. Outlier.
+\end{itemize}
+Consensus set $= 0$.
+
+\textbf{Trial 2: take $L_2{-}R_1 = (102, -104)$.}
+\begin{itemize}
+  \item $L_1$: predicted $(85, 272)$, actual $(269, 243)$. Outlier.
+  \item $L_3$: predicted $(113, 191)$, actual $(336, 178)$. Outlier.
+  \item $L_4$: predicted $(132, 132)$, actual $(135, 128) \Rightarrow$ distance $\approx 5 \le 20 \Rightarrow$ \textbf{inlier}.
+  \item $L_5$: predicted $(264, 246)$, actual $(269, 243) \Rightarrow$ distance $\approx 5.8 \le 20 \Rightarrow$ \textbf{inlier}.
+\end{itemize}
+Consensus set $= 2$.
+
+\textbf{Trial 3: take $L_3{-}R_5 = (-121, -91)$.}
+\begin{itemize}
+  \item All four predictions are far from their actual matches $\Rightarrow$ consensus $= 0$.
+\end{itemize}
+
+\textbf{Result.} Trial 2 wins. The true correspondences are the matches for $L_2, L_4, L_5$ (and the sample $L_2$). Re-estimate $(\Delta x, \Delta y)$ from those three pairs as the final model.
+\end{exbox}
+
+\begin{exbox}[Example 8: Harris response interpretation]
+\textbf{Q:} For the Harris corner detector, what type of image feature gives rise to (a) $R \approx 0$, (b) $R < 0$, (c) $R > 0$?
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) $R \approx 0$: a region where intensity is approximately unchanging (\textbf{flat}).
+  \item (b) $R < 0$ (with large magnitude): an \textbf{edge}.
+  \item (c) $R > 0$ (large): a \textbf{corner}.
+\end{itemize}
+\textbf{Why}: $\det H = \lambda_1 \lambda_2$ and $\mathrm{tr}\, H = \lambda_1 + \lambda_2$. On a corner both eigenvalues are large $\Rightarrow$ $\det H$ dominates $\Rightarrow R > 0$. On an edge one eigenvalue is large and one is small $\Rightarrow \det H$ small, $(\mathrm{tr}\, H)^2$ large $\Rightarrow R < 0$. On a flat region both are small $\Rightarrow R \approx 0$.
+\end{exbox}
+
+\begin{exbox}[Example 9: Computing $R$ from given derivatives]
+\textbf{Q:} Given $I_x$ and $I_y$ for a $5\times 4$ image, compute $R$ at a central pixel using $k=0.05$ and a $3\times 3$ equally weighted summing window. Suppose at one pixel the window gives
+\[
+\sum I_x^2 = 4, \quad \sum I_y^2 = 4, \quad \sum I_x I_y = 0.
+\]
+
+\textbf{A:}
+\begin{align*}
+\det H &= 4\cdot 4 - 0^2 = 16, \\
+\mathrm{tr}\, H &= 4 + 4 = 8, \\
+R &= 16 - 0.05 \cdot 8^2 = 16 - 3.2 = 12.8.
+\end{align*}
+\textbf{Interpretation:} $R > 0$ (large) $\Rightarrow$ corner. (For a flat window all sums would be 0 and $R = 0$. For an edge along one axis, one of $\sum I_x^2, \sum I_y^2$ is 0, so $\det H = 0$ and $R = -k(\mathrm{tr}\, H)^2 < 0$.)
+
+\textbf{Recipe in any exam variant:}
+(1) at the central pixel, list the nine values of $I_x^2, I_y^2, I_x I_y$ in the $3\times 3$ window;
+(2) sum each separately;
+(3) plug into $R = \det H - k(\mathrm{tr}\, H)^2$.
+\end{exbox}
+
+\begin{exbox}[Example 10: Correlation-based pros and cons]
+\textbf{Q:} Briefly describe the advantages and disadvantages of correlation-based methods.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Advantages}: easy to implement; gives a dense correspondence map (every pixel).
+  \item \textbf{Disadvantages}:
+  \begin{itemize}
+    \item Computationally expensive (correlation at every pixel).
+    \item Needs lots of distinct intensity patterns; constant or repetitive regions cause many false matches.
+    \item Fails when viewpoints differ much: illumination changes intensity values; foreshortening changes the size, shape and appearance of corresponding regions.
+  \end{itemize}
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 11: Why NCC over plain cross-correlation? (FAQ)]
+\textbf{Q:} Two ``similar'' images with low intensities can have lower plain cross-correlation than two ``different'' images with high intensities. Explain and resolve.
+
+\textbf{A:} Plain cross-correlation $\sum I_1 I_2$ is the dot product, which scales with the magnitudes $\|I_1\|, \|I_2\|$ as well as with how aligned (similar) they are. Two bright but unrelated patches can therefore beat two dim but identical ones. \textbf{Normalised cross-correlation} divides by $\|I_1\|\,\|I_2\|$, yielding $\cos\theta$: it depends only on the \emph{angle} (pattern alignment) between intensity vectors, not their magnitudes, and is therefore the right similarity for matching.
+\end{exbox}
+
+\begin{exbox}[Example 12: Why non-maximum suppression in Harris? (FAQ)]
+\textbf{Q:} What is non-maximum suppression for in Harris?
+
+\textbf{A:} A genuine corner produces high $R$ across a small neighbourhood of pixels; without NMS we would record many duplicate detections per corner. NMS keeps only the local maximum (set $R$ to 0 if any neighbour has a larger value), so each corner contributes one interest point, and weak responses near a strong one are ignored. NMS is a generic CV operation, also used by Canny edge detection and modern object detectors.
+\end{exbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Summary}
+
+\begin{keybox}[Key Takeaways]
+\begin{enumerate}
+  \item \textbf{Correspondence problem}: find matching elements across images. Underlies stereo, motion and recognition. Four design questions: which / where / similarity / outliers.
+  \item \textbf{Correlation-based} methods: slide a window; maximise NCC / correlation coefficient or minimise SSD / Euclidean / SAD. Dense and simple, but slow and viewpoint-fragile.
+  \item \textbf{Feature-based} methods: detect distinctive interest points (corners, blobs); build invariant descriptors; match by descriptor distance. Sparse but cheap and robust.
+  \item \textbf{Harris corner detector}: build $H = \begin{psmallmatrix}\sum I_x^2 & \sum I_x I_y \\ \sum I_x I_y & \sum I_y^2\end{psmallmatrix}$; corner $\Leftrightarrow$ both eigenvalues large; use $R = \det H - k(\mathrm{tr}\, H)^2$ to avoid eigen-decomposition. NMS to keep one peak per corner. Translation- and rotation-invariant; \emph{not} scale-invariant.
+  \item \textbf{SIFT}: scale-space DoG extrema $\to$ contrast/edge filtering $\to$ dominant orientation $\to$ $4\times 4 \times 8 = 128$-D gradient-orientation descriptor, normalised. Translation-, rotation-, scale- and illumination-invariant.
+  \item \textbf{Matching $\Rightarrow$ outliers}: nearest-neighbour search returns putative matches; outliers must be rejected.
+  \item \textbf{RANSAC}: 1.\ sample minimal subset, 2.\ fit, 3.\ count inliers within $t$, 4.\ repeat $N$ times, 5.\ keep model with most support and re-fit on its consensus set. Robust to a high outlier rate.
+  \item \textbf{Correspondence vs.\ grouping}: across vs.\ within an image.
+\end{enumerate}
+\end{keybox}
+
+\textbf{Final comparison: matching pipelines.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l l l @{}}
+\toprule
+\textbf{Method} & \textbf{Locations} & \textbf{What is matched} & \textbf{Comparison} & \textbf{Density} \\
+\midrule
+Correlation & every pixel & raw intensity windows & NCC / SSD / SAD & dense \\
+Harris + window & corners & intensity window & SSD / SAD / Euclidean & sparse \\
+SIFT & DoG keypoints & 128-D gradient histogram & Euclidean & sparse \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Final comparison: detector invariance.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l c c c c c @{}}
+\toprule
+\textbf{Detector} & \textbf{Translation} & \textbf{Rotation} & \textbf{Scale} & \textbf{Illumination} & \textbf{Viewpoint} \\
+\midrule
+Harris & yes & yes & no & partial & partial \\
+Harris-Laplacian & yes & yes & yes & partial & partial \\
+SIFT (DoG) & yes & yes & yes & yes & partial \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Final comparison: similarity / distance measures.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l l @{}}
+\toprule
+\textbf{Measure} & \textbf{Formula sketch} & \textbf{Optimise} & \textbf{Notes} \\
+\midrule
+Cross-correlation & $\sum I_1 I_2$ & maximise & Sensitive to intensity magnitude. \\
+NCC & $\frac{\sum I_1 I_2}{\|I_1\|\|I_2\|}$ & maximise & $= \cos\theta$ between intensity vectors. \\
+Correlation coefficient & mean-centred NCC & maximise & $=$ NCC when both means are zero. \\
+SSD & $\sum (I_1-I_2)^2$ & minimise & $=$ Euclidean distance squared. \\
+Euclidean & $\sqrt{\sum (I_1-I_2)^2}$ & minimise & Used by SIFT descriptors. \\
+SAD & $\sum |I_1-I_2|$ & minimise & Cheap; commonly used in practice. \\
+\bottomrule
+\end{tabular}
+\end{center}
