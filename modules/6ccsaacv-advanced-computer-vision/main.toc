@@ -1,22 +1,123 @@
-\contentsline {section}{Module Overview}{3}{section*.2}%
-\contentsline {section}{\numberline {1}Week 1: Introduction}{5}{section.1}%
-\contentsline {subsection}{\numberline {1.1}Topic Summary}{5}{subsection.1.1}%
-\contentsline {subsection}{\numberline {1.2}Core Concepts}{5}{subsection.1.2}%
-\contentsline {subsubsection}{\numberline {1.2.1}What is Computer Vision?}{5}{subsubsection.1.2.1}%
-\contentsline {subsubsection}{\numberline {1.2.2}Why Study Computer Vision?}{6}{subsubsection.1.2.2}%
-\contentsline {subsubsection}{\numberline {1.2.3}Why is Computer Vision Difficult?}{7}{subsubsection.1.2.3}%
-\contentsline {subsubsection}{\numberline {1.2.4}How Do We Tackle the Problem of Vision?}{9}{subsubsection.1.2.4}%
-\contentsline {subsection}{\numberline {1.3}Worked Examples}{10}{subsection.1.3}%
-\contentsline {subsection}{\numberline {1.4}Summary}{11}{subsection.1.4}%
-\contentsline {section}{\numberline {2}Week 2: Image Formation}{13}{section.2}%
-\contentsline {subsection}{\numberline {2.1}Topic Summary}{13}{subsection.2.1}%
-\contentsline {subsection}{\numberline {2.2}Core Concepts}{13}{subsection.2.2}%
-\contentsline {subsubsection}{\numberline {2.2.1}Physics of Image Formation}{13}{subsubsection.2.2.1}%
-\contentsline {subsubsection}{\numberline {2.2.2}Optics: Pinhole and Lens Cameras}{15}{subsubsection.2.2.2}%
-\contentsline {subsubsection}{\numberline {2.2.3}Geometry of Image Formation}{15}{subsubsection.2.2.3}%
-\contentsline {subsubsection}{\numberline {2.2.4}Intrinsic and Extrinsic Parameters}{16}{subsubsection.2.2.4}%
-\contentsline {subsubsection}{\numberline {2.2.5}Digital Images}{17}{subsubsection.2.2.5}%
-\contentsline {subsubsection}{\numberline {2.2.6}Camera Sensors and Demosaicing}{18}{subsubsection.2.2.6}%
-\contentsline {subsubsection}{\numberline {2.2.7}The Eye}{19}{subsubsection.2.2.7}%
-\contentsline {subsection}{\numberline {2.3}Worked Examples}{21}{subsection.2.3}%
-\contentsline {subsection}{\numberline {2.4}Summary}{22}{subsection.2.4}%
+\contentsline {section}{Module Overview}{6}{section*.2}%
+\contentsline {section}{\numberline {1}Week 1: Introduction}{8}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Topic Summary}{8}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Core Concepts}{8}{subsection.1.2}%
+\contentsline {subsubsection}{\numberline {1.2.1}What is Computer Vision?}{8}{subsubsection.1.2.1}%
+\contentsline {subsubsection}{\numberline {1.2.2}Why Study Computer Vision?}{9}{subsubsection.1.2.2}%
+\contentsline {subsubsection}{\numberline {1.2.3}Why is Computer Vision Difficult?}{10}{subsubsection.1.2.3}%
+\contentsline {subsubsection}{\numberline {1.2.4}How Do We Tackle the Problem of Vision?}{12}{subsubsection.1.2.4}%
+\contentsline {subsection}{\numberline {1.3}Worked Examples}{13}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Summary}{14}{subsection.1.4}%
+\contentsline {section}{\numberline {2}Week 2: Image Formation}{16}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Topic Summary}{16}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Core Concepts}{16}{subsection.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.1}Physics of Image Formation}{16}{subsubsection.2.2.1}%
+\contentsline {subsubsection}{\numberline {2.2.2}Optics: Pinhole and Lens Cameras}{18}{subsubsection.2.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.3}Geometry of Image Formation}{18}{subsubsection.2.2.3}%
+\contentsline {subsubsection}{\numberline {2.2.4}Intrinsic and Extrinsic Parameters}{19}{subsubsection.2.2.4}%
+\contentsline {subsubsection}{\numberline {2.2.5}Digital Images}{20}{subsubsection.2.2.5}%
+\contentsline {subsubsection}{\numberline {2.2.6}Camera Sensors and Demosaicing}{21}{subsubsection.2.2.6}%
+\contentsline {subsubsection}{\numberline {2.2.7}The Eye}{22}{subsubsection.2.2.7}%
+\contentsline {subsection}{\numberline {2.3}Worked Examples}{24}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Summary}{25}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Week 3: Low-Level Vision (Artificial)}{26}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Topic Summary}{26}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Core Concepts}{26}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Convolution}{27}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Smoothing}{28}{subsubsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.3}Differencing}{29}{subsubsection.3.2.3}%
+\contentsline {subsubsection}{\numberline {3.2.4}Edge Detection}{30}{subsubsection.3.2.4}%
+\contentsline {subsubsection}{\numberline {3.2.5}Multi-Scale Feature Detection}{32}{subsubsection.3.2.5}%
+\contentsline {subsection}{\numberline {3.3}Worked Examples}{33}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Summary}{36}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Week 4: Low- and Mid-Level Biological Vision}{38}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Topic Summary}{38}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Core Concepts}{39}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}The Biological Visual System}{39}{subsubsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2}Primary Visual Cortex (V1)}{40}{subsubsection.4.2.2}%
+\contentsline {subsubsection}{\numberline {4.2.3}Gabor Functions}{41}{subsubsection.4.2.3}%
+\contentsline {subsubsection}{\numberline {4.2.4}Non-Classical Receptive Fields}{43}{subsubsection.4.2.4}%
+\contentsline {subsubsection}{\numberline {4.2.5}Introduction to Mid-Level Vision}{44}{subsubsection.4.2.5}%
+\contentsline {subsubsection}{\numberline {4.2.6}Gestalt Laws (Bottom-up Grouping Principles)}{45}{subsubsection.4.2.6}%
+\contentsline {subsubsection}{\numberline {4.2.7}Border Ownership}{45}{subsubsection.4.2.7}%
+\contentsline {subsection}{\numberline {4.3}Worked Examples}{46}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Summary}{48}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Week 5: Mid-Level Vision --- Segmentation}{50}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Topic Summary}{50}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Core Concepts}{50}{subsection.5.2}%
+\contentsline {subsubsection}{\numberline {5.2.1}Feature Space and Similarity}{51}{subsubsection.5.2.1}%
+\contentsline {subsubsection}{\numberline {5.2.2}Thresholding}{52}{subsubsection.5.2.2}%
+\contentsline {subsubsection}{\numberline {5.2.3}Region-Based Segmentation}{53}{subsubsection.5.2.3}%
+\contentsline {subsubsection}{\numberline {5.2.4}Clustering Methods}{54}{subsubsection.5.2.4}%
+\contentsline {subsubsection}{\numberline {5.2.5}Fitting Methods}{56}{subsubsection.5.2.5}%
+\contentsline {subsection}{\numberline {5.3}Worked Examples}{58}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Summary}{60}{subsection.5.4}%
+\contentsline {section}{\numberline {6}Week 6: Feature Matching}{62}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Topic Summary}{62}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Core Concepts}{62}{subsection.6.2}%
+\contentsline {subsubsection}{\numberline {6.2.1}The Correspondence Problem}{63}{subsubsection.6.2.1}%
+\contentsline {subsubsection}{\numberline {6.2.2}Correlation-Based Methods}{63}{subsubsection.6.2.2}%
+\contentsline {subsubsection}{\numberline {6.2.3}Feature-Based Methods: Detector + Descriptor}{65}{subsubsection.6.2.3}%
+\contentsline {subsubsection}{\numberline {6.2.4}Corner Detection: Harris}{66}{subsubsection.6.2.4}%
+\contentsline {subsubsection}{\numberline {6.2.5}Scale-Invariant Detectors: Harris-Laplacian and SIFT}{67}{subsubsection.6.2.5}%
+\contentsline {subsubsection}{\numberline {6.2.6}Feature Descriptors}{68}{subsubsection.6.2.6}%
+\contentsline {subsubsection}{\numberline {6.2.7}The Matching Problem: Outliers and RANSAC}{69}{subsubsection.6.2.7}%
+\contentsline {subsubsection}{\numberline {6.2.8}Putting It All Together}{70}{subsubsection.6.2.8}%
+\contentsline {subsection}{\numberline {6.3}Worked Examples}{70}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Summary}{74}{subsection.6.4}%
+\contentsline {section}{\numberline {7}Week 7: Stereo Vision and Depth}{76}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Topic Summary}{76}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Core Concepts}{77}{subsection.7.2}%
+\contentsline {subsubsection}{\numberline {7.2.1}Why Stereo? Image Formation Recap}{77}{subsubsection.7.2.1}%
+\contentsline {subsubsection}{\numberline {7.2.2}Coplanar Cameras (Simplest Case)}{77}{subsubsection.7.2.2}%
+\contentsline {subsubsection}{\numberline {7.2.3}The Correspondence Problem}{78}{subsubsection.7.2.3}%
+\contentsline {subsubsection}{\numberline {7.2.4}Field of View (FoV)}{80}{subsubsection.7.2.4}%
+\contentsline {subsubsection}{\numberline {7.2.5}Non-Coplanar (Verging) Cameras}{80}{subsubsection.7.2.5}%
+\contentsline {subsubsection}{\numberline {7.2.6}Epipolar Geometry}{81}{subsubsection.7.2.6}%
+\contentsline {subsubsection}{\numberline {7.2.7}Cues to Depth}{82}{subsubsection.7.2.7}%
+\contentsline {subsection}{\numberline {7.3}Worked Examples}{83}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}Summary}{86}{subsection.7.4}%
+\contentsline {section}{\numberline {8}Week 8: Motion and Tracking}{88}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Topic Summary}{88}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Core Concepts}{88}{subsection.8.2}%
+\contentsline {subsubsection}{\numberline {8.2.1}Video, Motion Field, and Optic Flow}{89}{subsubsection.8.2.1}%
+\contentsline {subsubsection}{\numberline {8.2.2}Brightness Constancy and the Optic Flow Constraint}{89}{subsubsection.8.2.2}%
+\contentsline {subsubsection}{\numberline {8.2.3}The Aperture Problem}{90}{subsubsection.8.2.3}%
+\contentsline {subsubsection}{\numberline {8.2.4}The Video Correspondence Problem}{90}{subsubsection.8.2.4}%
+\contentsline {subsubsection}{\numberline {8.2.5}Estimating Optic Flow}{91}{subsubsection.8.2.5}%
+\contentsline {subsubsection}{\numberline {8.2.6}Applications of Optic Flow}{92}{subsubsection.8.2.6}%
+\contentsline {subsubsection}{\numberline {8.2.7}Motion Segmentation: Image Differencing and Background Subtraction}{93}{subsubsection.8.2.7}%
+\contentsline {subsubsection}{\numberline {8.2.8}Tracking}{93}{subsubsection.8.2.8}%
+\contentsline {subsubsection}{\numberline {8.2.9}Trackers: Kalman, Particle, Mean-Shift, KLT}{94}{subsubsection.8.2.9}%
+\contentsline {subsection}{\numberline {8.3}Worked Examples}{95}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}Summary}{98}{subsection.8.4}%
+\contentsline {section}{\numberline {9}Week 9: Artificial Object Recognition (High-Level Vision)}{100}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Topic Summary}{100}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Core Concepts}{101}{subsection.9.2}%
+\contentsline {subsubsection}{\numberline {9.2.1}Recognition tasks}{101}{subsubsection.9.2.1}%
+\contentsline {subsubsection}{\numberline {9.2.2}Recognition requirements and generic procedure}{102}{subsubsection.9.2.2}%
+\contentsline {subsubsection}{\numberline {9.2.3}Template matching}{103}{subsubsection.9.2.3}%
+\contentsline {subsubsection}{\numberline {9.2.4}Sliding window}{104}{subsubsection.9.2.4}%
+\contentsline {subsubsection}{\numberline {9.2.5}Edge matching}{104}{subsubsection.9.2.5}%
+\contentsline {subsubsection}{\numberline {9.2.6}Model-based recognition}{104}{subsubsection.9.2.6}%
+\contentsline {subsubsection}{\numberline {9.2.7}Intensity histograms}{105}{subsubsection.9.2.7}%
+\contentsline {subsubsection}{\numberline {9.2.8}Implicit Shape Model (ISM)}{105}{subsubsection.9.2.8}%
+\contentsline {subsubsection}{\numberline {9.2.9}SIFT feature matching}{106}{subsubsection.9.2.9}%
+\contentsline {subsubsection}{\numberline {9.2.10}Bag-of-Words (BoW)}{107}{subsubsection.9.2.10}%
+\contentsline {subsubsection}{\numberline {9.2.11}Geometric invariants}{107}{subsubsection.9.2.11}%
+\contentsline {subsubsection}{\numberline {9.2.12}Classification of methods}{108}{subsubsection.9.2.12}%
+\contentsline {subsection}{\numberline {9.3}Worked Examples}{109}{subsection.9.3}%
+\contentsline {subsection}{\numberline {9.4}Summary}{112}{subsection.9.4}%
+\contentsline {section}{\numberline {10}Week 10: Biological Object Recognition (High-Level Vision)}{115}{section.10}%
+\contentsline {subsection}{\numberline {10.1}Topic Summary}{115}{subsection.10.1}%
+\contentsline {subsection}{\numberline {10.2}Core Concepts}{116}{subsection.10.2}%
+\contentsline {subsubsection}{\numberline {10.2.1}Object-Based vs Image-Based Theories}{116}{subsubsection.10.2.1}%
+\contentsline {subsubsection}{\numberline {10.2.2}Configural vs Featural Theories}{117}{subsubsection.10.2.2}%
+\contentsline {subsubsection}{\numberline {10.2.3}Categorisation: Rules, Prototypes, Exemplars}{117}{subsubsection.10.2.3}%
+\contentsline {subsubsection}{\numberline {10.2.4}Cortical Visual System: Pathways}{119}{subsubsection.10.2.4}%
+\contentsline {subsubsection}{\numberline {10.2.5}Feed-Forward Hierarchical Models: HMAX and CNN}{120}{subsubsection.10.2.5}%
+\contentsline {subsubsection}{\numberline {10.2.6}Recurrent Models and Top-Down Processing}{121}{subsubsection.10.2.6}%
+\contentsline {subsubsection}{\numberline {10.2.7}Bayesian Inference}{121}{subsubsection.10.2.7}%
+\contentsline {subsubsection}{\numberline {10.2.8}Big Picture: How Cortex Combines These Ideas}{122}{subsubsection.10.2.8}%
+\contentsline {subsection}{\numberline {10.3}Worked Examples}{123}{subsection.10.3}%
+\contentsline {subsection}{\numberline {10.4}Summary}{127}{subsection.10.4}%

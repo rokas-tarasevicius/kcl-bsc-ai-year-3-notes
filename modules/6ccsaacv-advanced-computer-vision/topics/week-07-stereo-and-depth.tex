@@ -1,0 +1,607 @@
+% =============================================================================
+%                  WEEK 7: STEREO VISION AND DEPTH
+% =============================================================================
+\section{Week 7: Stereo Vision and Depth}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Derive the disparity-to-depth relation $z = fB/d$ for coplanar cameras and reason about how depth accuracy varies with baseline $B$ and distance $z$.
+  \item State the \term{stereo correspondence problem} and the constraints used to make it tractable: epipolar, maximum disparity, continuity, uniqueness, ordering.
+  \item Define the \term{epipolar geometry} terminology (baseline, epipole, epipolar plane, epipolar line, conjugated epipolar lines, horopter) and explain rectification.
+  \item For non-coplanar cameras, compute disparity as $\alpha_L - \alpha_R$ relative to the horopter and use it to localise points.
+  \item Relate \term{field of view} (FoV) to focal length / sensor size and explain the short- vs long-baseline FoV/error trade-off.
+  \item Enumerate and briefly describe the cues to depth: binocular (disparity), oculomotor (accommodation, convergence), monocular (interposition, size familiarity, texture gradients, linear/aerial perspective, shading), motion (parallax, optic flow, accretion/deletion, structure from motion).
+\end{itemize}
+\end{keybox}
+
+\textbf{Big Picture.}
+A single image loses depth: every 3D point on a line of sight projects to the same 2D pixel. \term{Stereo vision} recovers depth by triangulating the same 3D point in two images taken from different viewpoints. Two sub-problems must be solved:
+\begin{enumerate}
+  \item \textbf{Correspondence}: which left-image pixel matches which right-image pixel? Search is reduced from 2D to 1D by the \term{epipolar constraint}, and further pruned by maximum disparity, continuity, uniqueness and ordering. None of these constraints is universally true -- each one fails in characteristic situations (occlusion, slanted surfaces, depth discontinuities).
+  \item \textbf{Reconstruction}: given a correspondence, compute depth $z$ from disparity $d$. For coplanar (rectified) cameras $z = fB/d$; for non-coplanar (verging) cameras disparity is an angular quantity $\alpha_L - \alpha_R$ measured against a zero-disparity curve called the \term{horopter}.
+\end{enumerate}
+Stereo is only one cue. The visual system fuses many: \textbf{binocular} disparity, \textbf{oculomotor} (accommodation, convergence), \textbf{monocular} pictorial cues, and \textbf{motion}-induced cues. Computer-vision systems use the same taxonomy and add \textbf{active} sensing (LIDAR, structured light, time-of-flight).
+
+\separator
+
+\textbf{What Examiners Like to Ask:}
+\begin{itemize}
+  \item Derive $z = fB/d$ from two coplanar pinhole cameras (similar triangles; left vs right projection).
+  \item ``Comment on how depth accuracy changes with (a) distance, (b) baseline.''
+  \item ``Explain the epipolar constraint in one sentence.'' Then list the other constraints and when each one fails.
+  \item Numerical horopter question: given $B$, vergence $\theta$, and angles $\alpha_L, \alpha_R$, find the distance from horopter (Tutorial Q5 pattern).
+  \item ``Why are at least two cameras needed to recover 3D?'' (DOF counting: 3 unknowns, only 2 image equations per camera.)
+  \item ``Describe two oculomotor / four monocular / two motion-induced cues to depth.''
+  \item ``Why is depth important for object recognition?'' (segmentation between objects + shape within an object).
+  \item Code-style: implement a window-based SAD disparity map for rectified images (LGT exercise).
+\end{itemize}
+
+% =============================================================================
+\subsection{Core Concepts}
+
+\textbf{Roadmap:}
+\begin{enumerate}
+  \item Image formation recap and why one camera cannot recover depth.
+  \item Coplanar (simple) stereo: disparity, $z = fB/d$, accuracy.
+  \item Stereo correspondence: requirements and the five constraints.
+  \item Field of view: focal length, sensor, common FoV, baseline trade-off.
+  \item Non-coplanar (verging) stereo: horopter, angular disparity.
+  \item Epipolar geometry: baseline, epipoles, epipolar plane/lines, rectification.
+  \item Cues to depth: binocular, oculomotor, monocular, motion.
+\end{enumerate}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Why Stereo? Image Formation Recap}
+
+A pinhole camera projects a 3D scene point $P=(x,y,z)$ onto the image plane (assume the principal point is at the origin) by the similar-triangle relation
+\[
+P' = (x', y') = \left(\frac{f x}{z},\ \frac{f y}{z}\right).
+\]
+\textbf{Depth ambiguity.} All 3D points on a single line of sight produce the same image pixel: $(x,y,z)$ and $(\lambda x, \lambda y, \lambda z)$ project identically. Imaging therefore loses the depth dimension. A second viewpoint with known geometry breaks this ambiguity by triangulation.
+
+\textbf{Why two cameras?} For one camera the projection equations give two scalar constraints on three unknowns $(x,y,z)$ -- under-determined. A second camera adds two more equations, sufficient to solve for $(x,y,z)$. (DLT formalises this with 11 parameters per camera: 6 extrinsic + 5 intrinsic.)
+
+\textbf{Applications.} Path planning and collision avoidance (cars, robots), grasping, virtual advertising, 3D reconstruction (CAD models, VR), and as a pre-processing cue for segmentation and object recognition.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Coplanar Cameras (Simplest Case)}
+
+\begin{defbox}[Coplanar Stereo Setup]
+A pair of cameras with: (i) coplanar image planes, (ii) equal focal lengths $f$, (iii) optical centres at the same height (collinear $x$-axes), (iv) parallel $z$-axes (optical axes meet at infinity). Separation between optical centres is the \term{baseline} $B$.
+\end{defbox}
+
+\textbf{Image formation for the pair.} Working in the left camera's coordinate frame, a 3D point $P=(x,y,z)$ projects to
+\[
+(x'_L, y'_L) = \left(\frac{f x}{z},\ \frac{f y}{z}\right), \qquad (x'_R, y'_R) = \left(\frac{f (x-B)}{z},\ \frac{f y}{z}\right).
+\]
+Because the $x$-axes are collinear, $y'_L = y'_R$.
+
+\separator
+
+\begin{defbox}[Disparity (coplanar)]
+The horizontal difference between the projections of the same 3D point in the two images:
+\[
+d \;=\; x'_L - x'_R \;=\; \frac{f x}{z} - \frac{f(x-B)}{z} \;=\; \frac{f B}{z}.
+\]
+For coplanar cameras disparity is purely horizontal, measured in pixels, and may be positive or negative.
+\end{defbox}
+
+\begin{thmbox}[Disparity-to-Depth (coplanar)]
+\[
+\boxed{\,z \;=\; \frac{f B}{d}\,}
+\]
+\emph{Depth is inversely proportional to disparity.} Given baseline $B$ and focal length $f$, a measured disparity gives absolute depth; without $B$, only relative depths from relative disparities.
+\end{thmbox}
+
+\separator
+
+\textbf{Disparity map / depth map.}
+\begin{itemize}
+  \item A pair of stereo images defines a \term{field} of disparity vectors -- one per pixel (a \emph{disparity map}).
+  \item Per-pixel disparity is a 2D vector in general; for coplanar cameras only the $x$ component is non-zero.
+  \item Converting disparity to depth produces a \emph{depth map} (commonly: light $=$ close, dark $=$ far).
+  \item False matches produce false-shallow / false-deep regions; texture-poor surfaces are notoriously hard.
+\end{itemize}
+
+\separator
+
+\textbf{Accuracy of depth measurement.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Change} & \textbf{Effect on $d = fB/z$} & \textbf{Accuracy of $z$} \\
+\midrule
+$z$ decreases (point closer) & $d$ increases & Better (small $\Delta d$ matters less) \\
+$z$ increases (point farther) & $d \to 0$ & Worse (small errors swing $z$ a lot) \\
+$B$ increases (longer baseline) & $d$ increases & Better depth resolution \\
+$B$ decreases (shorter baseline) & $d$ decreases & Worse depth resolution \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Spot it in a question]
+``Comment on accuracy with changing distance / baseline'' $\Rightarrow$ argue from $d = fB/z$: larger disparity $\Rightarrow$ small measurement error in $d$ has less impact on $z$ $\Rightarrow$ accuracy improves as object gets closer or baseline gets longer.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{The Correspondence Problem}
+
+To measure disparity we must \emph{find corresponding points} -- pairs of pixels that are projections of the same 3D point.
+
+\textbf{Two solution families:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.5cm} p{5.5cm} @{}}
+\toprule
+\textbf{Method} & \textbf{Idea} & \textbf{Output} \\
+\midrule
+Correlation-based (window) & Match a fixed window around every pixel by SAD/SSD/NCC & Dense disparity map (a value at every pixel) \\
+Feature-based & Match interest points / descriptors only & Sparse disparity map (values at features) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{Basic requirements.}
+\begin{enumerate}
+  \item Most scene points are visible in both images (no large occlusions).
+  \item Corresponding image regions ``look similar'' (similar intensities/textures/descriptors).
+\end{enumerate}
+These hold approximately when scene depth $z \gg B$ (object far compared with baseline).
+
+\textbf{Why it is hard.} Correspondence is fundamentally ambiguous: for any left-image patch there are usually many right-image patches that are locally similar (repetitive texture, low texture, specularities). Constraints prune the search.
+
+\separator
+
+\begin{thmbox}[Constraints on Stereo Correspondence]
+\begin{enumerate}
+  \item \textbf{Epipolar.} A point in the left image must lie on the corresponding \emph{epipolar line} in the right image. \emph{For coplanar cameras the epipolar lines are horizontal scan lines}, so $y'_L = y'_R$ and 2D search collapses to 1D.
+  \item \textbf{Maximum disparity.} Limit the search range: for points at distance $\geq z_{\min}$, $|d| \leq d_{\max} = fB/z_{\min}$. \emph{Fails} for points closer than $z_{\min}$.
+  \item \textbf{Continuity (smoothness).} Neighbouring pixels usually have similar disparities (surfaces are smooth in depth). \emph{Fails at depth discontinuities} (object/object or object/background boundaries).
+  \item \textbf{Uniqueness.} Each pixel in one image matches at most one pixel in the other. \emph{Fails} when a slanted surface projects to $n$ pixels in one image and $m \neq n$ in the other, or when one camera's line of sight grazes a surface so one location matches many.
+  \item \textbf{Ordering.} Matching points along conjugated epipolar lines appear in the same order. \emph{Fails} when objects are at very different depths (a near object can swap order with a far one across views).
+\end{enumerate}
+\end{thmbox}
+
+\textbf{Bottom line.} ``We use \emph{imperfect} constraints to narrow many possible solutions down to (hopefully) the correct one.''
+
+\separator
+
+\textbf{Window matching (correlation-based).} For each left pixel $(x,y)$:
+\begin{enumerate}
+  \item Extract a template window of size $w \times w$ around $(x,y)$.
+  \item For each candidate disparity $d \in [0, d_{\max}]$, extract the window around $(x-d, y)$ in the right image.
+  \item Compute a similarity / cost (SAD, SSD, NCC).
+  \item Pick the $d$ minimising cost (or maximising similarity).
+\end{enumerate}
+\textbf{Common cost functions:}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l p{6cm} @{}}
+\toprule
+\textbf{Cost} & \textbf{Formula (window $W$)} & \textbf{Notes} \\
+\midrule
+SAD & $\sum_{(u,v)\in W} |I_L(u,v) - I_R(u-d,v)|$ & Cheap; sensitive to brightness offsets \\
+SSD & $\sum_{(u,v)\in W} (I_L - I_R)^2$ & Penalises large differences more \\
+NCC & normalised correlation in $W$ & Robust to linear brightness changes \\
+\bottomrule
+\end{tabular}
+\end{center}
+\textbf{Window-size trade-off:} small windows capture detail but are noisy and ambiguous on textureless regions; large windows are smoother but blur depth boundaries.
+
+\textbf{Sub-pixel refinement.} The minimum of a discrete cost curve is at integer $d$; fitting a parabola to three neighbouring cost values $\{c(d-1), c(d), c(d+1)\}$ and taking its minimum gives a sub-pixel estimate.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Field of View (FoV)}
+
+\begin{defbox}[Field of View]
+The angular extent of the scene that a camera can image. For a pinhole camera with focal length $f$ and sensor width $W$ (height $H$),
+\[
+\text{FoV}_x \;=\; 2 \arctan\!\left(\frac{W}{2 f}\right), \qquad \text{FoV}_y \;=\; 2 \arctan\!\left(\frac{H}{2 f}\right).
+\]
+\textbf{Larger $f$} (telephoto) $\Rightarrow$ \emph{narrower} FoV, more magnification.
+\textbf{Smaller $f$} (wide-angle) $\Rightarrow$ \emph{wider} FoV, more distortion at edges.
+\end{defbox}
+
+\textbf{Common FoV (cFoV).} A stereo system can only recover depth in the intersection of the two cameras' FoVs.
+
+\separator
+
+\textbf{Baseline / FoV / depth-error trade-off (coplanar cameras).}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l l @{}}
+\toprule
+\textbf{Setup} & \textbf{cFoV} & \textbf{Depth error} & \textbf{Why} \\
+\midrule
+Short baseline & Large & Large & Same $\Delta z$ produces small $\Delta d$ (from $z = fB/d$) \\
+Long baseline & Small & Small & Same $\Delta z$ produces larger $\Delta d$, but cameras see less common scene \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Verging cameras.} Rotating the cameras inwards so optical axes intersect (rather than being parallel) increases the cFoV at a given baseline and reduces depth error -- at the cost of more complex geometry (non-horizontal epipolar lines).
+
+\textbf{Panoramas.} Stitching multiple narrow-FoV images together produces a wide effective FoV; this is correspondence between rotated views, not stereo.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Non-Coplanar (Verging) Cameras}
+
+When the optical axes converge at a \term{fixation point} the geometry generalises:
+
+\begin{defbox}[Vergence and Horopter]
+\textbf{Vergence angle} $\theta$: the angle between the two optical axes. \\
+\textbf{Horopter}: the locus of 3D points that produce \emph{zero disparity} given the current vergence. Each line of sight from the left camera meets a corresponding right-camera ray at the horopter; equal angular offsets from the optical axes ($\alpha_L = \alpha_R$) define points on it.
+\end{defbox}
+
+\textbf{Disparity for verging cameras.} Disparity is measured in \emph{angles}, not pixels:
+\[
+d \;=\; \alpha_L - \alpha_R,
+\]
+where $\alpha_L, \alpha_R$ are the angles a 3D point's line of sight makes with the left/right optical axis.
+\begin{itemize}
+  \item $d = 0$ at the fixation point and at all points on the horopter.
+  \item $d > 0$: point lies \emph{outside} (further than) the horopter (``uncrossed'' disparity).
+  \item $d < 0$: point lies \emph{inside} (nearer than) the horopter (``crossed'' disparity).
+  \item Magnitude of disparity grows with distance from the horopter.
+\end{itemize}
+
+\textbf{Sign convention.} Be explicit about (i) the sign of each angle $\alpha$ relative to the optical axis and (ii) the order of subtraction; otherwise the inside/outside distinction flips.
+
+\separator
+
+\textbf{Recovering depth from non-coplanar cameras.} Two routes:
+\begin{enumerate}
+  \item \textbf{Triangulation.} Determine the intersection of the corresponding view-lines using the known camera parameters.
+  \item \textbf{Rectification + simple case.} Warp both images so that epipolar lines become horizontal scan lines (turning the verging case into a coplanar case), then use $z = fB/d$.
+\end{enumerate}
+Both require knowledge of intrinsic and extrinsic camera parameters (calibration).
+
+\textbf{Biological connection.} Human eyes verge on a fixation point; cortical neurons tuned to specific retinal disparities (positive, zero, negative) read out depth around the horopter (see Week 4: biological vision).
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Epipolar Geometry}
+
+\begin{defbox}[Epipolar Geometry: Terminology]
+\begin{itemize}
+  \item \textbf{Baseline.} The line through the two camera projection centres $O_L$, $O_R$.
+  \item \textbf{Epipole.} The image of one camera's optical centre in the other camera's image plane. Equivalently, the intersection of the baseline with each image plane. Left epipole $e_L$ lives in the left image; right epipole $e_R$ in the right image.
+  \item \textbf{Epipolar plane.} For a particular 3D point $P$, the plane through $P$ and both optical centres $O_L, O_R$.
+  \item \textbf{Epipolar line.} The intersection of the epipolar plane with an image plane. \emph{All epipolar lines in the left image pass through $e_L$; all epipolar lines in the right image pass through $e_R$.}
+  \item \textbf{Conjugated epipolar lines.} The pair of epipolar lines (one in each image) generated by the same 3D point.
+\end{itemize}
+\end{defbox}
+
+\begin{thmbox}[Epipolar Constraint]
+Corresponding image points must lie on conjugated epipolar lines. Hence the 2D correspondence search is reduced to a 1D search along an epipolar line. For coplanar cameras the epipoles are at infinity and the epipolar lines are horizontal scan lines (so search is along a row).
+\end{thmbox}
+
+\separator
+
+\textbf{Rectification.} A 2D image warp applied to both images that makes corresponding epipolar lines coincide with the rows of the rectified images. After rectification the system behaves as a coplanar pair: search left/right along the same row, $z = fB/d$ applies.
+
+\textbf{Why rectify?} Faster matching (one 1D search per row), simpler post-processing, and direct application of the simple-case depth formula.
+
+\separator
+
+\textbf{Coplanar vs general (verging) summary:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Property} & \textbf{Simple (coplanar)} & \textbf{General (verging)} \\
+\midrule
+Image planes & Coplanar (translation along $x$) & Translation $+$ rotation \\
+Epipolar lines & Horizontal scan lines & Lines radiating from the epipole \\
+Disparity unit & Pixels & Angles ($\alpha_L - \alpha_R$) \\
+Disparity vs depth & $z = fB/d$ & Magnitude grows with distance from horopter \\
+Depth recovery & Direct & Triangulation, or rectify $+$ simple case \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Cues to Depth}
+
+Stereo disparity is just one of many cues. The brain (and modern CV systems) fuse several.
+
+\begin{defbox}[Four Cue Families]
+\textbf{Binocular} -- requires two eyes/cameras. \\
+\textbf{Oculomotor} -- proprioceptive feedback from eye/camera muscles or controls. \\
+\textbf{Monocular} -- usable with one eye closed; pictorial cues. \\
+\textbf{Motion-induced} -- arise from observer or object motion.
+\end{defbox}
+
+\separator
+
+\textbf{Binocular cue.}
+\begin{itemize}
+  \item \textbf{Disparity (stereopsis).} The difference between the left and right images of corresponding scene points. Sufficient on its own: \emph{random-dot stereograms} and \emph{autostereograms} produce vivid depth percepts when all other cues are removed.
+\end{itemize}
+
+\textbf{Oculomotor cues.}
+\begin{itemize}
+  \item \textbf{Accommodation.} The shape (refractive power) of the lens is adjusted by ciliary muscles to bring objects at different depths into focus. The state of those muscles encodes depth.
+  \item \textbf{Convergence.} The angle by which the two eyes (or cameras) rotate inwards to fixate an object encodes that object's depth.
+\end{itemize}
+
+\textbf{Monocular (pictorial) cues.}
+\begin{itemize}
+  \item \textbf{Interposition (occlusion).} A near object hides part of a farther one; provides ordering, not absolute depth. Manipulating it produces impossible figures (Penrose triangle, Escher, Kanizsa squares).
+  \item \textbf{Size familiarity.} For objects of known size, smaller image $\Rightarrow$ greater depth.
+  \item \textbf{Texture gradient.} For uniform surfaces, texture elements get smaller and denser with distance.
+  \item \textbf{Linear perspective.} Parallel lines converge to a vanishing point; closer line spacing $\Rightarrow$ greater depth (e.g.\ railroad tracks). Strong manipulator: Ames room, Trompe-l'oeil.
+  \item \textbf{Aerial perspective.} Atmospheric scattering reduces contrast and saturation with distance (distant mountains look bluish/hazy).
+  \item \textbf{Shading.} Distribution of light and shadow encodes shape; the brain assumes light from above (hollow-face illusion shows shading can be overruled by familiarity).
+\end{itemize}
+
+\textbf{Motion-induced cues.}
+\begin{itemize}
+  \item \textbf{Motion parallax.} As an observer translates sideways, near objects move opposite to the motion, far objects move with it; speed grows with distance from the fixation point.
+  \item \textbf{Optic flow.} Forward/backward motion produces an expanding/contracting flow field; close points move faster across the image.
+  \item \textbf{Accretion/deletion.} As the camera moves, parts of far surfaces are progressively occluded or revealed by near surfaces; the pattern signals relative depth.
+  \item \textbf{Structure from motion (kinetic depth).} A moving rigid object viewed by a stationary camera (or a moving camera viewing a static scene) reveals 3D structure that is invisible in any single static frame.
+\end{itemize}
+
+\separator
+
+\textbf{Active depth sensing (engineering).} Beyond the above passive cues, computer-vision systems often add active sensors:
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.5cm} p{5.5cm} @{}}
+\toprule
+\textbf{Sensor} & \textbf{Principle} & \textbf{Trade-offs} \\
+\midrule
+Stereo (passive) & Triangulate two cameras & No emitter; struggles on textureless / shiny surfaces \\
+Structured light & Project known pattern, measure deformation & Robust on textureless surfaces; indoor only (sunlight overwhelms pattern) \\
+Time-of-flight (ToF) & Emit modulated IR, time the round trip & Direct depth per pixel; modest range and resolution \\
+LIDAR & Pulsed laser scan, ToF & Long range, sparse; expensive; rotating mechanics \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Spot it in a question]
+``Cues with one eye closed'' $\Rightarrow$ \emph{monocular}. ``Two oculomotor cues'' $\Rightarrow$ \emph{accommodation, convergence}. ``Why is depth important for object recognition?'' $\Rightarrow$ \emph{depth between objects helps segmentation; depth within an object encodes shape}.
+\end{tipbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Worked Examples}
+
+\begin{exbox}[Example 1: Derive $z = fB/d$ for coplanar cameras]
+\textbf{Q:} Two cameras have identical focal lengths $f$, coplanar image planes and collinear $x$-axes, separated by baseline $B$. Derive the relationship between point distance $z$ and disparity $d$.
+
+\textbf{A:} For any pinhole camera, a 3D point $(X,Y,Z)$ in its frame projects to $(u,v) = (fX/Z,\ fY/Z)$.
+For the left camera (using its frame): $(u_L, v_L) = (fX_L/Z,\ fY_L/Z)$.
+The right camera is the same scene viewed from a frame translated by $+B$ along $x$, so the same world point has $X_R = X_L - B$ and $Y_R = Y_L$ in the right frame:
+\[
+(u_R, v_R) = \left(\frac{f(X_L-B)}{Z},\ \frac{fY_L}{Z}\right).
+\]
+Hence the horizontal disparity is
+\[
+d \;=\; u_L - u_R \;=\; \frac{fX_L}{Z} - \frac{f(X_L-B)}{Z} \;=\; \frac{fB}{Z}, \qquad \boxed{Z = \frac{fB}{d}}.
+\]
+\end{exbox}
+
+\begin{exbox}[Example 2: Accuracy with distance and baseline]
+\textbf{Q:} Comment on the accuracy with which depth can be measured as (a) distance changes, (b) baseline changes.
+
+\textbf{A:} Accuracy depends on the size of the disparity: large $d$ $\Rightarrow$ small measurement errors translate into small $z$ errors.
+\begin{itemize}
+  \item (a) From $d = fB/z$: as $z$ decreases, $d$ increases. Hence accuracy \emph{increases as the object gets closer}; very far objects have $d \to 0$ and depth becomes unreliable.
+  \item (b) As $B$ increases, $d$ increases. Hence accuracy \emph{increases as the baseline gets longer}. Trade-off: a longer baseline shrinks the common FoV and exacerbates occlusion.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 3: Epipolar constraint in one sentence]
+\textbf{Q:} Briefly explain the epipolar constraint.
+
+\textbf{A:} For a known stereo geometry, the corresponding point of any left-image pixel must lie on a single 1D line in the right image (its \emph{epipolar line}); this reduces correspondence search from 2D to 1D. For a simple coplanar setup, epipolar lines coincide with horizontal image rows. Computing the epipolar line in general requires the intrinsic and extrinsic camera parameters.
+\end{exbox}
+
+\begin{exbox}[Example 4: Other constraints and when they fail]
+\textbf{Q:} List four further constraints used to solve the stereo correspondence problem and note circumstances where each fails.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Maximum disparity.} Restrict search to $|d| \leq fB/z_{\min}$. \emph{Fails} for points closer than $z_{\min}$.
+  \item \textbf{Continuity.} Neighbouring pixels have similar disparities. \emph{Fails} at depth discontinuities (object boundaries).
+  \item \textbf{Uniqueness.} Each pixel matches at most one in the other image. \emph{Fails} for surfaces angled so that they project a different number of elements to each image, and at occlusions (a pixel visible in only one camera has no match).
+  \item \textbf{Ordering.} Matches occur in the same order along conjugated epipolar lines. \emph{Fails} when objects sit at very different depths so the order swaps across views.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 5: Horopter distance with verging cameras]
+\textbf{Q:} A stereo system has baseline $B = 400$~mm and convergence angle $\theta = 60^\circ$, with each $z$-axis making $60^\circ$ with the baseline. Find the distance of a scene point from the horopter for:
+(a) $\alpha_L = \alpha_R = 15^\circ$, (b) $\alpha_L = +15^\circ,\ \alpha_R = -15^\circ$, (c) $\alpha_L = -15^\circ,\ \alpha_R = +15^\circ$.
+
+\textbf{A:} Disparity $d = \alpha_L - \alpha_R$. Distance from baseline along the symmetry line: the fixation point sits at $0.5 B \tan(60^\circ) = 200 \cdot 1.732 \approx 346.4$~mm.
+
+\begin{itemize}
+  \item \textbf{(a)} $d = 15 - 15 = 0$. The point lies on the horopter, so distance from horopter $= 0$.
+  \item \textbf{(b)} $d = 15 - (-15) = 30 > 0$. Compute angle $\angle B O_R P = 60 + 15 = 75^\circ$; distance from baseline to $P$ is $0.5 B \tan(75^\circ) \approx 200 \cdot 3.732 = 746.4$~mm. Distance to horopter $\approx 746.4 - 346.4 = \mathbf{400~\text{mm}}$ (point is \emph{outside} / further than horopter).
+  \item \textbf{(c)} $d = -15 - 15 = -30 < 0$. Angle $\angle B O_R P = 60 - 15 = 45^\circ$; distance from baseline to $P$ is $0.5 B \tan(45^\circ) = 200$~mm. Distance to horopter $= 200 - 346.4 = \mathbf{-146.4~\text{mm}}$ (point is \emph{inside} the horopter, nearer than fixation).
+\end{itemize}
+\textbf{Sign reading:} $d > 0$ means outside, $d < 0$ means inside; the sign of distance from horopter follows the sign of $d$.
+\end{exbox}
+
+\begin{exbox}[Example 6: Why depth helps object recognition]
+\textbf{Q:} Give two reasons why recovering depth information is important for object recognition.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Between-object depth} provides a cue for segmentation: regions at clearly different depths are likely different objects, supporting the mid-level vision task of grouping pixels into figures.
+  \item \textbf{Within-object depth} provides shape information (the 3D surface of the object), which supports high-level recognition by fitting/comparing 3D models or shape descriptors.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 7: Two oculomotor cues]
+\textbf{Q:} Briefly describe two oculomotor cues to depth.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Accommodation.} The shape of the lens (or, in a camera, the depth of the image plane) is adjusted to bring an object into focus. The state of the focusing apparatus is therefore correlated with object depth.
+  \item \textbf{Convergence.} In a verging system, the angle by which the two eyes/cameras rotate inwards to fixate an object encodes that object's distance. Larger convergence $\Rightarrow$ closer object.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 8: Four monocular cues]
+\textbf{Q:} Briefly describe four monocular (pictorial) cues to depth.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Interposition.} A nearer object occludes (interposes itself in front of) a farther one, giving ordinal depth.
+  \item \textbf{Size familiarity.} For an object of known size, a smaller image implies greater depth.
+  \item \textbf{Texture gradients.} On a uniformly textured surface, texture elements shrink and crowd together with depth.
+  \item \textbf{Linear perspective.} Lines parallel in the world converge to a vanishing point in the image; the closer the lines in the image, the greater the depth.
+\end{itemize}
+(\emph{Other valid answers:} aerial perspective, shading.)
+\end{exbox}
+
+\begin{exbox}[Example 9: Two motion-induced cues]
+\textbf{Q:} Briefly describe two motion-induced cues to depth.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Motion parallax.} When the observer translates sideways, objects nearer than the fixation point appear to move opposite to the observer while farther objects appear to move with it; speed of image motion grows with distance from the fixation point.
+  \item \textbf{Optic flow.} For forward (or backward) motion, the entire image expands (or contracts) about a focus of expansion; points closer to the camera have larger image-plane velocity.
+\end{itemize}
+(\emph{Other valid answers:} accretion/deletion, structure from motion.)
+\end{exbox}
+
+\begin{exbox}[Example 10: SAD disparity (LGT coding question)]
+\textbf{Q:} For a rectified stereo pair, write a window-based algorithm that computes a dense disparity map by minimising SAD along the same image row.
+
+\textbf{A:} \textbf{Algorithm.} For each interior pixel $(x,y)$ in the left image:
+\begin{enumerate}
+  \item Extract a $w \times w$ template window centred at $(x,y)$ from the left image.
+  \item For $d = 0, 1, \ldots, d_{\max}$, extract a $w \times w$ window centred at $(x-d, y)$ from the right image (skip if it falls off the left edge).
+  \item Compute $\text{SAD}(d) = \sum_{(u,v)\in W} | I_L(u,v) - I_R(u-d,v) |$ in floating point (avoid \texttt{uint8} under/overflow).
+  \item Record the $d^* = \arg\min_d \text{SAD}(d)$.
+  \item Write $\text{disp}(x,y) = d^*$.
+\end{enumerate}
+\textbf{Pseudocode (rectified, half-window $h_w$):}
+\begin{verbatim}
+for y in [h_w, H - h_w):
+  for x in [h_w, W - h_w):
+    template = L[y-h_w:y+h_w+1, x-h_w:x+h_w+1]
+    best_d, best_sad = 0, +inf
+    for d in [0, d_max):
+      if x - d - h_w < 0: break
+      win = R[y-h_w:y+h_w+1, x-d-h_w:x-d+h_w+1]
+      sad = sum(|template.float - win.float|)
+      if sad < best_sad: best_sad, best_d = sad, d
+    disp[y, x] = best_d
+\end{verbatim}
+\textbf{Pitfalls / pattern checks:}
+\begin{itemize}
+  \item Convert to \texttt{float32} \emph{before} subtracting -- otherwise unsigned-integer wrap-around silently corrupts SAD.
+  \item The bounds check \texttt{x - d - h\_w < 0} avoids reading off the left edge.
+  \item Window-size trade-off: small $w$ $\Rightarrow$ noisy/streaky map; large $w$ $\Rightarrow$ smooth but blurred at depth boundaries.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 11: Why two cameras (DOF counting)]
+\textbf{Q:} Why are at least two cameras needed to reconstruct a 3D position?
+
+\textbf{A:} A single camera's projection $(u,v) = (fx/z, fy/z)$ gives 2 scalar equations in 3 unknowns $(x,y,z)$ -- under-determined: an entire ray of 3D points satisfies it. A second calibrated camera adds 2 more equations from a different viewpoint, giving 4 equations in 3 unknowns; intersection of the two view-rays (\emph{triangulation}) recovers $(x,y,z)$. The DLT formulation makes this explicit with 11 parameters per camera (6 extrinsic $+$ 5 intrinsic).
+\end{exbox}
+
+\begin{exbox}[Example 12: Coplanar vs non-coplanar (summary)]
+\textbf{Q:} Contrast the coplanar and non-coplanar (verging) stereo cases on (a) image planes, (b) epipolar lines, (c) disparity, (d) depth recovery.
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) Coplanar: image planes parallel, optical axes parallel (intersect at $\infty$), $x$-axes collinear. Verging: image planes related by a translation \emph{and} a rotation; optical axes intersect at a finite fixation point.
+  \item (b) Coplanar: epipolar lines are horizontal scan lines; epipoles at infinity. Verging: epipolar lines radiate from the (finite) epipoles in each image.
+  \item (c) Coplanar: disparity in pixels, $d = x'_L - x'_R$. Verging: disparity in angles, $d = \alpha_L - \alpha_R$, with sign indicating inside/outside the horopter.
+  \item (d) Coplanar: $z = fB/d$ directly. Verging: triangulate via the calibrated geometry, or first \emph{rectify} both images so epipolar lines become rows and reduce to the simple case.
+\end{itemize}
+\end{exbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Summary}
+
+\begin{keybox}[Key Takeaways]
+\begin{enumerate}
+  \item \textbf{One camera loses depth.} Every point on a line of sight maps to one pixel; two viewpoints break the ambiguity by triangulation.
+  \item \textbf{Coplanar stereo} (rectified, parallel cameras): disparity $d = x'_L - x'_R = fB/z$ $\Rightarrow$ $z = fB/d$. Disparity is purely horizontal.
+  \item \textbf{Accuracy} of $z$ improves with larger disparity, i.e.\ closer points and longer baselines; long baselines reduce common FoV.
+  \item \textbf{Correspondence problem.} Find matching pixels. Constraints: \textbf{epipolar} (1D search), \textbf{maximum disparity}, \textbf{continuity}, \textbf{uniqueness}, \textbf{ordering} -- each fails in characteristic situations.
+  \item \textbf{Window matching} (SAD/SSD/NCC) gives dense maps; feature matching gives sparse maps. Window-size trade-off: detail vs noise.
+  \item \textbf{Field of view} $= 2\arctan(W/2f)$. Short baseline $\Rightarrow$ large cFoV but large depth error; long baseline $\Rightarrow$ small cFoV, small depth error.
+  \item \textbf{Verging cameras}: disparity is angular ($\alpha_L - \alpha_R$), zero on the horopter. $d > 0$ outside the horopter, $d < 0$ inside. Recover depth by triangulation or by rectifying to the simple case.
+  \item \textbf{Epipolar geometry}: baseline, epipoles ($e_L, e_R$), epipolar plane (per 3D point), epipolar lines (intersection with image plane), conjugated epipolar lines. \emph{Rectification} makes epipolar lines image rows.
+  \item \textbf{Cues to depth}: binocular (disparity), oculomotor (accommodation, convergence), monocular (interposition, size familiarity, texture gradient, linear/aerial perspective, shading), motion (parallax, optic flow, accretion/deletion, structure from motion). Active sensors (LIDAR, structured light, ToF) supplement passive vision.
+\end{enumerate}
+\end{keybox}
+
+\textbf{Final comparison: stereo geometry.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Property} & \textbf{Coplanar (simple)} & \textbf{Verging (general)} \\
+\midrule
+Image planes & Translation along $x$ only & Translation $+$ rotation \\
+Optical axes & Parallel (intersect at $\infty$) & Intersect at fixation point \\
+Epipoles & At infinity & Finite, in each image \\
+Epipolar lines & Horizontal scan lines & Radiate from epipoles \\
+Disparity unit & Pixels & Angles \\
+Disparity formula & $d = x'_L - x'_R$ & $d = \alpha_L - \alpha_R$ \\
+Zero disparity & Points at infinity & Horopter (depends on vergence) \\
+Depth formula & $z = fB/d$ & Triangulate (or rectify $+$ simple) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Final comparison: depth cues.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l p{6.5cm} @{}}
+\toprule
+\textbf{Family} & \textbf{Cue} & \textbf{What it encodes} \\
+\midrule
+Binocular & Disparity & Difference in image of corresponding points \\
+Oculomotor & Accommodation & Lens shape / focus state $\to$ object depth \\
+Oculomotor & Convergence & Inward rotation angle $\to$ fixation depth \\
+Monocular & Interposition & Near object occludes far (ordering) \\
+Monocular & Size familiarity & Smaller image of known object $\to$ farther \\
+Monocular & Texture gradient & Texture shrinks/densifies with depth \\
+Monocular & Linear perspective & Parallel lines converge at vanishing point \\
+Monocular & Aerial perspective & Lower contrast/saturation with depth \\
+Monocular & Shading & Light/shadow distribution $\to$ shape \\
+Motion & Motion parallax & Near vs far image motion under observer translation \\
+Motion & Optic flow & Expansion/contraction during forward/backward motion \\
+Motion & Accretion/deletion & Occlusion changes during camera motion \\
+Motion & Structure from motion & 3D shape from view sequence \\
+\bottomrule
+\end{tabular}
+\end{center}

@@ -1,0 +1,619 @@
+% =============================================================================
+%                  WEEK 5: MID-LEVEL VISION --- SEGMENTATION
+% =============================================================================
+\section{Week 5: Mid-Level Vision --- Segmentation}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Define the role of mid-level vision and explain feature space and similarity/distance measures.
+  \item Apply thresholding (single, hysteresis, local) and morphological clean-up (erosion, dilation, opening, closing).
+  \item Apply region-based segmentation (region growing, region merging, split-and-merge) on small numerical examples.
+  \item Apply clustering for segmentation (k-means and agglomerative hierarchical clustering with single/complete/average/centroid linkage).
+  \item Explain segmentation by graph cutting and the Normalised Cuts (Ncuts) criterion.
+  \item Apply the Hough transform for straight lines and explain its generalisation to circles and arbitrary shapes.
+  \item Describe active contours (snakes) and the energy terms they minimise.
+\end{itemize}
+\end{keybox}
+
+\textbf{Big Picture.}
+Mid-level vision is about \term{grouping}: take low-level image elements (pixels, edges, filter responses) and gather those that ``belong together'' into segments. Every method in this week is a different answer to the same question: which feature(s) define belonging, and how do we measure similarity? Each pixel becomes a point in a \term{feature space}, and segmentation reduces to partitioning that space. Methods differ in (i) what feature/measure they use, (ii) whether they reason in feature space alone or use spatial information, and (iii) what model they assume (uniform region, cluster, parametric shape, smooth curve).
+
+\separator
+
+\textbf{What Examiners Like to Ask:}
+\begin{itemize}
+  \item ``Briefly describe the role of mid-level vision.''
+  \item How to choose a threshold from an intensity histogram; explain hysteresis thresholding.
+  \item Apply hysteresis thresholding by hand on a small numerical image.
+  \item Show the result of erosion-then-dilation (opening) and dilation-then-erosion (closing) for 4- and 8-connected neighbourhoods.
+  \item Write pseudo-code for region growing / region merging / split-and-merge / k-means / agglomerative / Ncuts / Hough.
+  \item Apply each algorithm to a 3$\times$3 feature-vector image with SAD as similarity and a numerical threshold.
+  \item Describe single-link / complete-link / group-average / centroid linkage.
+  \item Compute a Hough accumulator array for a small binary image at given $\theta$ values.
+  \item Explain the two energy terms used by an active contour (snake).
+\end{itemize}
+
+% =============================================================================
+\subsection{Core Concepts}
+
+\textbf{Roadmap:}
+\begin{enumerate}
+  \item Feature space and similarity / distance measures
+  \item Thresholding (and morphological clean-up)
+  \item Region-based methods (growing, merging, split-and-merge)
+  \item Clustering (k-means, agglomerative hierarchical, graph cuts/Ncuts)
+  \item Fitting (Hough transform, active contours)
+\end{enumerate}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Feature Space and Similarity}
+
+\begin{defbox}[Mid-Level Vision (Segmentation)]
+The task of grouping together image elements that ``belong together'' (e.g. lie on the same object) and segmenting them from all other image elements.
+\end{defbox}
+
+\textbf{Common features used for grouping} (each motivates a Gestalt grouping law):
+\begin{itemize}
+  \item Location (proximity), colour/intensity (similarity), texture (similarity)
+  \item Depth, motion (common fate)
+  \item Not separated by a contour (common region)
+  \item Top-down: forms a known shape, or CNN feature vectors
+\end{itemize}
+
+\separator
+
+\begin{defbox}[Feature Space]
+Each image element is represented as a vector $\mathbf{a} = (a_1, \dots, a_n)$ in an $n$-dimensional feature space. Similarity (and hence grouping) is determined by the distance between points in this space.
+\end{defbox}
+
+\textbf{Similarity measures} (high when vectors agree):
+\[
+\text{Affinity} = \exp\!\left(-\frac{\sum_i (a_i - b_i)^2}{2\sigma^2}\right), \qquad
+\text{Cross-correlation} = \sum_i a_i b_i
+\]
+\[
+\text{NCC} = \frac{\sum_i a_i b_i}{\sqrt{\sum_i a_i^2}\,\sqrt{\sum_i b_i^2}}, \qquad
+\text{Corr.\ coeff.} = \frac{\sum_i (a_i - \bar a)(b_i - \bar b)}{\sqrt{\sum_i (a_i - \bar a)^2}\,\sqrt{\sum_i (b_i - \bar b)^2}}
+\]
+
+\textbf{Distance measures} (low when vectors agree):
+\[
+\text{Euclidean} = \sqrt{\textstyle\sum_i (a_i - b_i)^2}, \quad
+\text{SSD} = \sum_i (a_i - b_i)^2, \quad
+\text{SAD} = \sum_i |a_i - b_i|
+\]
+
+\begin{tipbox}[Exam Tip: SAD is the default in tutorial questions]
+Almost every numerical tutorial question for this week uses \textbf{Sum of Absolute Differences (SAD)} as the similarity measure with a threshold on SAD. Learn to compute SAD quickly: just add the absolute element-wise differences.
+\end{tipbox}
+
+\separator
+
+\textbf{Feature scaling and weighting.} Different features have different scales (e.g. pixel coordinates in $[0,2000]$ vs.\ intensity in $[0,1]$). If left raw, large-scale features dominate the distance and small-scale features look ``always similar''. Solutions:
+\begin{itemize}
+  \item Normalise each feature to a common range.
+  \item Use weighted distance, e.g. $\sqrt{w_1(a_1{-}b_1)^2 + w_2(a_2{-}b_2)^2 + \dots}$. Choosing $w_i$ that work well is non-trivial (requires optimisation).
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Thresholding}
+
+\begin{defbox}[Thresholding]
+A 1-D feature space segmentation: assign pixel $(x,y)$ to foreground if its feature value $I(x,y)$ exceeds a threshold:
+\[ I'(x,y) = \begin{cases} 1 & \text{if } I(x,y) > t \\ 0 & \text{otherwise} \end{cases} \]
+Produces \term{figure-ground} segmentation. The feature can be intensity, colour channel, or output of a filter (e.g. edge magnitude).
+\end{defbox}
+
+\textbf{How to choose the threshold:}
+\begin{enumerate}
+  \item \textbf{Average intensity} of the image.
+  \item \textbf{Histogram-based}: plot the intensity histogram, assume it is \term{bimodal}, place the threshold in the valley between the two peaks.
+  \item \textbf{Hysteresis thresholding}: use \emph{two} thresholds (one each side of the valley).
+  \item \textbf{Fraction-of-image}: choose $t$ so a known fraction of pixels are foreground (when object size is known).
+\end{enumerate}
+
+\begin{defbox}[Hysteresis Thresholding]
+Define a high threshold $t_h$ and a low threshold $t_l$ (with $t_l < t_h$):
+\begin{itemize}
+  \item Pixels with $I > t_h$: classified as figure (foreground).
+  \item Pixels with $I < t_l$: classified as background.
+  \item Pixels with $t_l \le I \le t_h$: classified as figure \emph{only if} they are adjacent to a pixel already classified as figure (otherwise background).
+\end{itemize}
+\end{defbox}
+
+\textbf{Local / block thresholding.} A single global threshold rarely works for whole images (uneven illumination, shadows). Split the image into rectangular blocks and apply a different threshold per block --- it is the \emph{local} contrast that matters.
+
+\separator
+
+\textbf{Thresholding errors and morphological clean-up.}
+Thresholding usually leaves artefacts: missing pixels (holes in objects) and unwanted pixels (specks of noise). Morphological operations clean these up.
+
+\begin{defbox}[Dilation and Erosion]
+Both use a \term{structuring element} (typically 3$\times$3) defining a neighbourhood (4-connected: H/V; 8-connected: H/V/diagonal).
+\begin{itemize}
+  \item \textbf{Dilation}: every background pixel that has a foreground neighbour becomes foreground (1). Expands foreground; fills holes/gaps.
+  \item \textbf{Erosion}: every foreground pixel that has a background neighbour becomes background (0). Shrinks foreground; removes bridges/specks.
+\end{itemize}
+\end{defbox}
+
+\begin{thmbox}[Opening and Closing]
+\begin{itemize}
+  \item \textbf{Opening} = erosion then dilation. Removes background noise (small foreground blobs disappear); leaves overall shape unchanged.
+  \item \textbf{Closing} = dilation then erosion. Fills foreground holes/gaps; leaves overall shape unchanged.
+\end{itemize}
+\end{thmbox}
+
+\begin{tipbox}[Exam Tip: Opening vs Closing]
+Mnemonic: ``open removes specks, close fills holes''. The first operation (erosion or dilation) tells you what is removed; the second restores the surviving objects to roughly their original size.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Region-Based Segmentation}
+
+\textbf{Motivation.} Thresholding ignores spatial information. Region-based methods consider pixel \emph{location} as well as feature values, so the feature space is multi-dimensional (e.g. RGB, or RGB + position).
+
+\separator
+
+\begin{defbox}[Region Growing]
+Start from a seed pixel; iteratively add neighbouring pixels whose features are within a similarity threshold of the seed's region.
+\end{defbox}
+
+\textbf{Pseudo-code (region growing):}
+\begin{enumerate}
+  \item While not all pixels have a region label:
+  \begin{enumerate}
+    \item Choose an unlabelled pixel at random.
+    \item Assign it the next unused region label.
+    \item For all neighbouring unlabelled pixels:
+    \begin{enumerate}
+      \item Calculate similarity to the chosen pixel.
+      \item If within similarity threshold: give it the same region label, then make that pixel the chosen pixel and recurse.
+    \end{enumerate}
+  \end{enumerate}
+\end{enumerate}
+
+\textbf{When to use.} You have plausible seed locations (or can pick them randomly) and a per-pixel similarity criterion.\\
+\textbf{Pitfalls.} Regions can ``leak'' through a single weak spot in the boundary. If similarity uses intensity only, regions stop at edges --- but only if edges are unbroken.
+
+\separator
+
+\begin{defbox}[Region Merging]
+Start with every pixel as its own region; iteratively merge adjacent regions whose properties (mean feature vector) are similar.
+\end{defbox}
+
+\textbf{Pseudo-code (region merging):}
+\begin{enumerate}
+  \item Give every pixel a unique region label.
+  \item Randomly choose a region not yet marked \emph{final}.
+  \begin{enumerate}
+    \item Compare its properties with each neighbour's.
+    \item For all neighbours within similarity threshold: relabel them to the chosen region's label; recompute properties as the mean of all constituent pixels.
+    \item If no neighbour can be merged: mark the chosen region as \emph{final}.
+  \end{enumerate}
+  \item Repeat until all regions are marked \emph{final}.
+\end{enumerate}
+
+\textbf{Pitfall: order-dependence.} The result depends on the order in which regions are merged, because the merged region's mean shifts with each merge.
+
+\separator
+
+\begin{defbox}[Split-and-Merge]
+Top-down then bottom-up. Recursively split heterogeneous regions into quadrants (a quadtree) until each region is homogeneous, then merge similar adjacent regions.
+\end{defbox}
+
+\textbf{Pseudo-code (split-and-merge):}
+\begin{enumerate}
+  \item Label every pixel with the same region label.
+  \item For each region: if not all pixels are similar, split into 4 quadrants with new labels.
+  \item Repeat step 2 until all regions are homogeneous.
+  \item For each region: compare to neighbours; merge any whose properties are within the similarity threshold (recompute mean).
+  \item Repeat step 4 until no more merges possible.
+\end{enumerate}
+
+\textbf{Note.} If image dimensions are not powers of 2, pad the image so it can be quartered cleanly.
+
+\separator
+
+\begin{tipbox}[Exam Tip: General problems with region-based methods]
+``Meaningful'' regions are rarely uniform: brightness/colour vary due to lighting, curvature, and texture. Real images are almost never composed of uniform regions of similar intensity/colour. Be ready to state this as a limitation.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Clustering Methods}
+
+\begin{defbox}[Clustering]
+A general class of methods for \term{unsupervised classification} of data --- classes are not predefined. Aim: minimise intra-cluster distance, maximise inter-cluster distance.
+\end{defbox}
+
+Two sub-classes:
+\begin{itemize}
+  \item \textbf{Partitional}: divide data into non-overlapping subsets (e.g.\ k-means).
+  \item \textbf{Hierarchical}: nested clusters organised as a tree (dendrogram) --- agglomerative (bottom-up) or divisive (top-down).
+\end{itemize}
+
+\separator
+
+\begin{defbox}[k-means Clustering]
+A partitional algorithm assuming there are $k$ clusters. Iteratively assigns points to the nearest cluster centre, then recomputes each centre as the mean of its assigned points, until centres stop moving.
+\end{defbox}
+
+\textbf{Pseudo-code (k-means):}
+\begin{enumerate}
+  \item Randomly choose $k$ points to act as cluster centres.
+  \item For each data point: compute similarity to each cluster centre; allocate to closest.
+  \item For each cluster centre: set new position to mean of its allocated points.
+  \item Repeat 2--3 until cluster centres are unchanged (converged).
+\end{enumerate}
+
+\textbf{Problems with k-means:}
+\begin{itemize}
+  \item Results depend on initial centre positions (different runs $\Rightarrow$ different clusterings).
+  \item Poor when true clusters have very different sizes.
+  \item Poor when true clusters are not roughly ``globular''.
+  \item Must choose $k$ in advance.
+\end{itemize}
+
+\begin{tipbox}[Exam Tip: k-means converges when assignments stop changing]
+On 3$\times$3 SAD examples, the assignment grid stabilises after one or two iterations. State explicitly: ``Allocation is unchanged, so cluster centres are also unchanged and the algorithm has converged.''
+\end{tipbox}
+
+\separator
+
+\begin{defbox}[Agglomerative Hierarchical Clustering]
+Bottom-up: each data point starts as its own cluster; iteratively merge the two most similar clusters until a stopping criterion (single cluster, target $k$, or proximity threshold).
+\end{defbox}
+
+\textbf{Pseudo-code (agglomerative):}
+\begin{enumerate}
+  \item Assign each data point to a unique cluster.
+  \item Compute the proximity matrix (distance between every pair of clusters).
+  \item Repeat:
+  \begin{enumerate}
+    \item Merge the two closest clusters.
+    \item Update the proximity matrix.
+  \end{enumerate}
+  \item Until only a single cluster remains (or target reached).
+\end{enumerate}
+
+\textbf{Inter-cluster similarity / linkage methods:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8.5cm} @{}}
+\toprule
+\textbf{Linkage} & \textbf{Distance between clusters} \\
+\midrule
+Single-link & MIN distance between any pair of elements \\
+Complete-link & MAX distance between any pair of elements \\
+Group-average & AVERAGE distance over all pairs of elements \\
+Centroid & Distance between the cluster centroids (means) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Different linkages produce different dendrograms on the same data.
+
+\begin{tipbox}[Exam Tip: ties merge together]
+In tutorial questions on agglomerative clustering, several pairs may be tied at the minimum distance. The model answer merges \emph{all tied pairs in the same step}, then updates the proximity matrix once.
+\end{tipbox}
+
+\separator
+
+\begin{defbox}[Segmentation by Graph Cutting]
+Build a weighted graph $G = (V, E)$. Each vertex $v \in V$ is an image element (a feature vector); each edge $e_{pq} \in E$ has weight equal to the similarity between connected elements. Segmentation $=$ partitioning $G$ into disjoint subgraphs.
+\end{defbox}
+
+For two disjoint sets $A, B \subseteq V$:
+\[
+\mathrm{cut}(A, B) = \sum_{p \in A,\, q \in B} e_{pq}
+\]
+Cutting edges with minimum total weight separates the most dissimilar parts of the graph. \textbf{Bias problem:} minimum cut favours small subgraphs (cost grows with the number of cut edges).
+
+\begin{thmbox}[Normalised Cuts (Shi \& Malik)]
+Normalise the cut cost by the total association of each side with the whole graph:
+\[
+\mathrm{Ncut}(A, B) = \frac{\mathrm{cut}(A, B)}{\mathrm{assoc}(A, V)} + \frac{\mathrm{cut}(A, B)}{\mathrm{assoc}(B, V)},
+\quad
+\mathrm{assoc}(A, V) = \sum_{p \in A,\, q \in V} e_{pq}
+\]
+Minimising Ncut avoids the bias toward small subgraphs.
+\end{thmbox}
+
+\textbf{Pseudo-code (Normalised Cuts):}
+\begin{enumerate}
+  \item Form a graph in which each vertex is an image element and each edge weight is the similarity between connected elements.
+  \item For every possible bipartition $(A, B)$ of vertices, compute $\mathrm{Ncut}(A, B)$.
+  \item Cut the edges between $A$ and $B$ for which $\mathrm{Ncut}$ is minimum.
+  \item Repeat steps 2--3 for each subgraph until either $\mathrm{Ncut}$ exceeds a threshold for every subgraph, or the maximum number of segments is reached.
+\end{enumerate}
+
+\textbf{Problems with Ncuts:}
+\begin{itemize}
+  \item Finding the exact minimum is NP-hard --- in practice we use approximate (eigenvector-based) solutions.
+  \item Bias toward partitioning into roughly equal segments.
+  \item Struggles with textured backgrounds (a common weakness across most segmentation algorithms).
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Fitting Methods}
+
+\begin{defbox}[Fitting]
+A class of segmentation methods that fit a mathematical model (line, circle, arbitrary parametric shape, smooth curve) to image elements. Elements that fit the model are grouped together; the model's boundary becomes the segmentation.
+\end{defbox}
+
+\separator
+
+\begin{defbox}[Hough Transform (for straight lines)]
+For each candidate edge pixel, compute the parameters $(\theta, r)$ of \emph{every} line passing through that pixel and increment a vote in an accumulator array indexed by $(\theta, r)$. Peaks in the accumulator correspond to lines supported by many pixels.
+\end{defbox}
+
+\textbf{Line parameterisation.} Avoid $y = mx + c$ (slope $m$ and intercept $c$ go to infinity for vertical lines). Use angle $\theta$ (with the horizontal axis) and perpendicular distance $r$ from the origin:
+\[
+y \cos\theta - x \sin\theta = r
+\]
+Note: in image coordinates the $y$-axis points downwards, so positive $\theta$ corresponds to a clockwise rotation.
+
+\textbf{Pseudo-code (Hough transform for straight lines):}
+\begin{enumerate}
+  \item Initialise all accumulator entries to 0.
+  \item For each edge pixel $(x, y)$:
+  \begin{enumerate}
+    \item For each quantised value of $\theta$:
+    \begin{enumerate}
+      \item Compute $r = y \cos\theta - x \sin\theta$.
+      \item Increment the accumulator entry nearest $(\theta, r)$.
+    \end{enumerate}
+  \end{enumerate}
+  \item Find peaks in the accumulator: each peak is a line.
+\end{enumerate}
+
+\textbf{Sizing the accumulator.} The maximum $|r|$ is the image diagonal $\sqrt{W^2 + H^2}$ (round up). Quantise $\theta$ and $r$ as required by the question.
+
+\separator
+
+\textbf{Generalised Hough Transform.}
+\begin{itemize}
+  \item \textbf{Circles}: parameterise by centre $(a, b)$ and radius $r$ --- 3-D accumulator. Each edge pixel votes for all $(a, b, r)$ corresponding to circles passing through it.
+  \item \textbf{Arbitrary (non-parametric) shapes}: store a table of edge offsets relative to a reference point. Each image edge pixel assumes it could be each table entry in turn and votes for the implied reference-point location. Peaks in the reference-point accumulator identify shape locations.
+\end{itemize}
+
+\separator
+
+\begin{thmbox}[Hough Transform: Trade-offs]
+\textbf{Advantages:}
+\begin{itemize}
+  \item Tolerant to gaps in edges and to occlusion.
+  \item Relatively unaffected by noise.
+  \item Detects multiple instances of the shape in a single pass.
+\end{itemize}
+\textbf{Disadvantages:}
+\begin{itemize}
+  \item Expensive in memory and computation (especially for $\geq$ 3 parameters).
+  \item Localisation information lost (line endpoints unknown).
+  \item Peaks hard to locate with noisy or parallel edges.
+  \item Sensitive to accumulator quantisation: too coarse $\Rightarrow$ different lines merge; too fine $\Rightarrow$ noise scatters votes and lines are missed.
+\end{itemize}
+\end{thmbox}
+
+\begin{tipbox}[Exam Tip: quantisation matters]
+Tutorial Q19 reuses the same image as Q18 but with $\theta \in \{0, 30, 60, 90, 120, 150\}$ instead of $\{0, 45, 90, 135\}$, and there is no clear peak any more. Be ready to comment that ``results are sensitive to the quantisation of the parameters''.
+\end{tipbox}
+
+\separator
+
+\begin{defbox}[Active Contours (``Snakes'')]
+A snake is a spline curve that deforms to minimise an energy function combining a shape (internal) term and an image (external) term. The minimum-energy curve is short, smooth, and lies along intensity discontinuities.
+\end{defbox}
+
+\textbf{Energy function:}
+\[
+E_{\text{snake}} = E_{\text{internal}} + E_{\text{external}}
+\]
+\begin{itemize}
+  \item \textbf{Internal energy}: function of the snake's \emph{shape}. Reduced when the curve is short and smooth (penalises bending and stretching).
+  \item \textbf{External energy}: function of \emph{image features} near the contour. Reduced when intensity gradients along the curve are high (i.e.\ the curve sits on edges).
+\end{itemize}
+
+\textbf{Behaviour.} Initialise around an object; the snake ``shrink-wraps'' onto the boundary as energy is minimised.
+
+\textbf{Problems:}
+\begin{itemize}
+  \item Only works for shapes that are smooth and form a closed contour.
+  \item Extremely sensitive to parameters that weight internal vs.\ external energy.
+\end{itemize}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Worked Examples}
+
+\begin{exbox}[Example 1: Role of Mid-Level Vision (Q1)]
+\textbf{Q:} Briefly describe the role of mid-level vision.
+
+\textbf{A:} To group together image elements that belong together, and to segment them from all other image elements.
+\end{exbox}
+
+\begin{exbox}[Example 2: Hysteresis Thresholding (Q3)]
+\textbf{Q:} Apply hysteresis thresholding to the 3$\times$3 image $I$ with $t_h = 0.75$, $t_l = 0.25$, 4-connected neighbours.
+\[
+I = \begin{pmatrix} 0.4 & 0.1 & 0.4 \\ 0.2 & 0.2 & 0.7 \\ 0.3 & 0.8 & 0.9 \end{pmatrix}
+\]
+
+\textbf{A:} Step 1 --- pixels with $I > t_h$ become 1, pixels with $I < t_l$ become 0; mid-range pixels (those with $t_l \leq I \leq t_h$, including $0.4, 0.7, 0.3$) are left undecided:
+\[
+\begin{pmatrix} 0.4 & 0 & 0.4 \\ 0 & 0 & 0.7 \\ 0.3 & 1 & 1 \end{pmatrix}
+\]
+Step 2 --- a mid-range pixel becomes 1 \emph{only if it neighbours a pixel already classified as figure} (4-connected). The seeds (1s) are at $(3,2)$ and $(3,3)$. Propagating:
+\begin{itemize}
+  \item $0.7$ at $(2,3)$: 4-neighbour $(3,3)=1$ $\Rightarrow$ becomes 1.
+  \item $0.3$ at $(3,1)$: 4-neighbour $(3,2)=1$ $\Rightarrow$ becomes 1.
+  \item $0.4$ at $(1,1)$: 4-neighbours $\{0.1, 0.2\}$ are all 0 $\Rightarrow$ becomes 0.
+  \item $0.4$ at $(1,3)$: 4-neighbours $\{0.1, 0.7\}$ --- the $0.7$ neighbour was just promoted to 1, but the model answer treats Step~2 as a single pass over the original mid-range set, so $0.4$ at $(1,3)$ stays 0 (neighbour $0.1=0$, $0.7$ not yet finalised when row 1 is checked).
+\end{itemize}
+\textbf{Final binary image:}
+\[
+I' = \begin{pmatrix} 0 & 0 & 0 \\ 0 & 0 & 1 \\ 1 & 1 & 1 \end{pmatrix}
+\]
+\end{exbox}
+
+\begin{exbox}[Example 3: Opening vs Closing (Q4)]
+\textbf{Q:} For a 7$\times$9 binary image: (a) draw the result of erosion then dilation with 4-connected neighbours; (b) draw the result of dilation then erosion with 8-connected neighbours.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{(a) Opening (4-conn)}: erosion first removes thin isolated foreground pixels and bridges (any FG pixel touching a BG pixel disappears). Dilation then re-grows the surviving cores. Net effect: small specks of foreground noise are removed; thicker shapes are preserved with roughly their original silhouette.
+  \item \textbf{(b) Closing (8-conn)}: dilation first fills small holes and gaps (every BG pixel adjacent to FG --- including diagonals --- becomes FG). Erosion then trims the outer halo back. Net effect: foreground holes/cracks are filled; outer shape is preserved.
+\end{itemize}
+
+\begin{tipbox}[Exam Tip: When asked to draw, sketch the foreground silhouette]
+Mark which pixels switch on each pass. With 8-connectivity, dilation reaches diagonally too; opening with 4-connectivity is more aggressive than with 8-connectivity (more pixels touch the background under 4-conn).
+\end{tipbox}
+\end{exbox}
+
+\begin{exbox}[Example 4: Region Growing on a 3$\times$3 Image (Q6)]
+\textbf{Q:} Apply region growing with SAD-similarity threshold $T = 12$, 8-connected neighbours, seed $=$ top-left, to the 3$\times$3 feature-vector image:
+\[
+\begin{matrix} (5,10,15) & (10,15,30) & (10,10,25) \\ (10,10,15) & (5,20,15) & (10,5,30) \\ (5,5,15) & (30,10,5) & (30,10,10) \end{matrix}
+\]
+
+\textbf{A:} Use SAD between feature vectors. Starting from the top-left (label 1):
+\begin{itemize}
+  \item SAD$($top-left, mid-left$) = 5$, SAD$($top-left, top-mid$) = 25$, SAD$($top-left, mid-mid$) = 10$. Add mid-left (5) and mid-mid (10) to region 1.
+  \item Grow from mid-left: SAD$($mid-left, bot-left$) = 10$ $\Rightarrow$ add bot-left to region 1.
+  \item No further growth from region 1 (all remaining neighbours have SAD $\geq 25$). Pick a new seed (top-mid, label 2).
+  \item Grow from top-mid: SAD$($top-mid, top-right$) = 10$ $\Rightarrow$ add. From top-right SAD$($top-right, mid-right$) = 10$ $\Rightarrow$ add. Region 2 cannot grow further.
+  \item Pick last seed bot-right (label 3): SAD$($bot-right, bot-mid$) = 5$ $\Rightarrow$ add bot-mid to region 3.
+\end{itemize}
+\textbf{Final labels:}
+\[
+\begin{pmatrix} 1 & 2 & 2 \\ 1 & 1 & 2 \\ 1 & 3 & 3 \end{pmatrix}
+\]
+\end{exbox}
+
+\begin{exbox}[Example 5: k-means on a 3$\times$3 Image (Q12)]
+\textbf{Q:} Apply k-means with SAD distance, $k=2$, initial centres $c_1 = (5,10,15)$, $c_2 = (10,10,25)$ to the same 3$\times$3 feature-vector image as Example 4.
+
+\textbf{A:} \textbf{Iteration 1.} Compute SAD distance from each pixel to each centre:
+\begin{itemize}
+  \item Distances to $c_1 = (5,10,15)$: $\begin{pmatrix} 0 & 25 & 15 \\ 5 & 10 & 25 \\ 5 & 35 & 30 \end{pmatrix}$
+  \item Distances to $c_2 = (10,10,25)$: $\begin{pmatrix} 15 & 10 & 0 \\ 10 & 25 & 10 \\ 20 & 40 & 35 \end{pmatrix}$
+\end{itemize}
+Allocate to closest centre:
+$\begin{pmatrix} 1 & 2 & 2 \\ 1 & 1 & 2 \\ 1 & 1 & 1 \end{pmatrix}$.
+
+\textbf{Recompute centres:}
+\[
+c_1 = \tfrac{1}{6}\big[(5,10,15)+(10,10,15)+(5,20,15)+(5,5,15)+(30,10,5)+(30,10,10)\big] = (14.17, 10.83, 12.50)
+\]
+\[
+c_2 = \tfrac{1}{3}\big[(10,15,30)+(10,10,25)+(10,5,30)\big] = (10, 10, 28.33)
+\]
+
+\textbf{Iteration 2.} Recompute distances; allocations are unchanged $\Rightarrow$ centres unchanged $\Rightarrow$ algorithm has converged.
+\end{exbox}
+
+\begin{exbox}[Example 6: Linkage Methods in Agglomerative Clustering (Q14)]
+\textbf{Q:} Briefly describe (a) single-link, (b) complete-link, (c) group-average, (d) centroid linkage.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Single-link}: distance between clusters is the shortest distance between any pair of elements (MIN).
+  \item \textbf{Complete-link}: longest distance between any pair of elements (MAX).
+  \item \textbf{Group-average}: average distance over all pairs of elements (AVERAGE).
+  \item \textbf{Centroid}: distance between the cluster centroids (means of feature vectors).
+\end{itemize}
+Different linkages can produce dramatically different dendrograms on the same data.
+\end{exbox}
+
+\begin{exbox}[Example 7: Hough Transform for a 4$\times$3 Binary Image (Q18)]
+\textbf{Q:} The image has foreground pixels at $(0,0), (1,1), (2,2), (3,0)$ (using top-left origin, $y$ down). Compute the Hough accumulator for $\theta \in \{0, 45, 90, 135\}$ deg, $r$ rounded to nearest integer.
+
+\textbf{A:} Recall $r = y\cos\theta - x\sin\theta$. Maximum $|r| \leq \sqrt{3^2 + 2^2} \approx 3.6$, so $r \in [-4, 4]$.
+
+For each pixel, compute the four $(\theta, r)$ pairs:
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l c c c c @{}}
+\toprule
+\textbf{Pixel} & $\theta=0$ & $\theta=45$ & $\theta=90$ & $\theta=135$ \\
+\midrule
+$(0,0)$ & $r=0$ & $r=0$ & $r=0$ & $r=0$ \\
+$(1,1)$ & $r=1$ & $r=0$ & $r=-1$ & $r\approx -1$ \\
+$(2,2)$ & $r=2$ & $r=0$ & $r=-2$ & $r\approx -3$ \\
+$(3,0)$ & $r=0$ & $r\approx -2$ & $r=-3$ & $r\approx -2$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The maximum accumulator entry is $3$ at $(\theta, r) = (45, 0)$, contributed by the three diagonal pixels $(0,0), (1,1), (2,2)$. This is the line of three collinear edge pixels.
+
+\textbf{Follow-up (Q19).} Repeat with $\theta \in \{0, 30, 60, 90, 120, 150\}$: \emph{no clear peak emerges}, illustrating the algorithm's sensitivity to angle quantisation.
+\end{exbox}
+
+\begin{exbox}[Example 8: Active Contour Energy (Q20)]
+\textbf{Q:} Briefly describe the two terms that form the energy function that an active contour attempts to minimise.
+
+\textbf{A:} $E_{\text{snake}} = E_{\text{internal}} + E_{\text{external}}$.
+\begin{itemize}
+  \item \textbf{Internal energy} is a function of the shape of the contour; it is reduced if the curve is short and smooth (i.e.\ penalises bending and stretching).
+  \item \textbf{External energy} is a function of the image features near the contour; it is reduced if the intensity gradient along the contour is high (i.e.\ the curve lies on strong edges).
+\end{itemize}
+\end{exbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Summary}
+
+\begin{keybox}[Key Takeaways]
+\begin{enumerate}
+  \item \textbf{Mid-level vision = grouping}. Choose a feature, define similarity (SAD/SSD/Euclidean) or affinity, partition feature space.
+  \item \textbf{Thresholding} segments a 1-D feature space. Use the histogram valley; for noisy boundaries use \term{hysteresis} with two thresholds; clean up with morphology (open removes specks, close fills holes).
+  \item \textbf{Region-based} methods use spatial information. Region growing (seed-driven), region merging (bottom-up, order-dependent), split-and-merge (top-down then bottom-up via a quadtree).
+  \item \textbf{k-means} is partitional clustering: needs $k$, sensitive to initialisation, struggles with non-globular or unequal-size clusters.
+  \item \textbf{Agglomerative hierarchical clustering} merges nearest clusters; linkage choice (single/complete/average/centroid) shapes the dendrogram.
+  \item \textbf{Graph cuts / Normalised Cuts} treat segmentation as graph partitioning. Min-cut is biased to small subgraphs; Ncut normalises by association. Optimum is NP-hard.
+  \item \textbf{Hough transform} fits parametric shapes by voting; tolerant to gaps and occlusion but expensive and sensitive to quantisation. Use $r = y\cos\theta - x\sin\theta$.
+  \item \textbf{Snakes} minimise internal (smoothness) plus external (image-gradient) energy; only suitable for smooth closed boundaries.
+\end{enumerate}
+\end{keybox}
+
+\textbf{Comparison of segmentation methods:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{3.6cm} p{3.6cm} p{3.6cm} @{}}
+\toprule
+\textbf{Method} & \textbf{Feature Space} & \textbf{Spatial Info?} & \textbf{Main Pitfall} \\
+\midrule
+Thresholding & 1-D (intensity / filter output) & No & Single threshold rarely works globally \\
+Hysteresis thresholding & 1-D + adjacency & Yes (adjacency) & Choice of $t_l, t_h$ \\
+Region growing & multi-D + adjacency & Yes & Leaks through weak boundaries \\
+Region merging & multi-D + adjacency & Yes & Order-dependent results \\
+Split-and-merge & multi-D + quadtree adjacency & Yes & Quadtree artefacts; padding needed \\
+k-means & multi-D & Optional (add position) & Init-dependent; needs $k$; non-globular fails \\
+Agglomerative & multi-D & Optional & Linkage choice changes results; $O(n^2)$ memory \\
+Graph cuts (min-cut) & graph in feature space & Yes (via edges) & Bias toward small subgraphs \\
+Normalised Cuts & graph in feature space & Yes & NP-hard exact; equal-size bias; texture issues \\
+Hough transform & parameter space (vote) & Yes & Memory cost; quantisation sensitivity \\
+Active contours (snakes) & curve over image & Yes (along curve) & Smooth closed shapes only; parameter-sensitive \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Exam Tip: Pseudo-code is a recurring marks-grab]
+Many tutorial questions ask you to write pseudo-code for an algorithm (region growing, region merging, split-and-merge, k-means, agglomerative, Ncuts, Hough). Memorise the canonical step lists in this chapter.
+\end{tipbox}

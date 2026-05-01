@@ -1,0 +1,730 @@
+% =============================================================================
+%             WEEK 9: ARTIFICIAL OBJECT RECOGNITION (HIGH-LEVEL VISION)
+% =============================================================================
+\section{Week 9: Artificial Object Recognition (High-Level Vision)}
+
+\subsection{Topic Summary}
+
+\begin{keybox}[Learning Objectives]
+By the end of this week, you will be able to:
+\begin{itemize}
+  \item Distinguish the three object-recognition tasks: \term{identification}, \term{classification}, \term{localisation}, and relate them to the category hierarchy.
+  \item State the requirements of object recognition (sensitivity vs invariance) and the standard sources of nuisance variation (viewpoint, lighting, deformation, clutter, occlusion).
+  \item Describe and contrast the nine classical methods covered: \term{template matching}, \term{sliding window}, \term{edge matching}, \term{model-based} recognition, \term{intensity histograms}, \term{Implicit Shape Model (ISM)}, \term{SIFT feature matching}, \term{bag-of-words}, \term{geometric invariants}.
+  \item Compute standard similarity measures (cross-correlation, NCC, correlation coefficient, SSD, SAD).
+  \item Explain Lowe's ratio test and the role of RANSAC / Generalised Hough Transform in feature-based recognition.
+  \item Classify methods along three axes: top-down vs bottom-up, representation (pixel intensity / features / geometry), 2D vs 3D, local vs global.
+\end{itemize}
+\end{keybox}
+
+\textbf{Big Picture.}
+Object recognition is the high-level task of associating image evidence with object identities or categories. Every recognition pipeline has the same skeleton: \emph{(i) image data}, \emph{(ii) a representation of the objects}, and \emph{(iii) a matching technique}. Methods differ in \emph{what} representation is used (pixel intensities, features, or geometry; 2D vs 3D; local vs global) and \emph{how} matching is performed (top-down/generative ``hypothesise and verify'' vs bottom-up/discriminative ``extract and look up''). The fundamental tension is \term{sensitivity} (small relevant differences must be distinguishable) vs \term{invariance} (large irrelevant differences must be ignored). Classical pipelines trade these off in different ways; the lecture surveys nine of them. Modern recognition is dominated by neural networks, but the classical building blocks (similarity measures, feature descriptors, voting schemes, geometric verification) still appear inside or alongside deep models.
+
+\separator
+
+\textbf{What Examiners Like to Ask:}
+\begin{itemize}
+  \item Define identification vs classification vs localisation; place them in the category hierarchy.
+  \item List the requirements of object recognition (D-O-R-I-style invariance lists: viewpoint, lighting, deformation, within-category, clutter, occlusion).
+  \item Describe the template matching pipeline; state similarity measures and which are maximised vs minimised.
+  \item Explain why template matching fails: scale, rotation, viewpoint, occlusion, threshold trade-off, tractability.
+  \item Compare sliding window with template matching; explain how segmentation reduces the search space.
+  \item Describe the bag-of-words pipeline (parsing $\to$ ignore stop-words $\to$ stems $\to$ ID $\to$ histogram) for documents and its image analogue (interest points $\to$ SIFT $\to$ k-means $\to$ codebook $\to$ histogram).
+  \item Describe the ISM pipeline and the voting / Generalised Hough Transform step.
+  \item Describe SIFT feature matching, including Lowe's ratio test and geometric verification with RANSAC.
+  \item State the geometric invariant of each transformation group: Euclidean (length, angle, area), similarity (length ratios, angles), affine (parallelism, length ratios on a line, area ratios), projective (cross-ratio).
+  \item Compare local vs global representations: which is robust to occlusion / viewpoint, which can distinguish similar objects, which generates more false positives / negatives.
+\end{itemize}
+
+% =============================================================================
+\subsection{Core Concepts}
+
+\textbf{Roadmap:}
+\begin{enumerate}
+  \item Recognition tasks and the category hierarchy.
+  \item Recognition requirements (sensitivity vs invariance) and the generic procedure.
+  \item Template matching + similarity measures.
+  \item Sliding window.
+  \item Edge matching.
+  \item Model-based recognition.
+  \item Intensity histograms.
+  \item Implicit Shape Model (ISM).
+  \item SIFT feature matching.
+  \item Bag-of-words (BoW).
+  \item Geometric invariants.
+  \item Classification of methods (top-down vs bottom-up; representation; local vs global).
+\end{enumerate}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Recognition tasks}
+
+\begin{defbox}[Three object-recognition tasks]
+\begin{itemize}
+  \item \textbf{Identification.} Determine the identity of an \emph{individual instance} of an object (e.g.\ Clinton vs Bush; Galaxy On8 vs iPhone 7+).
+  \item \textbf{Classification (categorisation).} Determine the \emph{category} of an object (e.g.\ human vs chimp; telephone vs calculator).
+  \item \textbf{Localisation.} Determine the \emph{presence and/or location} of an object in the image (bounding boxes / labels).
+\end{itemize}
+\end{defbox}
+
+\textbf{Semantic segmentation.} If localisation is sufficiently fine-grained \emph{and} run for a sufficiently large set of categories, the result becomes a per-pixel labelling — \term{semantic segmentation}. Note: semantic segmentation differs from the binary segmentation of earlier weeks (which separated one foreground from background); semantic segmentation assigns class labels at every pixel.
+
+\separator
+
+\textbf{Category hierarchy.} Classification can take place at multiple levels of abstraction:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.5cm} p{5cm} @{}}
+\toprule
+\textbf{Level} & \textbf{Examples} & \textbf{Properties} \\
+\midrule
+Superordinate & object, animal, mammal, fruit & Few features in common across members \\
+\textbf{Basic level} & cat, dog, cow, apple, banana & \textbf{Members share many features; easy to discriminate from peers} \\
+Subordinate & poodle, doberman, Bramley apple, Cox apple & Members very similar within class \\
+Identification & ``Rex'', ``Fido'' & Single instance; extreme of hierarchy \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}[Why basic level matters]
+The basic level is the level at which:
+\begin{itemize}
+  \item Humans are \emph{fastest} at recognising category members.
+  \item Humans usually classify \emph{first} before doing identification.
+  \item Children learn category names \emph{first}.
+  \item Members share many features (perceptually homogeneous) yet are distinct from peers (easy to discriminate).
+\end{itemize}
+It is the highest level at which members share many features, and the lowest level at which members have features distinct from other peer categories.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Recognition requirements and generic procedure}
+
+\begin{defbox}[The sensitivity / invariance trade-off]
+Object recognition simultaneously requires:
+\begin{itemize}
+  \item \textbf{Sensitivity} to (possibly small) image differences relevant to distinguishing one identity / category from another.
+  \item \textbf{Insensitivity (invariance)} to (possibly large) image differences that do \emph{not} affect identity / category.
+\end{itemize}
+\end{defbox}
+
+\textbf{Required invariances:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Source of variation} & \textbf{Example} \\
+\midrule
+Background clutter & Telephone amongst tangled cables \\
+Occlusion & Person partially hiding a telephone \\
+Viewpoint & Same chair seen from different angles \\
+Lighting & Same face under bright vs dim illumination \\
+Non-rigid deformation & Running horse, where the body bends \\
+Within-category variation & Many different sofa-chair shapes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{Generic recognition pipeline (off-line / on-line):}
+
+\begin{thmbox}[Object recognition procedure]
+\begin{enumerate}
+  \item \textbf{Off-line (training).} Extract a representation from each training image and store it as a feature vector $(a,b,c,\ldots)$.
+  \item \textbf{On-line (test).} Extract the representation from the input image in the same way.
+  \item \textbf{Match} the test representation against the stored ones to determine class / identity.
+\end{enumerate}
+The recipe needs: image data, a representation of objects, and a matching technique.
+\end{thmbox}
+
+\textbf{Methods vary along three axes:}
+\begin{itemize}
+  \item \textbf{Features used.} Local features (parts) vs global features (whole-shape descriptions).
+  \item \textbf{Representation.} 2D image-based vs 3D object-based; pixel intensities vs feature vectors vs geometry.
+  \item \textbf{Matching procedure.} Top-down (generative, expectation-driven) vs bottom-up (discriminative, stimulus-driven); choice of similarity measure and decision criterion.
+\end{itemize}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Template matching}
+
+\begin{defbox}[Template matching]
+\textbf{Representation:} a \term{template} $I_1$ is an array of pixel intensities depicting the object to be recognised. \\
+\textbf{Matching:} for every template, slide it across the image; at each location compute a similarity score against the underlying patch $I_2$; report the best score (or all scores above a threshold).
+\end{defbox}
+
+\textbf{Recognising multiple objects $\Rightarrow$ multiple templates} (one per object / part: mouth, eye, nose, $\ldots$).
+
+\separator
+
+\textbf{Similarity measures.} Recall (from the correspondence-problem lecture):
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Measure} & \textbf{Formula} & \textbf{Optim.} \\
+\midrule
+Cross-correlation & $\sum_{i,j} I_1(i,j)\, I_2(i,j) = I_1 \cdot I_2 = \|I_1\|\|I_2\|\cos\theta$ & maximise \\
+Normalised cross-correlation (NCC) & $\dfrac{\sum I_1 I_2}{\sqrt{\sum I_1^2}\sqrt{\sum I_2^2}} = \dfrac{I_1\cdot I_2}{\|I_1\|\|I_2\|} = \cos\theta$ & maximise \\
+Correlation coefficient & $\dfrac{\sum (I_1-\bar I_1)(I_2-\bar I_2)}{\sqrt{\sum (I_1-\bar I_1)^2}\sqrt{\sum (I_2-\bar I_2)^2}}$ & maximise \\
+Sum of squared differences (SSD) & $\sum (I_1 - I_2)^2$ & minimise \\
+Euclidean distance & $\sqrt{\sum (I_1 - I_2)^2}$ & minimise \\
+Sum of absolute differences (SAD) & $\sum |I_1 - I_2|$ & minimise \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Implementation note.} Template matching using cross-correlation can be implemented using \emph{convolution with a rotated template} (i.e.\ cross-correlation $=$ convolution after $180^\circ$ rotation of the kernel; cf.\ Week 3). The correlation coefficient equals NCC when both means are zero.
+
+\separator
+
+\textbf{Why template matching fails (collected):}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8.5cm} @{}}
+\toprule
+\textbf{Problem} & \textbf{Why it bites} \\
+\midrule
+True vs false matches & Multiple peaks; ambiguous what counts as a match. \\
+Template must be very similar & Even small changes in scale, rotation, viewpoint produce weak matches indistinguishable from false ones. \\
+Within-category variation & Need many templates per object (e.g.\ many car viewpoints). \\
+Threshold trade-off & High threshold $\Rightarrow$ miss true matches; low threshold $\Rightarrow$ many false positives. \\
+Tractability & $250\!\times\!200$ image, 5 objects, 30 viewpoints, 5 scales $\Rightarrow$ \textbf{37.5M} matches. \\
+Occlusion & A partially hidden object fails to match. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Underlying issue.} The pixel-intensity comparison is fundamentally not robust to appearance changes; invariance is hard to achieve.
+
+\begin{tipbox}[Spot it in a question]
+``Search every region, compute similarity, threshold the best peak'' $\Rightarrow$ template matching. ``Use NCC because it is invariant to linear illumination changes'' $\Rightarrow$ exam-favourite reason to choose NCC over plain cross-correlation.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Sliding window}
+
+\begin{defbox}[Sliding window]
+Like template matching, but with two changes:
+\begin{enumerate}
+  \item For each image patch, use a \textbf{classifier} (more tolerant to appearance changes) instead of a fixed-template similarity score.
+  \item Choose patches at \emph{different shapes and sizes} and \textbf{resize} them before feeding to the classifier (further increases tolerance to scale).
+\end{enumerate}
+\end{defbox}
+
+\textbf{Tractability.} Classifying every patch of every size and shape ($\sim$100k+ regions) is very expensive. Practical fix: pre-process the image with \term{segmentation} to propose candidate regions ($\sim$1k regions) likely to contain an object.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Edge matching}
+
+\begin{defbox}[Edge matching]
+\textbf{Representation:} like template matching, but \emph{both} template and input are pre-processed to extract edges (Canny etc., cf.\ Week 3). \\
+\textbf{Matching:} for every edge template $T$ and every image region with edge image $I$, compute the average minimum point-to-edge distance:
+\[
+D(T, I) \;=\; \frac{1}{|T|}\sum_{t \in T} d_I(t),
+\]
+where $d_I(t)$ is the distance from template point $t$ to the nearest image edge. Choose the minimum value as the best match.
+\end{defbox}
+
+\textbf{Pros:} more tolerant to lighting / colour changes than raw pixels (edges are intrinsic). \textbf{Cons:} still sensitive to scale, rotation, viewpoint; an edge map is noisy and contains many irrelevant edges (reflectance / illumination, cf.\ D-O-R-I from Week 3).
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Model-based recognition}
+
+\begin{defbox}[Model-based recognition]
+\textbf{General idea} (top-down / generative):
+\begin{enumerate}
+  \item \textbf{Hypothesise} object identity and pose.
+  \item \textbf{Render (back-project)} the object into the image plane.
+  \item \textbf{Compare} to the image; accept if score is good.
+\end{enumerate}
+Representation: 2D or 3D model of object shape.
+\end{defbox}
+
+\textbf{Comparison scores:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Score} & \textbf{Question asked, and verdict} \\
+\midrule
+Edge score & Are there image edges near predicted object edges? \emph{Very unreliable} -- in textured regions the answer is usually yes regardless. \\
+Oriented edge score & Same, but require matching orientations. Better, but still hard to tune. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Intensity histograms}
+
+\begin{defbox}[Intensity / colour histograms]
+\textbf{Representation:} a histogram of pixel intensities (greyscale or colour). \\
+\textbf{Matching:} compare histograms (e.g.\ via $\chi^2$, Bhattacharyya, or other distance) to find the closest match.
+\end{defbox}
+
+\textbf{Trade-offs:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{8cm} @{}}
+\toprule
+\textbf{Property} & \textbf{Comment} \\
+\midrule
+$+$ Fast, easy to compute & Simple histogram. \\
+$+$ Insensitive to small viewpoint changes & Unlike templates. \\
+$-$ Sensitive to illumination & Pixel values shift with lighting. \\
+$-$ Sensitive to intra-class variation & Different colour distributions for the same class. \\
+$-$ Insensitive to spatial configuration & Two very different images can share the same histogram (an exam-favourite trap). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Application: face / skin detection.} Skin has a small range of (intensity-independent) colours, so colour histograms are commonly used as part of face detection / recognition pipelines (segment skin pixels first, then look for face structure).
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Implicit Shape Model (ISM)}
+
+\begin{defbox}[ISM representation]
+Two components:
+\begin{itemize}
+  \item \textbf{Parts}: 2D image fragments (patches around interest points).
+  \item \textbf{Structure}: the configuration (spatial layout) of parts relative to the object centre.
+\end{itemize}
+\end{defbox}
+
+\textbf{Training pipeline:}
+\begin{enumerate}
+  \item For every training image, locate \term{interest points} (e.g.\ Harris detector).
+  \item Extract a 2D patch around each interest point; collect all such patches.
+  \item Cluster the patches (e.g.\ \term{hierarchical agglomerative clustering}); store cluster centres as the \term{appearance codebook}.
+  \item Match codebook entries to training images and, for each codebook entry, record the offset(s) to the object centre.
+\end{enumerate}
+
+\textbf{Matching pipeline:}
+\begin{enumerate}
+  \item Detect interest points in the input image.
+  \item For each interest point, find matching codebook entries.
+  \item Each matched feature \term{votes} for possible object centres (equivalent to the \term{Generalised Hough Transform}).
+  \item Object centres with maximum votes are taken as hypotheses; back-project the contributing patches to localise the object.
+\end{enumerate}
+
+\textbf{Strengths and limits.}
+Robust to translation, rotation, partial occlusion (since votes are local). \emph{Failure mode}: ignores spatial constraints between parts, so spurious centres can arise (e.g.\ a phantom ``cow'' between two real cows in the worked example).
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{SIFT feature matching}
+
+\begin{defbox}[SIFT descriptor (recap)]
+A \textbf{128-element} histogram of intensity-gradient orientations, formed by binning gradients in $4\times 4$ pixel windows around the interest point into 8 orientations ($4\times 4\times 8 = 128$), normalised to unit length, and rotated so the dominant orientation is vertical.
+\end{defbox}
+
+\textbf{Why SIFT works:}
+\begin{itemize}
+  \item \textbf{Locality}: features are local $\Rightarrow$ robust to occlusion and clutter (no prior segmentation).
+  \item \textbf{Distinctiveness}: each 128-D vector can be matched against a large database.
+  \item \textbf{Quantity}: many features even for small objects.
+  \item \textbf{Efficiency}: close to real-time.
+\end{itemize}
+
+\separator
+
+\textbf{Matching protocol:}
+\begin{enumerate}
+  \item For each test keypoint descriptor, find its top \emph{two} nearest neighbours in the training database (BFMatcher knn with $k=2$).
+  \item Apply \term{Lowe's ratio test}: accept the match if
+  \[
+  \frac{d_1}{d_2} \;<\; \tau, \qquad \tau \approx 0.75,
+  \]
+  where $d_1, d_2$ are distances to the first / second nearest descriptors. The idea: a true match should be much closer than the runner-up; if both are similar, the match is ambiguous.
+\end{enumerate}
+
+\separator
+
+\textbf{Geometric verification.} Given three non-collinear model points $P_1, P_2, P_3$ and three image points $p_1, p_2, p_3$, there is a unique transformation (rotation, translation, scale) aligning model to image. Use \term{RANSAC} or the \term{Generalised Hough Transform} to check that the matched locations are geometrically consistent — i.e.\ explained by a single transformation. In practice (cf.\ the coding exercise), one fits a \term{homography} via \texttt{cv2.findHomography(\dots, cv2.RANSAC, 5.0)} and uses the inlier mask.
+
+\begin{tipbox}[Spot it in a question]
+``Multiple matches per descriptor with a ratio threshold'' $\Rightarrow$ Lowe's ratio test. ``Verify matches with a single homography'' $\Rightarrow$ RANSAC or Generalised Hough Transform.
+\end{tipbox}
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Bag-of-Words (BoW)}
+
+\textbf{Bag-of-words for documents (the analogy):}
+\begin{enumerate}
+  \item Parse documents into words (``the cat sat on the mat. a dog is sitting on the cat'').
+  \item Ignore stop-words (the, a, on, it, $\ldots$) $\Rightarrow$ ``cat sat mat dog sitting cat''.
+  \item Reduce to stems (sitting / sat / sits $\to$ sit) $\Rightarrow$ ``cat sit mat dog sit cat''.
+  \item Assign each stem an ID (1 = cat, 2 = sit, 3 = mat, $\ldots$).
+  \item Represent each document as a $K$-dim frequency vector ($K =$ vocabulary size), e.g.\ $(2, 2, 1, 1, 0, \ldots)$.
+\end{enumerate}
+\textbf{Matching:} for query documents containing $\geq 1$ query word, compute the angle (i.e.\ $\cos^{-1}\text{NCC}$) between query and document vectors; rank.
+
+\separator
+
+\begin{defbox}[Bag-of-words for images]
+\begin{enumerate}
+  \item \textbf{Choose features.} Sample image locations via a regular grid, an interest-point detector, or randomly.
+  \item \textbf{Encode features.} Compute a SIFT (or other) descriptor on the patch around each location.
+  \item \textbf{Build dictionary.} Cluster descriptors with \term{k-means} into $K$ groups; cluster centres are \term{visual words} (codewords). Optionally drop the most frequent codewords (analogue of stop-words).
+  \item \textbf{Represent images.} Each image becomes a $K$-bin histogram of visual-word occurrences.
+  \item \textbf{Match.} Compare histograms by distance / angle.
+\end{enumerate}
+\end{defbox}
+
+\textbf{Mapping to the document analogy:}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Documents} & \textbf{Images} \\
+\midrule
+Word & Image patch \\
+Stem of a word & k-means cluster centre (visual word) \\
+Vocabulary & Codeword dictionary \\
+Stop-word removal & Drop most-frequent codewords \\
+TF vector per document & Histogram of visual words per image \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Strengths.} Robust to occlusion / clutter (local features), simple histogram representation, scales to large databases. \textbf{Limit.} Discards spatial layout (just like intensity histograms): two images with the same parts in different arrangements look identical.
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Geometric invariants}
+
+\begin{defbox}[Geometric invariant]
+A property of an object in the scene that does \emph{not} change under a given group of viewpoint transformations.
+\end{defbox}
+
+\textbf{Hierarchy of transformation groups (most $\to$ least restrictive):}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4cm} p{5.5cm} @{}}
+\toprule
+\textbf{Group} & \textbf{Transformations} & \textbf{Invariants} \\
+\midrule
+Euclidean & translation, rotation & lengths, angles, areas \\
+Similarity & + uniform scale & ratios of lengths, angles \\
+Affine & + shear (non-uniform scale) & parallelism, ratios of lengths \emph{along a line}, ratios of areas \\
+Projective & + foreshortening (full perspective) & \textbf{cross-ratio} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\begin{defbox}[Cross-ratio]
+For four collinear points $P_1, P_2, P_3, P_4$:
+\[
+\mathrm{CR}(P_1, P_2, P_3, P_4) \;=\; \frac{\|P_3 - P_1\|\,\|P_4 - P_2\|}{\|P_3 - P_2\|\,\|P_4 - P_1\|}.
+\]
+Under any perspective projection, the cross-ratio of the four points and of their projected images $p_1, p_2, p_3, p_4$ are equal.
+\end{defbox}
+
+\textbf{Recognition with invariants.}
+\begin{itemize}
+  \item \textbf{Representation}: value of the cross-ratio (or other invariant).
+  \item \textbf{Matching}: compare the measured invariant to a database of training values.
+\end{itemize}
+\textbf{Problems.} Occlusion (need all four collinear points visible), availability and distinctiveness of points (a single cross-ratio is not very discriminative on its own).
+
+\bigseparator
+
+% -----------------------------------------------------------------------------
+\subsubsection{Classification of methods}
+
+\textbf{Axis 1: matching procedure.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l p{6cm} @{}}
+\toprule
+\textbf{Style} & \textbf{Examples} & \textbf{Idea} \\
+\midrule
+Top-down (generative) & model-based, templates, edge matching & Hypothesise an object and look for it; expectation-driven; ``fitting''. \\
+Bottom-up (discriminative) & SIFT, BoW, intensity histograms, ISM & Extract a description and look it up in the database; stimulus-driven. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Axis 2: representation used.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Representation} & \textbf{Methods} \\
+\midrule
+Pixel intensities & templates, edge matching, intensity histograms, ISM \\
+Feature vectors & SIFT feature matching, bag-of-words \\
+Geometry & model-based, geometric invariants \\
+\midrule
+2D (image-based) & templates, sliding window, ISM, bag-of-words \\
+3D (object-based) & 3D models, geometric invariants, SIFT (used for consistency check) \\
+\midrule
+Local features & SIFT (and BoW), ISM, part templates \\
+Global features & whole-object templates, sliding window, 3D models \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\separator
+
+\textbf{Local vs global, head-to-head.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l p{4.5cm} p{5cm} @{}}
+\toprule
+\textbf{Aspect} & \textbf{Local features} & \textbf{Global features} \\
+\midrule
+Idea & Object $=$ collection of simple features (e.g.\ ``A $=$ /$+\backslash +-$''). & Object $=$ description of overall shape (e.g.\ ``A $=$ A''). \\
+$+$ Tolerance & Viewpoint, within-class variation, occlusion. & Can distinguish similar objects with the same parts. \\
+$-$ Failure 1 & Different objects can share the same set of features (T, L, $+$ all $=$ ``$|+-$''). & Sensitive to viewpoint and within-class variation (need exact alignment). \\
+$-$ Failure 2 & With many objects in the image, no part-to-object assignment (e.g.\ TA vs IV give the same multiset). & Sensitive to occlusion (every part of the description matters). \\
+Failure rate & Many false positives. & Many false negatives. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Compromise.} Use features of \emph{intermediate complexity}, or a \emph{hierarchy} of features at different complexities — combining locality (robustness) with structure (discriminative power).
+
+\bigseparator
+
+% =============================================================================
+\subsection{Worked Examples}
+
+\begin{exbox}[Example 1: Three recognition tasks]
+\textbf{Q:} Distinguish identification, classification, and localisation. Where does ``semantic segmentation'' sit?
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Identification}: which \emph{instance}? (Clinton vs Bush.)
+  \item \textbf{Classification}: which \emph{category}? (human vs chimp.)
+  \item \textbf{Localisation}: \emph{where} in the image? (bounding box / label.)
+\end{itemize}
+\textbf{Semantic segmentation} arises when localisation is fine-grained \emph{and} performed for many categories: every pixel gets a class label. It differs from earlier-week (binary) segmentation by labelling multiple classes simultaneously.
+\end{exbox}
+
+\begin{exbox}[Example 2: Basic-level category]
+\textbf{Q:} Why is the ``basic level'' privileged in human object recognition? Place the categories \{animal, dog, poodle, Rex\} on the hierarchy.
+
+\textbf{A:} The basic level is the \emph{highest} level at which members share many features and the \emph{lowest} level at which they are distinct from peer categories — making it perceptually homogeneous and easy to discriminate. Humans recognise basic-level categories fastest, classify there before identifying, and learn those names first as children. \\
+Hierarchy: \emph{animal} (superordinate) $\to$ \emph{dog} (basic) $\to$ \emph{poodle} (subordinate) $\to$ \emph{Rex} (identification).
+\end{exbox}
+
+\begin{exbox}[Example 3: Pick a similarity measure]
+\textbf{Q:} You template-match a logo across an image where lighting may have rescaled all intensities by an unknown factor. Which similarity measure should you use, and why?
+
+\textbf{A:} Use \textbf{NCC} (or the correlation coefficient if mean-shift is also possible). NCC equals $\cos\theta$ between the two patches viewed as vectors, so it is invariant to a positive multiplicative factor on either vector — exactly the linear-illumination case. Plain cross-correlation is not, since multiplying intensities by $k$ scales the score by $k$.
+\end{exbox}
+
+\begin{exbox}[Example 4: Why template matching fails on chairs]
+\textbf{Q:} A chair template gives a clean NCC peak in image~A but a noisy response in image~B (same chair, different viewpoint). Explain. Suggest two fixes consistent with the methods covered.
+
+\textbf{A:} Template matching's pixel-level metric is \emph{not} robust to scale, rotation, viewpoint or within-class variation. Image B differs from the template in viewpoint, so every patch is a poor match and the peak vanishes into the noise. \\
+Fixes: (i) use \textbf{multiple templates} per object covering different viewpoints and scales (with the trade-off of $\sim$37.5M comparisons in the lecture's example); (ii) move to a \textbf{sliding window} with a learned classifier that tolerates appearance changes, or to a \textbf{local-feature} pipeline (SIFT / BoW / ISM) that does not rely on global pixel alignment.
+\end{exbox}
+
+\begin{exbox}[Example 5: Lowe's ratio test]
+\textbf{Q:} For a SIFT descriptor in the test image, the two best matches in the database have L2 distances $d_1 = 0.30$ and $d_2 = 0.36$. (a) With ratio threshold $\tau = 0.75$, is this match accepted? (b) If $d_1 = 0.30, d_2 = 0.42$, is it accepted? (c) Why is the ratio used rather than $d_1$ alone?
+
+\textbf{A:}
+\begin{itemize}
+  \item (a) $d_1/d_2 = 0.83 > 0.75$ $\Rightarrow$ \textbf{rejected} (ambiguous: the runner-up is almost as close).
+  \item (b) $d_1/d_2 = 0.71 < 0.75$ $\Rightarrow$ \textbf{accepted}.
+  \item (c) An absolute threshold on $d_1$ is unreliable because descriptor distances vary across keypoints. The \emph{ratio} encodes \emph{distinctiveness} of the match relative to its competitors; a true match should be much closer than the second-best.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 6: Building a BoW representation]
+\textbf{Q:} You have 1000 training images. Outline the steps to build a 500-word visual vocabulary and represent a new image as a feature vector.
+
+\textbf{A:}
+\begin{enumerate}
+  \item For each training image, sample feature locations (regular grid, Harris / SIFT detector, or random) and compute a SIFT descriptor at each.
+  \item Pool all descriptors and run \textbf{k-means} with $K = 500$; cluster centres are the visual words / codeword dictionary.
+  \item Optionally drop the most frequent codewords (BoW analogue of stop-words).
+  \item For a new image: compute SIFT descriptors at sampled locations, assign each to its nearest codeword, and form the 500-bin frequency \textbf{histogram}.
+  \item Match by comparing histograms (e.g.\ via $\cos\theta = \mathrm{NCC}$ between the two TF vectors).
+\end{enumerate}
+\textbf{Caveat:} histogram representations discard spatial layout — two images with the same parts arranged differently will look identical (a known weakness of BoW and intensity histograms).
+\end{exbox}
+
+\begin{exbox}[Example 7: ISM voting]
+\textbf{Q:} In an ISM, three matched codebook entries vote for object centres at pixel locations $(50,60), (51,59), (200,30)$. There is one true cow at the first cluster of votes and one false hypothesis. Explain how voting localises the cow and why a phantom cow can appear between two real cows.
+
+\textbf{A:} Each codebook match contributes a ballot for the predicted object centre (Generalised Hough Transform). Genuine matches from the same cow vote consistently for nearby pixels, producing a peak; the back-projected patches at that peak reconstruct the cow. \\
+With \emph{two} cows present, parts of cow~1 may also vote (via codebook entries) for centres consistent with cow~2's position, and vice versa. The combined votes can pile up at a location \emph{between} the two real cows, creating a phantom hypothesis. ISM votes do not enforce the spatial relationship between distinct parts, so this failure is structural.
+\end{exbox}
+
+\begin{exbox}[Example 8: Geometric invariants under transformations]
+\textbf{Q:} For each transformation group, state which of \{lengths, angles, length ratios, parallelism, cross-ratio\} are invariant.
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Euclidean} (translation, rotation): lengths, angles, length ratios, parallelism, cross-ratio all preserved.
+  \item \textbf{Similarity} (+ uniform scale): lengths \emph{not} preserved (scaled), but length ratios, angles, parallelism, cross-ratio preserved.
+  \item \textbf{Affine} (+ shear / non-uniform scale): angles \emph{not} preserved, but parallelism, length ratios \emph{along a line}, area ratios, cross-ratio preserved.
+  \item \textbf{Projective} (+ foreshortening): only the \textbf{cross-ratio} preserved.
+\end{itemize}
+The hierarchy is nested: the cross-ratio survives all four; angles only survive similarity-and-below.
+\end{exbox}
+
+\begin{exbox}[Example 9: Cross-ratio computation]
+\textbf{Q:} Four collinear scene points have positions $1, 2, 3, 5$ along a ruler. Their projected images sit at $0, 1, 1.5, 2$ on the image line. (a) Compute the cross-ratio in scene and image. (b) What does the result tell you?
+
+\textbf{A:}
+\begin{itemize}
+  \item \textbf{Scene:} $\mathrm{CR} = \dfrac{(P_3 - P_1)(P_4 - P_2)}{(P_3 - P_2)(P_4 - P_1)} = \dfrac{(3-1)(5-2)}{(3-2)(5-1)} = \dfrac{2 \cdot 3}{1 \cdot 4} = \dfrac{6}{4} = 1.5$.
+  \item \textbf{Image:} $\mathrm{CR} = \dfrac{(1.5 - 0)(2 - 1)}{(1.5 - 1)(2 - 0)} = \dfrac{1.5 \cdot 1}{0.5 \cdot 2} = \dfrac{1.5}{1} = 1.5$.
+\end{itemize}
+The two cross-ratios match, as expected: the cross-ratio is a projective invariant. To recognise the same configuration of four collinear points across viewpoints, store $\mathrm{CR} = 1.5$ in the database and compare.
+\end{exbox}
+
+\begin{exbox}[Example 10: Top-down vs bottom-up classification]
+\textbf{Q:} Classify each method as top-down or bottom-up, and justify.
+\begin{enumerate}
+  \item Model-based (3D CAD) recognition.
+  \item SIFT + Lowe + RANSAC.
+  \item Bag-of-words + nearest-neighbour histogram.
+  \item Edge matching with a stored template.
+\end{enumerate}
+
+\textbf{A:}
+\begin{itemize}
+  \item (1) \textbf{Top-down} (generative): hypothesise pose, render, compare. Expectation-driven.
+  \item (2) \textbf{Bottom-up} (discriminative): extract SIFT descriptors, look them up; geometric verification only confirms a hypothesis built from the data.
+  \item (3) \textbf{Bottom-up}: extract a histogram and look it up.
+  \item (4) \textbf{Top-down}: a stored object template is hypothesised in each image region; the comparison is the verification step.
+\end{itemize}
+\end{exbox}
+
+\begin{exbox}[Example 11: Coding -- template matching with NCC]
+\textbf{Q:} (LGT Coding Q1) Complete \texttt{find\_object\_template} using OpenCV's \texttt{matchTemplate} with NCC and report the bounding box of the best match.
+
+\textbf{A:}
+\begin{verbatim}
+def find_object_template(image, template):
+    h, w = template.shape[:2]
+    result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
+    _, _, _, max_loc = cv2.minMaxLoc(result)
+    top_left     = max_loc
+    bottom_right = (top_left[0] + w, top_left[1] + h)
+    return top_left, bottom_right
+\end{verbatim}
+\textbf{Why \texttt{TM\_CCOEFF\_NORMED}.} It is the correlation coefficient (mean-subtracted NCC), so it is invariant to additive \emph{and} multiplicative linear illumination changes. We take the \emph{maximum} (NCC is a maximise-this measure), unlike SSD/SAD where we would take the minimum.
+\end{exbox}
+
+\begin{exbox}[Example 12: Coding -- SIFT + Lowe + RANSAC]
+\textbf{Q:} (LGT Coding Q2/Q3) Sketch the pipeline that (a) finds robust SIFT matches between two images and (b) localises the object via a homography.
+
+\textbf{A:}
+\begin{verbatim}
+# (a) SIFT + Lowe's ratio test
+sift = cv2.SIFT_create()
+kp1, des1 = sift.detectAndCompute(img1, None)
+kp2, des2 = sift.detectAndCompute(img2, None)
+bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
+matches = bf.knnMatch(des1, des2, k=2)
+good = [m for m, n in matches if m.distance < 0.75 * n.distance]
+
+# (b) Homography via RANSAC, then project model corners
+src = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
+dst = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
+H, mask = cv2.findHomography(src, dst, cv2.RANSAC, 5.0)
+h, w = img1.shape
+corners = np.float32([[0,0],[0,h-1],[w-1,h-1],[w-1,0]]).reshape(-1, 1, 2)
+proj = cv2.perspectiveTransform(corners, H)
+\end{verbatim}
+\textbf{Why each piece.} \texttt{NORM\_L2} is the correct distance for SIFT (Euclidean on 128-D unit vectors). \texttt{knnMatch} with $k=2$ is needed for Lowe's ratio. \texttt{findHomography} with RANSAC discards outliers (need $\geq 4$ point pairs for a homography). \texttt{perspectiveTransform} maps the model corners into the scene to draw the bounding polygon.
+\end{exbox}
+
+\bigseparator
+
+% =============================================================================
+\subsection{Summary}
+
+\begin{keybox}[Key Takeaways]
+\begin{enumerate}
+  \item \textbf{Three recognition tasks}: identification (instance), classification (category), localisation (where). Fine-grained, multi-class localisation $=$ semantic segmentation.
+  \item \textbf{Sensitivity vs invariance}: must distinguish small relevant differences yet ignore large irrelevant ones (clutter, occlusion, viewpoint, lighting, deformation, within-class).
+  \item \textbf{Generic recipe}: image data $+$ representation $+$ matching. Methods differ on the three axes: top-down vs bottom-up, representation type, local vs global features.
+  \item \textbf{Template matching}: simple but brittle. Use NCC for linear illumination invariance. Multiple templates needed for multiple viewpoints/scales (combinatorial blow-up).
+  \item \textbf{Sliding window}: classifier instead of similarity; resize patches; use segmentation to propose candidate regions ($\sim$1k vs $\sim$100k+).
+  \item \textbf{Edge matching}: pre-process with edges; minimise average distance from template edge points to image edges.
+  \item \textbf{Model-based}: hypothesise pose $\to$ back-project $\to$ compare. Edge or oriented-edge score; oriented is better.
+  \item \textbf{Intensity / colour histograms}: fast, viewpoint-tolerant, but discard spatial layout and are sensitive to illumination. Used for face / skin detection.
+  \item \textbf{ISM}: parts $+$ structure; codebook by clustering; voting via Generalised Hough Transform; robust to translation/rotation/occlusion but ignores inter-part spatial constraints.
+  \item \textbf{SIFT matching}: 128-D descriptors $+$ Lowe's ratio test $+$ RANSAC / GHT geometric verification; locality, distinctiveness, quantity, efficiency.
+  \item \textbf{Bag-of-words}: documents-to-images analogy; k-means visual vocabulary; histogram representation; loses spatial layout.
+  \item \textbf{Geometric invariants}: Euclidean (length, angle, area), similarity (length ratios, angles), affine (parallelism, length ratios, area ratios), projective (cross-ratio). Cross-ratio is the only invariant under full perspective.
+  \item \textbf{Local vs global}: local $=$ many false positives, global $=$ many false negatives; intermediate-complexity / hierarchical features compromise.
+\end{enumerate}
+\end{keybox}
+
+\textbf{Final comparison: nine classical methods.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l l p{4.5cm} @{}}
+\toprule
+\textbf{Method} & \textbf{Style} & \textbf{Repr.} & \textbf{Key strength / weakness} \\
+\midrule
+Template matching & top-down & pixels (global) & $-$ scale/rotation/occlusion brittle \\
+Sliding window & either & pixels $\to$ classifier & $+$ tolerant via classifier; $-$ tractability \\
+Edge matching & top-down & edges (global) & $+$ illumination tolerant; $-$ noisy edges \\
+Model-based & top-down & 2D/3D shape & $+$ explicit pose; $-$ unreliable scores \\
+Intensity histograms & bottom-up & global pixel stats & $+$ fast; $-$ ignores spatial layout \\
+ISM & bottom-up & local patches $+$ votes & $+$ occlusion-robust; $-$ phantom centres \\
+SIFT matching & bottom-up & local features (128-D) & $+$ scale/rotation invariant; needs verification \\
+Bag-of-words & bottom-up & local features $\to$ histogram & $+$ scalable; $-$ no spatial info \\
+Geometric invariants & either & geometry & $+$ viewpoint invariant; $-$ occlusion / point availability \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Final comparison: similarity measures.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} l l p{6cm} @{}}
+\toprule
+\textbf{Measure} & \textbf{Optim.} & \textbf{Invariances} \\
+\midrule
+Cross-correlation & max & none beyond same-scale comparison \\
+NCC & max & invariant to multiplicative illumination changes \\
+Correlation coefficient & max & invariant to additive \emph{and} multiplicative changes \\
+SSD / Euclidean & min & none \\
+SAD & min & none; cheaper than SSD; less penalty for outliers \\
+\bottomrule
+\end{tabular}
+\end{center}
